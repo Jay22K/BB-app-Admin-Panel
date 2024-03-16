@@ -64,3 +64,21 @@ If you discover a security vulnerability within Laravel, please send an e-mail t
 ## License
 
 The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+
+
+#installation
+Installation Steps for Setup in Localhost
+Install XAMPP and Composer.
+Copy egrocer code in (EX. C:/Xampp/htdocs/egrocer) your folder (make sure all files move). If you going to setup it on server give root path to public folder (public_html/egrocer/public).
+Add Your Domain Name As APP_URL=yourdomain (Ex: wrteam.in or egrocer.wrteam.in) in .env File. (Note:Only for Live Server)
+Note: Be advised that if you do not find the .env file in the root folder, it is necessary to activate the "Unhide hidden files and folders" option in your settings.
+Create Database name 'egrocer' and change DB_DATABASE=egrocer DB_USERNAME=database_user_name DB_PASSWORD=database_user_password in .env File.
+Now, in root directory, run this command composer install
+After Composer installed successfully, run this command npm install
+After npm installed successfully, run this command php artisan migrate to add all required tables in database. (Note: Make Sure Database configure in .env)
+After Migration run this command to add required database entries php artisan db:seed
+For API's Authentication run command php artisan passport:install
+For Images run command php artisan storage:link, If it is show link is already generated Please delete folder public/storage and run command again.
+Now, in root directory, run this command php artisan serve (Note: This is only for localhost not for server)
+
+#Installation Steps for Setup in Server
