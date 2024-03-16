@@ -20,7 +20,7 @@ class AdminSeeder extends Seeder
         \App\Models\User::truncate();
         \App\Models\Seller::truncate();
         \App\Models\DeliveryBoy::truncate();
-        
+
         /*Admins*/
         $superAdmin = \App\Models\Admin::create([
             'username' => 'superadmin',
@@ -81,7 +81,7 @@ class AdminSeeder extends Seeder
         $deliveryBoyData['mobile'] = '9558192002';
         $deliveryBoyData['balance'] = 0;
         $deliveryBoyData['address'] = "Bhuj";
-        $deliveryBoyData['bonus'] = 0;
+        // $deliveryBoyData['bonus'] = 0;
         $deliveryBoyData['status'] = 1;
         $deliveryBoyData['city_id'] = 0;
         DeliveryBoy::create($deliveryBoyData);
