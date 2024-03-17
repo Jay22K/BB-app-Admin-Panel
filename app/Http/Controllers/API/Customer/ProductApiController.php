@@ -24,16 +24,11 @@ use App\Models\Transaction;
 use App\Models\WalletTransaction;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Auth;
-use App\Models\User;
-use function App\Models\Setting;
-
-use Response;
 
 class ProductApiController extends Controller
 {
@@ -125,7 +120,7 @@ class ProductApiController extends Controller
 
             if (isset($request['search']) && $request['search'] != '') {
                 $search = $request['search'];
-//                $where .= " AND (p.`id` like '%" . $search . "%' OR p.`name` like '%" . $search . "%' OR s.`name` like '%" . $search . "%' OR p.`category_id` like '%" . $search . "%' OR p.`slug` like '%" . $search . "%' OR p.`description` like '%" . $search . "%') ";
+                //                $where .= " AND (p.`id` like '%" . $search . "%' OR p.`name` like '%" . $search . "%' OR s.`name` like '%" . $search . "%' OR p.`category_id` like '%" . $search . "%' OR p.`slug` like '%" . $search . "%' OR p.`description` like '%" . $search . "%') ";
                 $where .= " AND ( p.`name` like '%" . $search . "%' OR p.`slug` like '%" . $search . "%' OR p.`tags` like '%" . $search . "%') ";
             }
 
@@ -147,7 +142,7 @@ class ProductApiController extends Controller
                 $seller_slug = $request['seller_slug'];
                 if (isset($request['category_id']) && !empty($request['category_id']) && is_numeric($request['category_id'])) {
                     $seller_category = Seller::where('slug', $seller_slug)->first(['categories']);
-                    if(!empty($seller_category)) {
+                    if (!empty($seller_category)) {
                         $category = $seller_category['categories'];
                         $data = explode(",", $category);
                         $search = (in_array($category_id, $data, TRUE)) ? 1 : 2;
@@ -156,15 +151,15 @@ class ProductApiController extends Controller
                         } else {
                             $where .= " AND s.`slug` = '$seller_slug' AND p.`category_id` IN (" . $category_id . ") ";
                         }
-                    }else{
+                    } else {
                         return CommonHelper::responseError(__('no_products_found'));
                     }
                 } else {
                     $seller_category = Seller::where('slug', $seller_slug)->first(['categories']);
-                    if(!empty($seller_category)) {
+                    if (!empty($seller_category)) {
                         $category = $seller_category['categories'];
                         $where .= " AND s.`slug` =  '$seller_slug' AND p.category_id IN (" . $category . " )";
-                    }else{
+                    } else {
                         return CommonHelper::responseError(__('no_products_found'));
                     }
                 }
@@ -178,7 +173,7 @@ class ProductApiController extends Controller
             if (isset($request['seller_id']) && !empty($request['seller_id']) && is_numeric($request['seller_id'])) {
                 if (isset($request['category_id']) && !empty($request['category_id']) && is_numeric($request['category_id'])) {
                     $seller_category = Seller::where('slug', $seller_slug)->first(['categories']);
-                    if(!empty($seller_category)) {
+                    if (!empty($seller_category)) {
                         $category = $seller_category['categories'];
                         $data = explode(",", $category);
                         $search = (in_array($category_id, $data, TRUE)) ? 1 : 2;
@@ -187,15 +182,15 @@ class ProductApiController extends Controller
                         } else {
                             $where .= " AND p.`seller_id` = " . $seller_id . " AND p.`category_id` IN (" . $category_id . ") ";
                         }
-                    }else{
+                    } else {
                         return CommonHelper::responseError(__('no_products_found'));
                     }
                 } else {
                     $seller_category = Seller::where('slug', $seller_slug)->first(['categories']);
-                    if(!empty($seller_category)) {
+                    if (!empty($seller_category)) {
                         $category = $seller_category['categories'];
                         $where .= " AND p.`seller_id` = " . $seller_id . " AND p.category_id IN (" . $category . " )";
-                    }else{
+                    } else {
                         return CommonHelper::responseError(__('no_products_found'));
                     }
                 }
@@ -240,10 +235,16 @@ class ProductApiController extends Controller
             $max_price = $productResult->max_price;*/
 
 
-            \DB::enableQueryLog();
-            $sql = Product::select('p.*', 'p.type as d_type', 's.store_name as seller_name', 's.slug as seller_slug', 's.status as seller_status',
+            DB::enableQueryLog();
+            $sql = Product::select(
+                'p.*',
+                'p.type as d_type',
+                's.store_name as seller_name',
+                's.slug as seller_slug',
+                's.status as seller_status',
 
-                'pv.price', 'pv.discounted_price',
+                'pv.price',
+                'pv.discounted_price',
 
                 DB::raw("if(pv.discounted_price > 0, ceil(((pv.price - pv.discounted_price)/pv.price)*100), 0)  as cal_discount_percentage"),
 
@@ -254,7 +255,10 @@ class ProductApiController extends Controller
                 DB::raw("(select MIN(if(discounted_price > 0, discounted_price, price)) from product_variants where product_variants.product_id = p.id) as min_price"),
                 DB::raw("(select MAX(if(discounted_price > 0, discounted_price, price)) from product_variants where product_variants.product_id = p.id) as max_price"),
                 'co.name as country_made_in',
-                's.longitude', 's.latitude', 'cities.max_deliverable_distance', 'cities.boundary_points'
+                's.longitude',
+                's.latitude',
+                'cities.max_deliverable_distance',
+                'cities.boundary_points'
             )
                 ->from('products as p')
                 ->leftJoin("countries as co", "p.made_in", "=", "co.id")
@@ -313,11 +317,13 @@ class ProductApiController extends Controller
 
             foreach ($records as $row) {
                 if ($request->sort == 'popular') {
-                    $sql = ProductVariant::select('pv.*',
+                    $sql = ProductVariant::select(
+                        'pv.*',
                         DB::raw("(SELECT short_code FROM units as u WHERE u.id = pv.stock_unit_id) as stock_unit_name"),
                         DB::raw("ceil(((pv.price - pv.discounted_price)/pv.price)*100) as cal_discount_percentage"),
                         DB::raw("(SELECT is_unlimited_stock FROM products as p WHERE p.id = pv.product_id) as is_unlimited_stock"),
-                        DB::raw('count(*) as order_counter'), 'pv.id as id'
+                        DB::raw('count(*) as order_counter'),
+                        'pv.id as id'
                     );
                     $sql = $sql->from('product_variants as pv');
                     $sql = $sql->leftJoin('order_items as oi', 'oi.product_variant_id', '=', 'pv.id');
@@ -332,9 +338,9 @@ class ProductApiController extends Controller
                         //->orderBy('pv.status','ASC');
                         ->orderByRaw($price_sort);
                     $sql = $sql->groupBy("pv.id");
-
                 } else {
-                    $sql = ProductVariant::select('*',
+                    $sql = ProductVariant::select(
+                        '*',
                         DB::raw("(SELECT short_code FROM units as u WHERE u.id = pv.stock_unit_id) as stock_unit_name"),
                         DB::raw("ceil(((pv.price - pv.discounted_price)/pv.price)*100) as cal_discount_percentage"),
                         DB::raw("(SELECT is_unlimited_stock FROM products as p WHERE p.id = pv.product_id) as is_unlimited_stock")
@@ -360,16 +366,15 @@ class ProductApiController extends Controller
                 $row['is_unlimited_stock'] = intval($row['is_unlimited_stock']) ?? 0;
                 $row['tax_included_in_price'] = intval($row['tax_included_in_price']) ?? 0;
                 $row['status'] = intval($row['status']) ?? 0;
-                if(isset($row->max_deliverable_distance) && $row->max_deliverable_distance != 0 && $row->max_deliverable_distance != ""){
-                    if(isset($request->longitude) && CommonHelper::isDeliverable($row->max_deliverable_distance, $row->longitude, $row->latitude, $request->longitude, $request->latitude)){
+                if (isset($row->max_deliverable_distance) && $row->max_deliverable_distance != 0 && $row->max_deliverable_distance != "") {
+                    if (isset($request->longitude) && CommonHelper::isDeliverable($row->max_deliverable_distance, $row->longitude, $row->latitude, $request->longitude, $request->latitude)) {
                         $row['is_deliverable'] = true;
-                    }else{
+                    } else {
                         $row['is_deliverable'] = false;
                     }
 
                     $row['is_deliverable'] = true;
-
-                }else{
+                } else {
                     $row['is_deliverable'] = false;
                 }
 
@@ -379,11 +384,13 @@ class ProductApiController extends Controller
                 } else {
                     $row['is_favorite'] = false;
                 }
-                $row = $row->makeHidden(['seller_id','row_order','return_status',
-                    'cancelable_status','till_status','description','is_approved','return_days','pincodes',
-                    'cod_allowed','pickup_location','tags','d_type','seller_name','seller_slug','seller_status',
-                    'created_at', 'updated_at','deleted_at','image','other_images', 'price','discounted_price','cal_discount',
-                    'cal_discount_percentage','min_price','max_price','type','boundary_points','country_made_in','order_counter']);
+                $row = $row->makeHidden([
+                    'seller_id', 'row_order', 'return_status',
+                    'cancelable_status', 'till_status', 'description', 'is_approved', 'return_days', 'pincodes',
+                    'cod_allowed', 'pickup_location', 'tags', 'd_type', 'seller_name', 'seller_slug', 'seller_status',
+                    'created_at', 'updated_at', 'deleted_at', 'image', 'other_images', 'price', 'discounted_price', 'cal_discount',
+                    'cal_discount_percentage', 'min_price', 'max_price', 'type', 'boundary_points', 'country_made_in', 'order_counter'
+                ]);
 
                 $products[$i] = $row;
 
@@ -467,9 +474,6 @@ class ProductApiController extends Controller
             throw $e;
             return CommonHelper::responseError("Something Went Wrong!");
         }
-
-
-
     }
 
 
@@ -513,11 +517,22 @@ class ProductApiController extends Controller
             ->where('p.id',$product_id);
         $product = $sql->first();*/
         $sql = Product::with(['variants' => function ($query) {
-            $query->select('*',
+            $query->select(
+                '*',
                 DB::raw("(SELECT short_code FROM units as u WHERE u.id = stock_unit_id) as stock_unit_name")
             );
-        }])->select('p.*', 'p.type as d_type', 's.store_name as seller_name', 's.slug as seller_slug', 's.status as seller_status', 's.latitude', 's.longitude',
-            'co.name as country_made_in', 'cities.boundary_points','cities.max_deliverable_distance')
+        }])->select(
+            'p.*',
+            'p.type as d_type',
+            's.store_name as seller_name',
+            's.slug as seller_slug',
+            's.status as seller_status',
+            's.latitude',
+            's.longitude',
+            'co.name as country_made_in',
+            'cities.boundary_points',
+            'cities.max_deliverable_distance'
+        )
             ->from('products as p')
             ->leftJoin("countries as co", "p.made_in", "=", "co.id")
             ->leftJoin('sellers as s', 'p.seller_id', '=', 's.id')
@@ -529,8 +544,10 @@ class ProductApiController extends Controller
 
         if ($product) {
 
-            $product = $product->makeHidden(['seller_id', 'row_order', 'pincodes', 'pickup_location', 'tags', 'seller_slug', 'seller_status',
-                'created_at', 'updated_at', 'deleted_at', 'image', 'other_images','boundary_points','country_made_in']);
+            $product = $product->makeHidden([
+                'seller_id', 'row_order', 'pincodes', 'pickup_location', 'tags', 'seller_slug', 'seller_status',
+                'created_at', 'updated_at', 'deleted_at', 'image', 'other_images', 'boundary_points', 'country_made_in'
+            ]);
 
             $product->images = CommonHelper::getImages($product->id);
             $product->made_in = $product->country_made_in ?? "";
@@ -548,13 +565,13 @@ class ProductApiController extends Controller
                 $product->is_deliverable = false;
             }*/
 
-            if(isset($product->max_deliverable_distance) && $product->max_deliverable_distance != 0 && $product->max_deliverable_distance != ""){
-                if(CommonHelper::isDeliverable($product->max_deliverable_distance, $product->longitude, $product->latitude, $request->longitude, $request->latitude)){
+            if (isset($product->max_deliverable_distance) && $product->max_deliverable_distance != 0 && $product->max_deliverable_distance != "") {
+                if (CommonHelper::isDeliverable($product->max_deliverable_distance, $product->longitude, $product->latitude, $request->longitude, $request->latitude)) {
                     $product->is_deliverable = true;
-                }else{
+                } else {
                     $product->is_deliverable = false;
                 }
-            }else{
+            } else {
                 $product->is_deliverable = false;
             }
 
@@ -576,7 +593,7 @@ class ProductApiController extends Controller
             }
             foreach ($variants as $key => $variant) {
                 $variants = $variants->makeHidden(['product_id', 'measurement_unit_id', 'stock_unit_id', 'deleted_at']);
-                if ($variants[$key]->stock <= 0 && $product->is_unlimited_stock == 0 ) {
+                if ($variants[$key]->stock <= 0 && $product->is_unlimited_stock == 0) {
                     $variants[$key]->status = 0;
                 } else {
                     $variants[$key]->status = intval($variants[$key]->status) ?? 0;
@@ -626,7 +643,6 @@ class ProductApiController extends Controller
                 </html>';*/
 
             return CommonHelper::responseWithData($product);
-
         } else {
             return CommonHelper::responseError(__('no_items_found'));
         }
@@ -655,7 +671,7 @@ class ProductApiController extends Controller
         }
 
         /*$sql = "SELECT  count(p.id) as total FROM `products` p JOIN `sellers`s ON s.id=p.seller_id WHERE p.is_approved = 1 AND p.status = 1 AND s.status = 1 AND p.id IN ($product_ids) " . $where;
-        $total = \DB::select(\DB::raw($sql));
+        $total = DB::select(DB::raw($sql));
         echo $where;*/
 
         $sql = Product::select(DB::raw('COUNT(p.id) AS total'))
@@ -680,7 +696,7 @@ class ProductApiController extends Controller
             FROM `products` p
                 JOIN `sellers`s ON s.id=p.seller_id
         WHERE p.is_approved = 1 AND p.status = 1 AND s.status = 1 AND p.id IN ($product_ids)" . $where;
-        $records = \DB::select(\DB::raw($sql));
+        $records = DB::select(DB::raw($sql));
         $records = json_decode(json_encode($records), true);*/
 
         $sql = Product::with('images')->select('p.*', 's.name as seller_name', 's.status as seller_status')
@@ -706,11 +722,13 @@ class ProductApiController extends Controller
                  FROM product_variants pv
                  WHERE pv.product_id=" . $row['id'] . " ORDER BY `pv`.`status` ASC";
 
-             $variants = \DB::select(\DB::raw($sql));
+             $variants = DB::select(DB::raw($sql));
              $variants = json_decode(json_encode($variants), true);*/
 
-            $sql = ProductVariant::with('images')->select('*',
-                DB::raw("(SELECT short_code FROM units u WHERE u.id=pv.stock_unit_id) as stock_unit_name"))
+            $sql = ProductVariant::with('images')->select(
+                '*',
+                DB::raw("(SELECT short_code FROM units u WHERE u.id=pv.stock_unit_id) as stock_unit_name")
+            )
                 ->from('product_variants as pv')
                 ->where('pv.product_id', '=', $row['id'])
                 ->orderBy('pv.status', 'ASC');
@@ -783,7 +801,6 @@ class ProductApiController extends Controller
 
     public function getVariantsOffline(Request $request)
     {
-
         $validator = Validator::make($request->all(), [
             'variant_ids' => 'required',
         ]);
@@ -802,7 +819,7 @@ class ProductApiController extends Controller
         }
 
         $sql = "SELECT  count(pv.id) as total FROM product_variants pv JOIN products p ON p.id=pv.product_id JOIN sellers s ON s.id=p.seller_id where pv.id IN ($variant_ids) and p.is_approved = 1 AND p.status = 1 AND s.status = 1 " . $where;
-        $total = \DB::select(\DB::raw($sql));
+        $total = DB::select(DB::raw($sql));
         if (count($total) > 0) {
             $total = $total[0]->total;
         } else {
@@ -810,7 +827,7 @@ class ProductApiController extends Controller
         }
 
         $sql = "SELECT pv.id as product_variant_id,pv.*,p.tax_id FROM product_variants pv JOIN products p ON p.id=pv.product_id where pv.id IN ($variant_ids)" . $where;
-        $records = \DB::select(\DB::raw($sql));
+        $records = DB::select(DB::raw($sql));
         $records = json_decode(json_encode($records), true);
         $i = 0;
         $j = 0;
@@ -821,7 +838,7 @@ class ProductApiController extends Controller
             unset($records[$i]['images']);
             $sql = "select pv.*,p.*,s.name as seller_name,p.type as d_type,s.status as seller_status,pv.measurement,(select short_code from units u where u.id=pv.stock_unit_id) as units,(Select short_code from units su where su.id=pv.stock_unit_id) as stock_unit_name from product_variants pv left join products p on p.id=pv.product_id JOIN sellers s ON s.id=p.seller_id where pv.id=" . $row['product_variant_id'];
 
-            $item = \DB::select(\DB::raw($sql));
+            $item = DB::select(DB::raw($sql));
             $item = json_decode(json_encode($item), true);
             $res[$i]['item'] = $item;
 
@@ -920,7 +937,7 @@ class ProductApiController extends Controller
 
 
         $sql = "SELECT count(p.id) as total FROM `products` p JOIN `sellers`s ON s.id=p.seller_id where p.id != $product_id AND p.category_id = $category_id AND p.is_approved = 1 AND p.status = 1 and s.status = 1  $where ORDER BY $order LIMIT $offset,$limit";
-        $total = \DB::select(\DB::raw($sql));
+        $total = DB::select(DB::raw($sql));
         if (count($total) > 0) {
             $total = $total[0]->total;
         } else {
@@ -931,7 +948,7 @@ class ProductApiController extends Controller
         $rows = array();
 
         $sql = "SELECT p.*,s.name as seller_name,s.status as seller_status,(SELECT MIN(pv.price) FROM product_variants pv WHERE pv.product_id=p.id) as price FROM products p  JOIN sellers s on s.id=p.seller_id where p.id != $product_id and p.status=1  and p.is_approved = 1 and  s.status = 1 and category_id = $category_id $where ORDER BY $order LIMIT $offset,$limit";
-        $res = \DB::select(\DB::raw($sql));
+        $res = DB::select(DB::raw($sql));
         $res = json_decode(json_encode($res), true);
 
         if (!empty($res)) {
@@ -977,7 +994,6 @@ class ProductApiController extends Controller
                     $tax1 = Tax::find($row['tax_id']);
                     $tempRow['tax_title'] = $tax1['title'];
                     $tempRow['tax_percentage'] = $tax1['percentage'];
-
                 }
 
                 if ($user_id) {
@@ -991,7 +1007,7 @@ class ProductApiController extends Controller
                 $tempRow['status'] = $row['status'];
 
                 $sql1 = "SELECT *,(SELECT short_code FROM units u WHERE u.id=pv.stock_unit_id) as measurement_unit_name,(SELECT short_code FROM units u WHERE u.id=pv.stock_unit_id) as stock_unit_name FROM product_variants pv WHERE pv.product_id=" . $row['id'] . " ORDER BY pv.status ASC";
-                $variants = \DB::select(\DB::raw($sql1));
+                $variants = DB::select(DB::raw($sql1));
                 $variants = json_decode(json_encode($variants), true);
                 if (empty($variants)) {
                     continue;
@@ -1012,7 +1028,6 @@ class ProductApiController extends Controller
                 }
                 $tempRow['variants'] = $variants;
                 $rows[] = $tempRow;
-
             }
 
             $response['total'] = $total;
@@ -1056,7 +1071,7 @@ class ProductApiController extends Controller
 
         $sql = "SELECT COUNT(p.id) as total FROM `products`p JOIN `sellers` s ON s.id=p.seller_id WHERE p.is_approved = 1 AND p.status = 1 AND s.status = 1 " . $where;
 
-        $total = \DB::select(\DB::raw($sql));
+        $total = DB::select(DB::raw($sql));
         if (count($total) > 0) {
             $total = $total[0]->total;
         } else {
@@ -1064,7 +1079,7 @@ class ProductApiController extends Controller
         }
 
         $sql = "SELECT p.*,s.name as seller_name,s.status as seller_status FROM `products`p JOIN sellers s ON s.id=p.seller_id WHERE p.is_approved = 1 AND p.status = 1 AND s.status = 1 " . $where;
-        $res = \DB::select(\DB::raw($sql));
+        $res = DB::select(DB::raw($sql));
         $res = json_decode(json_encode($res), true);
 
         $products = array();
@@ -1072,7 +1087,7 @@ class ProductApiController extends Controller
 
         foreach ($res as $row) {
             $sql = "SELECT *,(SELECT short_code FROM units u WHERE u.id=pv.stock_unit_id) as measurement_unit_name,(SELECT short_code FROM units u WHERE u.id=pv.stock_unit_id) as stock_unit_name FROM product_variants pv WHERE pv.product_id=" . $row['id'] . " ORDER BY pv.status ASC";
-            $variants = \DB::select(\DB::raw($sql));
+            $variants = DB::select(DB::raw($sql));
             $variants = json_decode(json_encode($variants), true);
             if (empty($variants)) {
                 continue;
@@ -1137,7 +1152,7 @@ class ProductApiController extends Controller
     {
 
         $sql = "SELECT p.name FROM `products` p JOIN sellers s on s.id = p.seller_id where p.is_approved = 1 AND p.status = 1 AND s.status = 1";
-        $res = \DB::select(\DB::raw($sql));
+        $res = DB::select(DB::raw($sql));
         $res = json_decode(json_encode($res), true);
 
         $rows = $tempRow = $blog_array = $blog_array1 = array();

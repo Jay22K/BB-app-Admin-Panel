@@ -9,11 +9,11 @@ use App\Models\Seller;
 use App\Models\Category;
 use App\Models\Product;
 use App\Models\ProductImages;
+use App\Models\ProductPrice;
 use App\Models\ProductVariant;
 use App\Models\Setting;
 use App\Models\Tax;
 use App\Models\Unit;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
@@ -34,7 +34,7 @@ class ProductApiController extends Controller
             LEFT JOIN `sellers` s ON s.id = p.seller_id";
 
         $where = '';
-        $products  = \DB::select(\DB::raw("SELECT p.id AS product_id,p.*, p.name,p.seller_id,p.status,p.tax_id, p.image,
+        $products  = DB::select(DB::raw("SELECT p.id AS product_id,p.*, p.name,p.seller_id,p.status,p.tax_id, p.image,
         s.name as seller_name, p.indicator, p.manufacturer, p.made_in, p.return_status, p.cancelable_status, p.till_status,p.description,
         pv.id as product_variant_id, pv.price, pv.discounted_price, pv.measurement, pv.status, pv.stock,pv.stock_unit_id, u.short_code,
         (select short_code from units where units.id = pv.stock_unit_id) as stock_unit
@@ -43,11 +43,12 @@ class ProductApiController extends Controller
         return CommonHelper::responseWithData($products);
     }*/
 
-    public function getProducts(Request $request){
-        if(!isset($request->type)){
-            $sellers = Seller::orderBy('id','DESC')->get()->toArray();
+    public function getProducts(Request $request)
+    {
+        if (!isset($request->type)) {
+            $sellers = Seller::orderBy('id', 'DESC')->get()->toArray();
         }
-        $categories = Category::orderBy('id','DESC')->get()->toArray();
+        $categories = Category::orderBy('id', 'DESC')->get()->toArray();
 
         $join = "LEFT JOIN `categories` c ON c.id = p.category_id
         LEFT JOIN `product_variants` pv ON pv.product_id = p.id
@@ -61,29 +62,29 @@ class ProductApiController extends Controller
             $where .= empty($where) ? " WHERE p.standard_shipping = $request->shipping_type" : " AND p.standard_shipping = $request->shipping_type";
         }*/
 
-        if(isset($request->is_approved) && $request->is_approved !== "" ){
+        if (isset($request->is_approved) && $request->is_approved !== "") {
             $where .= empty($where) ? " WHERE p.is_approved = $request->is_approved" : " AND p.is_approved = $request->is_approved";
         }
 
-        if(isset($request->seller) && $request->seller !== "" ){
+        if (isset($request->seller) && $request->seller !== "") {
             $where .= empty($where) ? " WHERE p.seller_id = $request->seller" : " AND p.seller_id = $request->seller";
         }
 
-        if(isset($request->category) && $request->category !== "" ){
+        if (isset($request->category) && $request->category !== "") {
             $where .= empty($where) ? " WHERE p.category_id = $request->category" : " AND p.category_id = $request->category";
         }
         //here Sold Out as 0
-        if(isset($request->type) && $request->type === 'sold_out'){
+        if (isset($request->type) && $request->type === 'sold_out') {
 
             $where .= empty($where) ? " WHERE (pv.stock <=0 OR pv.status = '0') AND p.is_unlimited_stock = 0" : " AND (stock <=0 OR pv.status = '0') AND p.is_unlimited_stock = 0";
         }
         //here Available as 1, low_stock_limit
-        if(isset($request->type) && $request->type === 'low_stock'){
+        if (isset($request->type) && $request->type === 'low_stock') {
             $low_stock_limit = Setting::where('variable', 'low_stock_limit')->first();
-            $where .= empty($where) ? " WHERE pv.stock <= ".$low_stock_limit['value']." AND pv.status = '1' AND p.is_unlimited_stock != '1'" : " AND stock <= ".$low_stock_limit['value']." AND pv.status = '1' AND p.is_unlimited_stock != '1'";
+            $where .= empty($where) ? " WHERE pv.stock <= " . $low_stock_limit['value'] . " AND pv.status = '1' AND p.is_unlimited_stock != '1'" : " AND stock <= " . $low_stock_limit['value'] . " AND pv.status = '1' AND p.is_unlimited_stock != '1'";
         }
 
-        $products  = \DB::select(\DB::raw("SELECT p.id AS product_id,p.*, p.name,p.seller_id,p.status,p.tax_id, p.image,
+        $products  = DB::select(DB::raw("SELECT p.id AS product_id,p.*, p.name,p.seller_id,p.status,p.tax_id, p.image,
         s.name as seller_name, p.indicator, p.manufacturer, p.made_in, p.return_status, p.cancelable_status, p.till_status, osl.status as till_status_name ,p.description,
         pv.id as product_variant_id, pv.price, pv.discounted_price, pv.measurement, pv.status as pv_status , pv.stock,pv.stock_unit_id, u.short_code,
         (select short_code from units where units.id = pv.stock_unit_id) as stock_unit
@@ -93,57 +94,51 @@ class ProductApiController extends Controller
             "categories" => $categories,
             "products" => $products,
         );
-        if(!isset($request->type)){
+        if (!isset($request->type)) {
             $data["sellers"] = $sellers;
         }
-       
+
         return CommonHelper::responseWithData($data);
     }
 
-    public function getActiveProducts(){
-        $products = Product::where('status', 1)->orderBy('id','DESC')->get()->toArray();
+    public function getActiveProducts()
+    {
+        $products = Product::where('status', 1)->orderBy('id', 'DESC')->get()->toArray();
         return CommonHelper::responseWithData($products);
     }
 
-    public function save(Request $request){
-
-        // dd($request->loose_custom_title);
-
-        // \Log::info('Save : ',[$request->all()]);
-        $validator = Validator::make($request->all(),[
-            'name' => [ 'required',
-                        Rule::unique('products')->where(function($query) use ($request) {
-                            $query->where('seller_id', $request->seller_id);
-                        })
-                ],
+    public function save(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'name' => [
+                'required',
+                Rule::unique('products')->where(function ($query) use ($request) {
+                    $query->where('seller_id', $request->seller_id);
+                })
+            ],
             'slug' => 'required|unique:products,slug',
             'seller_id' => 'required',
             'description' => 'required',
             'image' => 'required|mimes:jpeg,jpg,png',
             'type' => 'required',
             'is_unlimited_stock' => 'required',
-
-            'packet_measurement.*' =>  ['required_if:type,packet','numeric'],
-            'packet_price.*' =>  ['required_if:type,packet','numeric'],
-
-            'loose_measurement.*' =>  ['required_if:type,loose','numeric'],
-            'loose_price.*' =>  ['required_if:type,loose','numeric'],
-
+            'packet_measurement.*' =>  ['required_if:type,packet', 'numeric'],
+            'packet_price.*' =>  ['required_if:type,packet', 'numeric'],
+            'loose_measurement.*' =>  ['required_if:type,loose', 'numeric'],
+            'loose_price.*' =>  ['required_if:type,loose', 'numeric'],
             'category_id' => 'required',
-
-        ],[
+        ], [
             'name.unique' => 'The product name has already been taken.',
             'seller_id.required' => 'The seller name field is required.',
             'is_unlimited_stock.required' => 'The Stock Limit field is required.',
             'category_id.required' => 'The Category name field is required.',
-
         ]);
         if ($validator->fails()) {
             return CommonHelper::responseError($validator->errors()->first());
         }
 
         $variations = array();
-        if($request->type == "packet") {
+        if ($request->type == "packet") {
             foreach ($request->packet_measurement as $index => $item) {
                 $data = array();
                 $data['measurement'] = $request->packet_measurement[$index];
@@ -154,7 +149,7 @@ class ProductApiController extends Controller
                 $data['stock_unit_id'] = $request->packet_stock_unit_id[$index];
                 $variations[] = $data;
             }
-        }else{
+        } else {
             foreach ($request->loose_measurement as $index => $item) {
                 $data = array();
                 $data['measurement'] = $request->loose_measurement[$index];
@@ -167,12 +162,12 @@ class ProductApiController extends Controller
             return CommonHelper::responseError("Variations are duplicate!");
         }
 
-        if($request->max_allowed_quantity == "" || $request->max_allowed_quantity == 0 ){
+        if ($request->max_allowed_quantity == "" || $request->max_allowed_quantity == 0) {
             $max_allowed_quantity = Setting::get_value('max_cart_items_count');
-            if($max_allowed_quantity == "" || $max_allowed_quantity == 0 ){
+            if ($max_allowed_quantity == "" || $max_allowed_quantity == 0) {
                 return CommonHelper::responseError("Maximum items allowed in cart in empty in store settings.");
             }
-        }else{
+        } else {
             $max_allowed_quantity = $request->max_allowed_quantity;
         }
 
@@ -205,54 +200,60 @@ class ProductApiController extends Controller
             $product->status = 1;
             $product->brand_id = $request->brand_id;
             $product->fssai_lic_no = $request->fssai_lic_no ?? "";
-            if($request->fssai_lic_no != null){
+            if ($request->fssai_lic_no != null) {
                 $pattern = '/^[0-9]{14}$/';
                 // Check if the FSSAI number matches the pattern
                 if (preg_match($pattern, $request->fssai_lic_no)) {
-                
                 } else {
                     return CommonHelper::responseError("Please enter valid FSSAI no.");
                 }
             }
             $image = '';
-            if($request->hasFile('image')){
+            if ($request->hasFile('image')) {
                 $file = $request->file('image');
-                $fileName = time().'_'.rand(1111,99999).'.'.$file->getClientOriginalExtension();
+                $fileName = time() . '_' . rand(1111, 99999) . '.' . $file->getClientOriginalExtension();
                 $image = Storage::disk('public')->putFileAs('products', $file, $fileName);
             }
             $product->image = $image;
             $product->save();
 
-            if($request->hasFile('other_images')){
-                CommonHelper::uploadProductImages($request->file('other_images'),$product->id);
+            if ($request->hasFile('other_images')) {
+                CommonHelper::uploadProductImages($request->file('other_images'), $product->id);
             }
 
             /*Variance*/
-            if($request->type == "packet"){
-
-                foreach ($request->packet_measurement as $index => $item){
-
+            if ($request->type == "packet") {
+                foreach ($request->packet_measurement as $index => $item) {
                     $data = array();
                     $data['product_id'] = $product->id;
                     $data['type'] = $request->type;
                     $data['measurement'] = $request->packet_measurement[$index];
+                    $data['base_price'] = $request->base_price[$index] ?? 0;
                     $data['price'] = $request->packet_price[$index];
                     $data['discounted_price'] = isset($request->discounted_price[$index]) ? $request->discounted_price[$index] : 0;
                     $data['status'] = $request->packet_status[$index] ?? 1;
                     $data['stock'] = $request->packet_stock[$index];
                     $data['stock_unit_id'] = isset($request->packet_stock_unit_id[$index]) ? $request->packet_stock_unit_id[$index] : 0;
-
                     ProductVariant::insert($data);
                     $variant_id = DB::getPdo()->lastInsertId();
-                    if($request->hasFile('packet_variant_images_'.$index)){
-                        CommonHelper::uploadProductImages($request->file('packet_variant_images_'.$index),$product->id, $variant_id);
+                    if ($request->hasFile('packet_variant_images_' . $index)) {
+                        CommonHelper::uploadProductImages($request->file('packet_variant_images_' . $index), $product->id, $variant_id);
+                    }
+                    if (!empty($item->prices)) {
+                        foreach ($item->prices as $item) {
+                            ProductPrice::create([
+                                'product_id' => $product->id,
+                                'variant_id' => $variant_id,
+                                'seles_channel' => $item->seles_channel,
+                                'price' => $item->price,
+                            ]);
+                        }
                     }
                 }
             }
 
-            if($request->type == "loose"){
-                foreach ($request->loose_measurement as $index => $item){
-
+            if ($request->type == "loose") {
+                foreach ($request->loose_measurement as $index => $item) {
                     $data = array();
                     $data['product_id'] = $product->id;
                     $data['type'] = $request->type;
@@ -260,21 +261,30 @@ class ProductApiController extends Controller
                     $data['stock_unit_id'] = $request->loose_stock_unit_id;
                     $data['status'] = $request->status;
                     $data['measurement'] = $request->loose_measurement[$index];
+                    $data['base_price'] = $request->base_price[$index] ?? 0;
                     $data['price'] = $request->loose_price[$index];
-
                     $data['discounted_price'] = isset($request->loose_discounted_price[$index]) ? $request->loose_discounted_price[$index] : 0;
-
                     ProductVariant::insert($data);
                     $variant_id = DB::getPdo()->lastInsertId();
-                    if($request->hasFile('loose_variant_images_'.$index)){
-                        CommonHelper::uploadProductImages($request->file('loose_variant_images_'.$index),$product->id, $variant_id);
+                    if ($request->hasFile('loose_variant_images_' . $index)) {
+                        CommonHelper::uploadProductImages($request->file('loose_variant_images_' . $index), $product->id, $variant_id);
+                    }
+                    if (!empty($item->prices)) {
+                        foreach ($item->prices as $item) {
+                            ProductPrice::create([
+                                'product_id' => $product->id,
+                                'variant_id' => $variant_id,
+                                'seles_channel' => $item->seles_channel,
+                                'price' => $item->price,
+                            ]);
+                        }
                     }
                 }
             }
 
             DB::commit();
         } catch (\Exception $e) {
-            Log::info("Error : ".$e->getMessage());
+            Log::info("Error : " . $e->getMessage());
             DB::rollBack();
             // throw $e;
             return CommonHelper::responseError("Something Went Wrong!");
@@ -283,40 +293,43 @@ class ProductApiController extends Controller
         return CommonHelper::responseSuccess("Product Saved Successfully!");
     }
 
-    public function edit($id){
-        $product = Product::with('seller','images','variants.images', 'variants.unit','category', 'tax','madeInCountry')
-            ->where('id',$id)->first();
+    public function edit($id)
+    {
+        $product = Product::with('seller', 'images', 'variants.images', 'variants.unit', 'category', 'tax', 'madeInCountry')
+            ->where('id', $id)->first();
         //log::info('product edit function :=> ',[$product]);
-        if(!$product){
+        if (!$product) {
             return CommonHelper::responseError("Product Not found!");
         }
         return CommonHelper::responseWithData($product);
     }
 
-    public function update(Request $request){
-       
-        $validator = Validator::make($request->all(),[
-            'name' =>[ 'required',
-                Rule::unique('products')->where(function($query) use ($request) {
+    public function update(Request $request)
+    {
+
+        $validator = Validator::make($request->all(), [
+            'name' => [
+                'required',
+                Rule::unique('products')->where(function ($query) use ($request) {
                     $query->where('seller_id', $request->seller_id)->where('id', '!=', $request->id);
                 })
             ],
-            'slug' => 'required|unique:products,slug,'.$request->id,
+            'slug' => 'required|unique:products,slug,' . $request->id,
             'seller_id' => 'required',
             'description' => 'required',
 
             'type' => 'required',
             'is_unlimited_stock' => 'required',
 
-            'packet_measurement.*' =>  ['required_if:type,packet','numeric'],
-            'packet_price.*' =>  ['required_if:type,packet','numeric'],
+            'packet_measurement.*' =>  ['required_if:type,packet', 'numeric'],
+            'packet_price.*' =>  ['required_if:type,packet', 'numeric'],
 
-            'loose_measurement.*' =>  ['required_if:type,loose','numeric'],
-            'loose_price.*' =>  ['required_if:type,loose','numeric'],
+            'loose_measurement.*' =>  ['required_if:type,loose', 'numeric'],
+            'loose_price.*' =>  ['required_if:type,loose', 'numeric'],
 
             'category_id' => 'required',
-        
-        ],[
+
+        ], [
             'name.unique' => 'The product name has already been taken.',
             'seller_id.required' => 'The seller name field is required.',
             'is_unlimited_stock.required' => 'The Stock Limit field is required.',
@@ -326,7 +339,7 @@ class ProductApiController extends Controller
             return CommonHelper::responseError($validator->errors()->first());
         }
         $variations = array();
-        if($request->type == "packet") {
+        if ($request->type == "packet") {
             foreach ($request->packet_measurement as $index => $item) {
                 $data = array();
                 $data['measurement'] = $request->packet_measurement[$index];
@@ -337,7 +350,7 @@ class ProductApiController extends Controller
                 $data['stock_unit_id'] = $request->packet_stock_unit_id[$index];
                 $variations[] = $data;
             }
-        }else{
+        } else {
             foreach ($request->loose_measurement as $index => $item) {
                 $data = array();
                 $data['measurement'] = $request->loose_measurement[$index];
@@ -386,22 +399,22 @@ class ProductApiController extends Controller
         }*/
 
 
-        if($request->max_allowed_quantity == "" || $request->max_allowed_quantity == 0 ){
+        if ($request->max_allowed_quantity == "" || $request->max_allowed_quantity == 0) {
             $max_allowed_quantity = Setting::get_value('max_cart_items_count');
-            if($max_allowed_quantity == "" || $max_allowed_quantity == 0 ){
+            if ($max_allowed_quantity == "" || $max_allowed_quantity == 0) {
                 return CommonHelper::responseError("Maximum items allowed in cart in empty in store settings.");
             }
-        }else{
+        } else {
             $max_allowed_quantity = $request->max_allowed_quantity;
         }
 
         DB::beginTransaction();
         try {
             $product_image_ids = json_decode($request->deleteImageIds);
-            if(count($product_image_ids) !==0){
-                foreach ($product_image_ids as $index => $product_image_id){
+            if (count($product_image_ids) !== 0) {
+                foreach ($product_image_ids as $index => $product_image_id) {
                     $image = ProductImages::find($product_image_id);
-                    if($image){
+                    if ($image) {
                         //@Storage::disk('public')->delete($image->image);
                         $image->delete();
                     }
@@ -435,32 +448,31 @@ class ProductApiController extends Controller
             $product->is_unlimited_stock = $request->is_unlimited_stock;
             $product->is_approved = $request->is_approved;
             $product->fssai_lic_no = $request->fssai_lic_no ?? "";
-            if($request->fssai_lic_no != null){
+            if ($request->fssai_lic_no != null) {
                 $pattern = '/^[0-9]{14}$/';
                 // Check if the FSSAI number matches the pattern
                 if (preg_match($pattern, $request->fssai_lic_no)) {
-                
                 } else {
                     return CommonHelper::responseError("Please enter valid FSSAI no.");
                 }
             }
 
-            if($request->hasFile('image')){
+            if ($request->hasFile('image')) {
                 $file = $request->file('image');
-                $fileName = time().'_'.rand(1111,99999).'.'.$file->getClientOriginalExtension();
+                $fileName = time() . '_' . rand(1111, 99999) . '.' . $file->getClientOriginalExtension();
                 $image = Storage::disk('public')->putFileAs('products', $file, $fileName);
                 $product->image = $image;
             }
-            if($request->hasFile('other_images')){
-                CommonHelper::uploadProductImages($request->file('other_images'),$request->id);
+            if ($request->hasFile('other_images')) {
+                CommonHelper::uploadProductImages($request->file('other_images'), $request->id);
             }
             $product->save();
 
             //Variance
-            if($request->type == "packet"){
-                foreach ($request->packet_measurement as $index => $item){
+            if ($request->type == "packet") {
+                foreach ($request->packet_measurement as $index => $item) {
                     $variant = ProductVariant::find($request->variant_id[$index]);
-                    if(!$variant){
+                    if (!$variant) {
                         $variant = new ProductVariant();
                     }
                     $variant->product_id = $product->id;
@@ -469,50 +481,51 @@ class ProductApiController extends Controller
                     $variant->price = $request->packet_price[$index];
                     $variant->discounted_price = isset($request->discounted_price[$index]) ? $request->discounted_price[$index] : 0;
                     $variant->status = $request->packet_status[$index];
-                    $variant->stock = ($request->is_unlimited_stock == 0)?$request->packet_stock[$index]:0;
+                    $variant->stock = ($request->is_unlimited_stock == 0) ? $request->packet_stock[$index] : 0;
                     $variant->stock_unit_id = isset($request->packet_stock_unit_id[$index]) ? $request->packet_stock_unit_id[$index] : 0;
                     $variant->save();
-                    if($request->hasFile('packet_variant_images_'.$index)){
-                        CommonHelper::uploadProductImages($request->file('packet_variant_images_'.$index),$product->id, $variant->id);
+                    if ($request->hasFile('packet_variant_images_' . $index)) {
+                        CommonHelper::uploadProductImages($request->file('packet_variant_images_' . $index), $product->id, $variant->id);
                     }
                 }
             }
 
-            if($request->type == "loose"){
-                foreach ($request->loose_measurement as $index => $item){
+            if ($request->type == "loose") {
+                foreach ($request->loose_measurement as $index => $item) {
                     $variant = ProductVariant::find($request->variant_id[$index]);
-                    if(!$variant){
+                    if (!$variant) {
                         $variant = new ProductVariant();
                     }
                     $variant->product_id = $product->id;
                     $variant->type = $request->type;
-                    $variant->stock = ($request->is_unlimited_stock == 0) ? $request->loose_stock:0;
+                    $variant->stock = ($request->is_unlimited_stock == 0) ? $request->loose_stock : 0;
                     $variant->stock_unit_id = $request->loose_stock_unit_id;
                     $variant->status = $request->status;
                     $variant->measurement = $request->loose_measurement[$index];
                     $variant->price = $request->loose_price[$index];
                     $variant->discounted_price = isset($request->loose_discounted_price[$index]) ? $request->loose_discounted_price[$index] : 0;
                     $variant->save();
-                    if($request->hasFile('loose_variant_images_'.$index)){
-                        CommonHelper::uploadProductImages($request->file('loose_variant_images_'.$index),$product->id, $variant->id);
+                    if ($request->hasFile('loose_variant_images_' . $index)) {
+                        CommonHelper::uploadProductImages($request->file('loose_variant_images_' . $index), $product->id, $variant->id);
                     }
                 }
             }
             DB::commit();
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::info("Error : ".$e->getMessage());
+            Log::info("Error : " . $e->getMessage());
             throw $e;
             return CommonHelper::responseError("Something Went Wrong!");
         }
         return CommonHelper::responseSuccess("Product Updated Successfully!");
     }
 
-    public function delete(Request $request){
-        if(isset($request->id)){
+    public function delete(Request $request)
+    {
+        if (isset($request->id)) {
 
-            $productVariant= ProductVariant::find($request->id);
-            if($productVariant){
+            $productVariant = ProductVariant::find($request->id);
+            if ($productVariant) {
                 $product_id = $productVariant->product_id;
 
 
@@ -520,37 +533,38 @@ class ProductApiController extends Controller
                 $variantDeleteStatus =  $productVariant->delete();
 
 
-                $variants = ProductVariant::where('product_id',$product_id)->get();
-                if($variantDeleteStatus == true && $variants->count() == 0){
+                $variants = ProductVariant::where('product_id', $product_id)->get();
+                if ($variantDeleteStatus == true && $variants->count() == 0) {
                     $product = Product::find($product_id);
-                    if($product){
+                    if ($product) {
                         $product->delete();
                     }
                 }
 
                 return CommonHelper::responseSuccess("Product Deleted Successfully!");
-            }else{
+            } else {
                 return CommonHelper::responseSuccess("Product Already Deleted!");
             }
         }
     }
 
-    public function multipleDelete(Request $request){
-        if(isset($request->ids)){
-            $ids = explode(',' , $request->ids);
-            $productVariants = ProductVariant::with('images')->whereIn('id',$ids)->get();
-            foreach($productVariants as $productVariant) {
+    public function multipleDelete(Request $request)
+    {
+        if (isset($request->ids)) {
+            $ids = explode(',', $request->ids);
+            $productVariants = ProductVariant::with('images')->whereIn('id', $ids)->get();
+            foreach ($productVariants as $productVariant) {
                 $product_id = $productVariant->product_id;
-                foreach ($productVariant->images as $image){
+                foreach ($productVariant->images as $image) {
                     @Storage::disk('public')->delete($image->image);
                     $image->delete();
                 }
                 $productVariant->delete();
 
                 //If All variant deleted remove main product
-                $product = Product::with('variants','images')->where('id',$product_id)->first();
-                if($product && count($product->variants)==0){
-                    foreach ($productVariant->images as $image){
+                $product = Product::with('variants', 'images')->where('id', $product_id)->first();
+                if ($product && count($product->variants) == 0) {
+                    foreach ($productVariant->images as $image) {
                         @Storage::disk('public')->delete($image->image);
                         $image->delete();
                     }
@@ -562,22 +576,23 @@ class ProductApiController extends Controller
         }
     }
 
-    public function changeStatus(Request $request){
-        if(isset($request->id)){
+    public function changeStatus(Request $request)
+    {
+        if (isset($request->id)) {
             $product = Product::find($request->id);
-            if($product){
+            if ($product) {
                 //dd($product->status);
-                $product->status = ($product->status == 1)?0:1;
+                $product->status = ($product->status == 1) ? 0 : 1;
                 $product->save();
                 return CommonHelper::responseSuccess("Products Status Updated Successfully!");
-            }else{
+            } else {
                 return CommonHelper::responseSuccess("Products Record not found!");
             }
-
         }
     }
 
-    public function getProductsOrderList(Request $request){
+    public function getProductsOrderList(Request $request)
+    {
 
         $validator = Validator::make($request->all(), [
             'category_id' => 'required',
@@ -586,12 +601,13 @@ class ProductApiController extends Controller
             return CommonHelper::responseError($validator->errors()->first());
         }
 
-        $products = Product::where('category_id',$request->category_id)->orderBy('row_order','ASC')->get();
+        $products = Product::where('category_id', $request->category_id)->orderBy('row_order', 'ASC')->get();
         return CommonHelper::responseWithData($products);
     }
-    public function updateProductsOrder(Request $request){
+    public function updateProductsOrder(Request $request)
+    {
         $products = $request->all();
-        foreach ($products as $key => $product){
+        foreach ($products as $key => $product) {
             $data = Product::find($product["id"]);
             $data->row_order = $product["row_order"];
             $data->save();
@@ -599,8 +615,9 @@ class ProductApiController extends Controller
         return CommonHelper::responseSuccess("Product Order Updated Successfully!");
     }
 
-    public function bulkUpload(Request $request){
-        $validator = Validator::make($request->all(),[
+    public function bulkUpload(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
             'file' => 'required'
         ]);
         if ($validator->fails()) {
@@ -609,11 +626,11 @@ class ProductApiController extends Controller
 
         $filename = $_FILES["file"]["tmp_name"];
         $allowed_status = array("received", "processed", "shipped");
-        if ($_FILES["file"]["size"] > 0 ) {
+        if ($_FILES["file"]["size"] > 0) {
             $file = fopen($filename, "r");
             $count = 0;
             while (($products = fgetcsv($file, 10000, ",")) !== FALSE) {
-                if($count!=0) {
+                if ($count != 0) {
                     if (empty($products[0])) {
                         return CommonHelper::responseError('Product Name  is empty at row - ' . $count);
                     }
@@ -624,7 +641,7 @@ class ProductApiController extends Controller
                         return CommonHelper::responseError('Seller ID  is empty or invalid at row - ' . $count);
                     }
                     if (!empty($products[1])) {
-                        $seller = Seller::select('name','categories')->where('id',$products[11])->first();
+                        $seller = Seller::select('name', 'categories')->where('id', $products[11])->first();
                         if (empty($seller)) {
                             return CommonHelper::responseError('Seller is not exist check the seller_id at row - ' . $count);
                         }
@@ -651,7 +668,7 @@ class ProductApiController extends Controller
                         return CommonHelper::responseError('Image  is empty at row - ' . $count);
                     }
                     if (!empty($products[16])) {
-                        $tax = Tax::where('id',$products[11])->first();
+                        $tax = Tax::where('id', $products[11])->first();
                         if (empty($tax)) {
                             return CommonHelper::responseError('Tax ID  is invalid at row - ' . $count);
                         }
@@ -669,7 +686,7 @@ class ProductApiController extends Controller
                         return CommonHelper::responseError('Atleast one variant required at row - ' . $count);
                     }
 
-                    $ids = Unit::select('id')->orderBy('id','ASC')->get();
+                    $ids = Unit::select('id')->orderBy('id', 'ASC')->get();
                     $index1 = 17;
                     for ($z = 0; $z < $total_variants; $z++) {
                         if (empty($products[$index1]) || ($products[$index1] != 'packet' && $products[$index1] != 'loose')) {
@@ -714,7 +731,6 @@ class ProductApiController extends Controller
                         $index1 = $index1 + 1;
                     }
                 }
-
             }
             fclose($file);
 
@@ -727,7 +743,7 @@ class ProductApiController extends Controller
 
                     if ($count1 != 0) {
 
-                        $seller = Seller::select('name','categories')->where('id',$emapData[11])->first();
+                        $seller = Seller::select('name', 'categories')->where('id', $emapData[11])->first();
                         $is_approved = isset($seller->require_products_approval) && $seller->require_products_approval == 0 ? 1 : 0;
 
                         $product_name = $emapData[0]; // product name
@@ -748,7 +764,7 @@ class ProductApiController extends Controller
                         $return_days =  (!empty($emapData[15]) && $emapData[15] != "") ? $emapData[15] : "0"; // return_days
                         $tax_id =  (!empty($emapData[16]) && $emapData[16] != "") ? $emapData[16] : "0"; // tax_id
                         $fssai_lic_no =  (!empty($emapData[17]) && $emapData[17] != "") ? $emapData[17] : ""; // fssai_lic_no
-                        
+
 
                         /*$emapData[17] = trim($db->escapeString($emapData[17])); // type
                         $emapData[18] = trim($db->escapeString($emapData[18])); // Measurement
@@ -843,7 +859,7 @@ class ProductApiController extends Controller
                 DB::commit();
             } catch (\Exception $e) {
                 DB::rollBack();
-                Log::info("Error : ".$e->getMessage());
+                Log::info("Error : " . $e->getMessage());
                 //throw $e;
                 return CommonHelper::responseError("Please review the CSV file and compare it with the sample file or follow the provided instructions.");
             }

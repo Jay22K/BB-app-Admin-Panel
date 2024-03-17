@@ -14,11 +14,11 @@ use Laravel\Cashier\Billable;
 class User extends Authenticatable
 {
     use SoftDeletes;
-    use HasApiTokens, HasFactory, Notifiable,HasRoles,Billable;
+    use HasApiTokens, HasFactory, Notifiable, HasRoles, Billable;
 
-    protected $fillable = ['email','name','password','mobile'];
+    protected $fillable = ['email', 'name', 'password', 'mobile'];
 
-    protected $hidden = ['password','friends_code','auth_uid'];
+    protected $hidden = ['password', 'friends_code', 'auth_uid'];
 
 
     public static $deactive = 0;
@@ -50,10 +50,16 @@ class User extends Authenticatable
     }*/
 
 
-    public function getProfileAttribute($value){
-        if(trim($value) == ""){
+    public function getProfileAttribute($value)
+    {
+        if (trim($value) == "") {
             return asset('images/user_default_profile.png');
         }
-        return asset('storage/'.$value);
+        return asset('storage/' . $value);
+    }
+
+    public function details()
+    {
+        return $this->hasOne($this->customer_type ? B2CDetail::class : B2BDetail::class, 'user_id');
     }
 }
