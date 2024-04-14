@@ -839,7 +839,7 @@ export default {
     },
     created: function () {
         this.id = this.$route.params.id;
-        // this.getCategories();
+        this.getCategories();
         this.getSellers();
         this.getTaxes();
         this.getUnits();
@@ -1046,13 +1046,16 @@ export default {
         },
         getCategories() {
             this.isLoading = true
+            console.log(this.$apiUrl + '/categories/options')
             //axios.get(this.$apiUrl + '/categories')
             axios.get(this.$apiUrl + '/categories/options')
                 .then((response) => {
                     this.isLoading = false
                     let data = response.data;
-                    //this.categories = data.data
-                    this.categoryOptions = `<option value="">--Select Category--</option>` + data
+                    console.log(data)
+                    this.categoryOptions=data
+                    // this.categories = data.data
+                    // this.categoryOptions = `<option value="">--Select Category--</option>` + data
                     //console.log("categories : ", this.categoryOptions);
                 });
         },
