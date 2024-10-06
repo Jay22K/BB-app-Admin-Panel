@@ -4,6 +4,7 @@ namespace App\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class UserStatusMiddleware
 {
@@ -16,10 +17,13 @@ class UserStatusMiddleware
      */
     public function handle(Request $request, Closure $next)
     {
-        $user = $request->user();
+        $user = Auth::guard('api')->user() ?? $request->user();
         if ($user && $user->status == 1) {
             return $next($request);
+        } else if (!$user) {
+            return response()->json(['status' => 0, 'message' => 'Invalid auth user.', 'data' => []]);
         } else {
+            $statusMsg = ' is Invalid';
             if ($user->status == 0) {
                 $statusMsg = 'is inactive';
             } else if ($user->status == 2) {

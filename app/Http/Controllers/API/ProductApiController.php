@@ -11,6 +11,7 @@ use App\Models\Product;
 use App\Models\ProductImages;
 use App\Models\ProductPrice;
 use App\Models\ProductVariant;
+use App\Models\RequestedProduct;
 use App\Models\Setting;
 use App\Models\Tax;
 use App\Models\Unit;
@@ -45,60 +46,64 @@ class ProductApiController extends Controller
 
     public function getProducts(Request $request)
     {
-        if (!isset($request->type)) {
-            $sellers = Seller::orderBy('id', 'DESC')->get()->toArray();
-        }
-        $categories = Category::orderBy('id', 'DESC')->get()->toArray();
+        try {
+            if (!isset($request->type)) {
+                $sellers = Seller::orderBy('id', 'DESC')->get()->toArray();
+            }
+            $categories = Category::orderBy('id', 'DESC')->get()->toArray();
 
-        $join = "LEFT JOIN `categories` c ON c.id = p.category_id
-        LEFT JOIN `product_variants` pv ON pv.product_id = p.id
+            $join = "LEFT JOIN `categories` c ON c.id = p.category_id
+            LEFT JOIN `product_variants` pv ON pv.product_id = p.id
             LEFT JOIN `units` u ON u.id = pv.stock_unit_id
             LEFT JOIN `sellers` s ON s.id = p.seller_id
             LEFT JOIN `order_status_lists` osl ON osl.id = p.till_status
             ";
-        $where = '';
+            $where = '';
 
-        /*if(isset($request->shipping_type) && $request->shipping_type !== "" ){
+            /*if(isset($request->shipping_type) && $request->shipping_type !== "" ){
             $where .= empty($where) ? " WHERE p.standard_shipping = $request->shipping_type" : " AND p.standard_shipping = $request->shipping_type";
         }*/
 
-        if (isset($request->is_approved) && $request->is_approved !== "") {
-            $where .= empty($where) ? " WHERE p.is_approved = $request->is_approved" : " AND p.is_approved = $request->is_approved";
-        }
+            if (isset($request->is_approved) && $request->is_approved !== "") {
+                $where .= empty($where) ? " WHERE p.is_approved = $request->is_approved" : " AND p.is_approved = $request->is_approved";
+            }
 
-        if (isset($request->seller) && $request->seller !== "") {
-            $where .= empty($where) ? " WHERE p.seller_id = $request->seller" : " AND p.seller_id = $request->seller";
-        }
+            if (isset($request->seller) && $request->seller !== "") {
+                $where .= empty($where) ? " WHERE p.seller_id = $request->seller" : " AND p.seller_id = $request->seller";
+            }
 
-        if (isset($request->category) && $request->category !== "") {
-            $where .= empty($where) ? " WHERE p.category_id = $request->category" : " AND p.category_id = $request->category";
-        }
-        //here Sold Out as 0
-        if (isset($request->type) && $request->type === 'sold_out') {
+            if (isset($request->category) && $request->category !== "") {
+                $where .= empty($where) ? " WHERE p.category_id = $request->category" : " AND p.category_id = $request->category";
+            }
+            //here Sold Out as 0
+            if (isset($request->type) && $request->type === 'sold_out') {
 
-            $where .= empty($where) ? " WHERE (pv.stock <=0 OR pv.status = '0') AND p.is_unlimited_stock = 0" : " AND (stock <=0 OR pv.status = '0') AND p.is_unlimited_stock = 0";
-        }
-        //here Available as 1, low_stock_limit
-        if (isset($request->type) && $request->type === 'low_stock') {
-            $low_stock_limit = Setting::where('variable', 'low_stock_limit')->first();
-            $where .= empty($where) ? " WHERE pv.stock <= " . $low_stock_limit['value'] . " AND pv.status = '1' AND p.is_unlimited_stock != '1'" : " AND stock <= " . $low_stock_limit['value'] . " AND pv.status = '1' AND p.is_unlimited_stock != '1'";
-        }
-
-        $products  = DB::select(DB::raw("SELECT p.id AS product_id,p.*, p.name,p.seller_id,p.status,p.tax_id, p.image,
+                $where .= empty($where) ? " WHERE (pv.stock <=0 OR pv.status = '0') AND p.is_unlimited_stock = 0" : " AND (stock <=0 OR pv.status = '0') AND p.is_unlimited_stock = 0";
+            }
+            //here Available as 1, low_stock_limit
+            if (isset($request->type) && $request->type === 'low_stock') {
+                $low_stock_limit = Setting::where('variable', 'low_stock_limit')->first();
+                $where .= empty($where) ? " WHERE pv.stock <= " . $low_stock_limit['value'] . " AND pv.status = '1' AND p.is_unlimited_stock != '1'" : " AND stock <= " . $low_stock_limit['value'] . " AND pv.status = '1' AND p.is_unlimited_stock != '1'";
+            }
+            $sql = "SELECT p.id AS product_id,p.*, p.name,p.seller_id,p.status,p.tax_id, p.image,
         s.name as seller_name, p.indicator, p.manufacturer, p.made_in, p.return_status, p.cancelable_status, p.till_status, osl.status as till_status_name ,p.description,
         pv.id as product_variant_id, pv.price, pv.discounted_price, pv.measurement, pv.status as pv_status , pv.stock,pv.stock_unit_id, u.short_code,
         (select short_code from units where units.id = pv.stock_unit_id) as stock_unit
-        FROM `products` p $join $where  order by p.id desc, pv.id asc "));
+        FROM `products` p $join $where  order by p.id desc, pv.id asc";
+            $products  = DB::select(DB::raw($sql));
 
-        $data = array(
-            "categories" => $categories,
-            "products" => $products,
-        );
-        if (!isset($request->type)) {
-            $data["sellers"] = $sellers;
+            $data = array(
+                "categories" => $categories,
+                "products" => $products,
+            );
+            if (!isset($request->type)) {
+                $data["sellers"] = $sellers;
+            }
+
+            return CommonHelper::responseWithData($data);
+        } catch (\Exception $e) {
+            return CommonHelper::responseErrorWithData("Something went wrong", ['sql' => $sql]);
         }
-
-        return CommonHelper::responseWithData($data);
     }
 
     public function getActiveProducts()
@@ -234,6 +239,26 @@ class ProductApiController extends Controller
                     $data['status'] = $request->packet_status[$index] ?? 1;
                     $data['stock'] = $request->packet_stock[$index];
                     $data['stock_unit_id'] = isset($request->packet_stock_unit_id[$index]) ? $request->packet_stock_unit_id[$index] : 0;
+                    $data['freezer_cost'] = $request->{$request->type . '_freezer_cost'}[$index] ?? 0;
+                    $data['secondry_trp'] = $request->{$request->type . '_secondry_trp'}[$index] ?? 0;
+                    $data['company_margin'] = $request->{$request->type . '_company_margin'}[$index] ?? 0;
+                    $data['total_freezer_trp_margin'] = $request->{$request->type . '_total_freezer_trp_margin'}[$index] ?? 0;
+                    $data['distributor_franchise_rate'] = $request->{$request->type . '_distributor_franchise_rate'}[$index] ?? 0;
+                    $data['e_commerce_rate'] = $request->{$request->type . '_e_commerce_rate'}[$index] ?? 0;
+                    $data['subdistributor_outlet_rate'] = $request->{$request->type . '_subdistributor_outlet_rate'}[$index] ?? 0;
+                    $data['horika_cantin_rate'] = $request->{$request->type . '_horika_cantin_rate'}[$index] ?? 0;
+                    $data['gt_market_retailer_vikreta_rate'] = $request->{$request->type . '_gt_market_retailer_vikreta_rate'}[$index] ?? 0;
+                    $data['pick_up_the_franchiser_point_rate'] = $request->{$request->type . '_pick_up_the_franchiser_point_rate'}[$index] ?? 0;
+                    $data['consumer_home_delivery_customer_price'] = $request->{$request->type . '_consumer_home_delivery_customer_price'}[$index] ?? 0;
+                    $data['total_distributor_franchise_rate'] = $request->{$request->type . '_total_distributor_franchise_rate'}[$index] ?? 0;
+                    $data['total_e_commerce_rate'] = $request->{$request->type . '_total_e_commerce_rate'}[$index] ?? 0;
+                    $data['total_subdistributor_outlet_rate'] = $request->{$request->type . '_total_subdistributor_outlet_rate'}[$index] ?? 0;
+                    $data['total_horika_cantin_rate'] = $request->{$request->type . '_total_horika_cantin_rate'}[$index] ?? 0;
+                    $data['total_gt_market_retailer_vikreta_rate'] = $request->{$request->type . '_total_gt_market_retailer_vikreta_rate'}[$index] ?? 0;
+                    $data['total_pick_up_the_franchiser_point_rate'] = $request->{$request->type . '_total_pick_up_the_franchiser_point_rate'}[$index] ?? 0;
+                    $data['total_consumer_home_delivery_customer_price'] = $request->{$request->type . '_total_consumer_home_delivery_customer_price'}[$index] ?? 0;
+                    $data['mrp'] = $request->{$request->type . '_mrp'}[$index] ?? 0;
+                    $data['hsn'] = $request->{$request->type . '_hsn'}[$index] ?? '';
                     ProductVariant::insert($data);
                     $variant_id = DB::getPdo()->lastInsertId();
                     if ($request->hasFile('packet_variant_images_' . $index)) {
@@ -264,6 +289,26 @@ class ProductApiController extends Controller
                     $data['base_price'] = $request->base_price[$index] ?? 0;
                     $data['price'] = $request->loose_price[$index];
                     $data['discounted_price'] = isset($request->loose_discounted_price[$index]) ? $request->loose_discounted_price[$index] : 0;
+                    $data['freezer_cost'] = $request->{$request->type . '_freezer_cost'}[$index] ?? 0;
+                    $data['secondry_trp'] = $request->{$request->type . '_secondry_trp'}[$index] ?? 0;
+                    $data['company_margin'] = $request->{$request->type . '_company_margin'}[$index] ?? 0;
+                    $data['total_freezer_trp_margin'] = $request->{$request->type . '_total_freezer_trp_margin'}[$index] ?? 0;
+                    $data['distributor_franchise_rate'] = $request->{$request->type . '_distributor_franchise_rate'}[$index] ?? 0;
+                    $data['e_commerce_rate'] = $request->{$request->type . '_e_commerce_rate'}[$index] ?? 0;
+                    $data['subdistributor_outlet_rate'] = $request->{$request->type . '_subdistributor_outlet_rate'}[$index] ?? 0;
+                    $data['horika_cantin_rate'] = $request->{$request->type . '_horika_cantin_rate'}[$index] ?? 0;
+                    $data['gt_market_retailer_vikreta_rate'] = $request->{$request->type . '_gt_market_retailer_vikreta_rate'}[$index] ?? 0;
+                    $data['pick_up_the_franchiser_point_rate'] = $request->{$request->type . '_pick_up_the_franchiser_point_rate'}[$index] ?? 0;
+                    $data['consumer_home_delivery_customer_price'] = $request->{$request->type . '_consumer_home_delivery_customer_price'}[$index] ?? 0;
+                    $data['total_distributor_franchise_rate'] = $request->{$request->type . '_total_distributor_franchise_rate'}[$index] ?? 0;
+                    $data['total_e_commerce_rate'] = $request->{$request->type . '_total_e_commerce_rate'}[$index] ?? 0;
+                    $data['total_subdistributor_outlet_rate'] = $request->{$request->type . '_total_subdistributor_outlet_rate'}[$index] ?? 0;
+                    $data['total_horika_cantin_rate'] = $request->{$request->type . '_total_horika_cantin_rate'}[$index] ?? 0;
+                    $data['total_gt_market_retailer_vikreta_rate'] = $request->{$request->type . '_total_gt_market_retailer_vikreta_rate'}[$index] ?? 0;
+                    $data['total_pick_up_the_franchiser_point_rate'] = $request->{$request->type . '_total_pick_up_the_franchiser_point_rate'}[$index] ?? 0;
+                    $data['total_consumer_home_delivery_customer_price'] = $request->{$request->type . '_total_consumer_home_delivery_customer_price'}[$index] ?? 0;
+                    $data['mrp'] = $request->{$request->type . '_mrp'}[$index] ?? 0;
+                    $data['hsn'] = $request->{$request->type . '_hsn'}[$index] ?? '';
                     ProductVariant::insert($data);
                     $variant_id = DB::getPdo()->lastInsertId();
                     if ($request->hasFile('loose_variant_images_' . $index)) {
@@ -290,12 +335,12 @@ class ProductApiController extends Controller
             return CommonHelper::responseError("Something Went Wrong!");
         }
 
-        return CommonHelper::responseSuccess("Product Saved Successfully!");
+        return CommonHelper::responseSuccessWithData("Product Saved Successfully!", Product::where('id', $product->id)->with('variants')->first());
     }
 
     public function edit($id)
     {
-        $product = Product::with('seller', 'images', 'variants.images', 'variants.unit', 'category', 'tax', 'madeInCountry')
+        $product = Product::with('seller', 'images', 'variants', 'variants.images', 'variants.unit', 'category', 'tax', 'madeInCountry')
             ->where('id', $id)->first();
         //log::info('product edit function :=> ',[$product]);
         if (!$product) {
@@ -338,24 +383,82 @@ class ProductApiController extends Controller
         if ($validator->fails()) {
             return CommonHelper::responseError($validator->errors()->first());
         }
+
+        $product = Product::find($request->id);
         $variations = array();
         if ($request->type == "packet") {
             foreach ($request->packet_measurement as $index => $item) {
                 $data = array();
+                // $data['measurement'] = $request->packet_measurement[$index];
+                // $data['price'] = $request->packet_price[$index];
+                // $data['discounted_price'] = $request->discounted_price[$index];
+                // $data['status'] = $request->packet_status[$index];
+                // $data['stock'] = $request->packet_stock[$index];
+                // $data['stock_unit_id'] = $request->packet_stock_unit_id[$index];
+                $data['product_id'] = $product->id;
+                $data['type'] = $request->type;
                 $data['measurement'] = $request->packet_measurement[$index];
+                $data['base_price'] = $request->base_price[$index] ?? 0;
                 $data['price'] = $request->packet_price[$index];
-                $data['discounted_price'] = $request->discounted_price[$index];
-                $data['status'] = $request->packet_status[$index];
+                $data['discounted_price'] = isset($request->discounted_price[$index]) ? $request->discounted_price[$index] : 0;
+                $data['status'] = $request->packet_status[$index] ?? 1;
                 $data['stock'] = $request->packet_stock[$index];
-                $data['stock_unit_id'] = $request->packet_stock_unit_id[$index];
+                $data['stock_unit_id'] = isset($request->packet_stock_unit_id[$index]) ? $request->packet_stock_unit_id[$index] : 0;
+                $data['freezer_cost'] = $request->{$request->type . '_freezer_cost'}[$index] ?? 0;
+                $data['secondry_trp'] = $request->{$request->type . '_secondry_trp'}[$index] ?? 0;
+                $data['company_margin'] = $request->{$request->type . '_company_margin'}[$index] ?? 0;
+                $data['total_freezer_trp_margin'] = $request->{$request->type . '_total_freezer_trp_margin'}[$index] ?? 0;
+                $data['distributor_franchise_rate'] = $request->{$request->type . '_distributor_franchise_rate'}[$index] ?? 0;
+                $data['e_commerce_rate'] = $request->{$request->type . '_e_commerce_rate'}[$index] ?? 0;
+                $data['subdistributor_outlet_rate'] = $request->{$request->type . '_subdistributor_outlet_rate'}[$index] ?? 0;
+                $data['horika_cantin_rate'] = $request->{$request->type . '_horika_cantin_rate'}[$index] ?? 0;
+                $data['gt_market_retailer_vikreta_rate'] = $request->{$request->type . '_gt_market_retailer_vikreta_rate'}[$index] ?? 0;
+                $data['pick_up_the_franchiser_point_rate'] = $request->{$request->type . '_pick_up_the_franchiser_point_rate'}[$index] ?? 0;
+                $data['consumer_home_delivery_customer_price'] = $request->{$request->type . '_consumer_home_delivery_customer_price'}[$index] ?? 0;
+                $data['total_distributor_franchise_rate'] = $request->{$request->type . '_total_distributor_franchise_rate'}[$index] ?? 0;
+                $data['total_e_commerce_rate'] = $request->{$request->type . '_total_e_commerce_rate'}[$index] ?? 0;
+                $data['total_subdistributor_outlet_rate'] = $request->{$request->type . '_total_subdistributor_outlet_rate'}[$index] ?? 0;
+                $data['total_horika_cantin_rate'] = $request->{$request->type . '_total_horika_cantin_rate'}[$index] ?? 0;
+                $data['total_gt_market_retailer_vikreta_rate'] = $request->{$request->type . '_total_gt_market_retailer_vikreta_rate'}[$index] ?? 0;
+                $data['total_pick_up_the_franchiser_point_rate'] = $request->{$request->type . '_total_pick_up_the_franchiser_point_rate'}[$index] ?? 0;
+                $data['total_consumer_home_delivery_customer_price'] = $request->{$request->type . '_total_consumer_home_delivery_customer_price'}[$index] ?? 0;
+                $data['mrp'] = $request->{$request->type . '_mrp'}[$index] ?? 0;
+                $data['hsn'] = $request->{$request->type . '_hsn'}[$index] ?? '';
                 $variations[] = $data;
             }
         } else {
+            $request->type == "loose";
             foreach ($request->loose_measurement as $index => $item) {
                 $data = array();
+                $data['product_id'] = $product->id;
+                $data['type'] = $request->type;
+                $data['stock'] = $request->loose_stock;
+                $data['stock_unit_id'] = $request->loose_stock_unit_id;
+                $data['status'] = $request->status;
                 $data['measurement'] = $request->loose_measurement[$index];
+                $data['base_price'] = $request->base_price[$index] ?? 0;
                 $data['price'] = $request->loose_price[$index];
-                $data['discounted_price'] = $request->loose_discounted_price[$index];
+                $data['discounted_price'] = isset($request->loose_discounted_price[$index]) ? $request->loose_discounted_price[$index] : 0;
+                $data['freezer_cost'] = $request->{$request->type . '_freezer_cost'}[$index] ?? 0;
+                $data['secondry_trp'] = $request->{$request->type . '_secondry_trp'}[$index] ?? 0;
+                $data['company_margin'] = $request->{$request->type . '_company_margin'}[$index] ?? 0;
+                $data['total_freezer_trp_margin'] = $request->{$request->type . '_total_freezer_trp_margin'}[$index] ?? 0;
+                $data['distributor_franchise_rate'] = $request->{$request->type . '_distributor_franchise_rate'}[$index] ?? 0;
+                $data['e_commerce_rate'] = $request->{$request->type . '_e_commerce_rate'}[$index] ?? 0;
+                $data['subdistributor_outlet_rate'] = $request->{$request->type . '_subdistributor_outlet_rate'}[$index] ?? 0;
+                $data['horika_cantin_rate'] = $request->{$request->type . '_horika_cantin_rate'}[$index] ?? 0;
+                $data['gt_market_retailer_vikreta_rate'] = $request->{$request->type . '_gt_market_retailer_vikreta_rate'}[$index] ?? 0;
+                $data['pick_up_the_franchiser_point_rate'] = $request->{$request->type . '_pick_up_the_franchiser_point_rate'}[$index] ?? 0;
+                $data['consumer_home_delivery_customer_price'] = $request->{$request->type . '_consumer_home_delivery_customer_price'}[$index] ?? 0;
+                $data['total_distributor_franchise_rate'] = $request->{$request->type . '_total_distributor_franchise_rate'}[$index] ?? 0;
+                $data['total_e_commerce_rate'] = $request->{$request->type . '_total_e_commerce_rate'}[$index] ?? 0;
+                $data['total_subdistributor_outlet_rate'] = $request->{$request->type . '_total_subdistributor_outlet_rate'}[$index] ?? 0;
+                $data['total_horika_cantin_rate'] = $request->{$request->type . '_total_horika_cantin_rate'}[$index] ?? 0;
+                $data['total_gt_market_retailer_vikreta_rate'] = $request->{$request->type . '_total_gt_market_retailer_vikreta_rate'}[$index] ?? 0;
+                $data['total_pick_up_the_franchiser_point_rate'] = $request->{$request->type . '_total_pick_up_the_franchiser_point_rate'}[$index] ?? 0;
+                $data['total_consumer_home_delivery_customer_price'] = $request->{$request->type . '_total_consumer_home_delivery_customer_price'}[$index] ?? 0;
+                $data['mrp'] = $request->{$request->type . '_mrp'}[$index] ?? 0;
+                $data['hsn'] = $request->{$request->type . '_hsn'}[$index] ?? '';
                 $variations[] = $data;
             }
         }
@@ -421,12 +524,9 @@ class ProductApiController extends Controller
                 }
             }
 
-            $product = Product::find($request->id);
             $row_order = Product::max('row_order') + 1;
             $product->name = $request->name;
-
             $product->slug = $request->slug;
-
             $product->row_order = $row_order;
             $product->tax_id = $request->tax_id;
             $product->brand_id = $request->brand_id;
@@ -469,47 +569,53 @@ class ProductApiController extends Controller
             $product->save();
 
             //Variance
-            if ($request->type == "packet") {
-                foreach ($request->packet_measurement as $index => $item) {
-                    $variant = ProductVariant::find($request->variant_id[$index]);
-                    if (!$variant) {
-                        $variant = new ProductVariant();
-                    }
-                    $variant->product_id = $product->id;
-                    $variant->type = $request->type;
-                    $variant->measurement = $request->packet_measurement[$index];
-                    $variant->price = $request->packet_price[$index];
-                    $variant->discounted_price = isset($request->discounted_price[$index]) ? $request->discounted_price[$index] : 0;
-                    $variant->status = $request->packet_status[$index];
-                    $variant->stock = ($request->is_unlimited_stock == 0) ? $request->packet_stock[$index] : 0;
-                    $variant->stock_unit_id = isset($request->packet_stock_unit_id[$index]) ? $request->packet_stock_unit_id[$index] : 0;
+            // if ($request->type == "packet") {
+            foreach ($variations as $index => $variation) {
+                /**
+                 * @var ProductVariant $variant
+                 */
+                $variant = ProductVariant::find($request->variant_id[$index]);
+                if (empty($variant)) {
+                    $variant = new ProductVariant($variation);
                     $variant->save();
-                    if ($request->hasFile('packet_variant_images_' . $index)) {
-                        CommonHelper::uploadProductImages($request->file('packet_variant_images_' . $index), $product->id, $variant->id);
-                    }
+                } else {
+                    $variant->update($variation);
+                }
+                // $variant->product_id = $product->id;
+                // $variant->type = $request->type;
+                // $variant->measurement = $request->packet_measurement[$index];
+                // $variant->price = $request->packet_price[$index];
+                // $variant->discounted_price = isset($request->discounted_price[$index]) ? $request->discounted_price[$index] : 0;
+                // $variant->status = $request->packet_status[$index];
+                // $variant->stock = ($request->is_unlimited_stock == 0) ? $request->packet_stock[$index] : 0;
+                // $variant->stock_unit_id = isset($request->packet_stock_unit_id[$index]) ? $request->packet_stock_unit_id[$index] : 0;
+                // $variant->update();
+                if ($request->hasFile($request->type . '_variant_images_' . $index)) {
+                    CommonHelper::uploadProductImages($request->file($request->type . '_variant_images_' . $index), $product->id, $variant->id);
                 }
             }
+            // }
 
-            if ($request->type == "loose") {
-                foreach ($request->loose_measurement as $index => $item) {
-                    $variant = ProductVariant::find($request->variant_id[$index]);
-                    if (!$variant) {
-                        $variant = new ProductVariant();
-                    }
-                    $variant->product_id = $product->id;
-                    $variant->type = $request->type;
-                    $variant->stock = ($request->is_unlimited_stock == 0) ? $request->loose_stock : 0;
-                    $variant->stock_unit_id = $request->loose_stock_unit_id;
-                    $variant->status = $request->status;
-                    $variant->measurement = $request->loose_measurement[$index];
-                    $variant->price = $request->loose_price[$index];
-                    $variant->discounted_price = isset($request->loose_discounted_price[$index]) ? $request->loose_discounted_price[$index] : 0;
-                    $variant->save();
-                    if ($request->hasFile('loose_variant_images_' . $index)) {
-                        CommonHelper::uploadProductImages($request->file('loose_variant_images_' . $index), $product->id, $variant->id);
-                    }
-                }
-            }
+            // if ($request->type == "loose") {
+            //     foreach ($request->loose_measurement as $index => $item) {
+            //         $variant = ProductVariant::find($request->variant_id[$index]);
+            //         if (!$variant) {
+            //             $variant = new ProductVariant();
+            //         }
+            //         $variant->product_id = $product->id;
+            //         $variant->type = $request->type;
+            //         $variant->stock = ($request->is_unlimited_stock == 0) ? $request->loose_stock : 0;
+            //         $variant->stock_unit_id = $request->loose_stock_unit_id;
+            //         $variant->status = $request->status;
+            //         $variant->measurement = $request->loose_measurement[$index];
+            //         $variant->price = $request->loose_price[$index];
+            //         $variant->discounted_price = isset($request->loose_discounted_price[$index]) ? $request->loose_discounted_price[$index] : 0;
+            //         $variant->save();
+            //         if ($request->hasFile('loose_variant_images_' . $index)) {
+            //             CommonHelper::uploadProductImages($request->file('loose_variant_images_' . $index), $product->id, $variant->id);
+            //         }
+            //     }
+            // }
             DB::commit();
         } catch (\Exception $e) {
             DB::rollBack();
@@ -517,7 +623,7 @@ class ProductApiController extends Controller
             throw $e;
             return CommonHelper::responseError("Something Went Wrong!");
         }
-        return CommonHelper::responseSuccess("Product Updated Successfully!");
+        return CommonHelper::responseSuccessWithData("Product Updated Successfully!", Product::where('id', $product->id)->with('variants')->first());
     }
 
     public function delete(Request $request)
@@ -527,12 +633,8 @@ class ProductApiController extends Controller
             $productVariant = ProductVariant::find($request->id);
             if ($productVariant) {
                 $product_id = $productVariant->product_id;
-
-
                 //@Storage::disk('public')->delete($category->image);
                 $variantDeleteStatus =  $productVariant->delete();
-
-
                 $variants = ProductVariant::where('product_id', $product_id)->get();
                 if ($variantDeleteStatus == true && $variants->count() == 0) {
                     $product = Product::find($product_id);
@@ -866,5 +968,11 @@ class ProductApiController extends Controller
             //Excel::import(new ProductsImport, $request->file('file')->store('temp'));
             return CommonHelper::responseSuccess("All Products Imported Successfully!");
         }
+    }
+
+    public function requestedProducts(Request $request)
+    {
+        $requestedProducts = RequestedProduct::where('request_status', 0)->with('user')->paginate($request->limit ?? 50);
+        return CommonHelper::responseSuccessWithData("Requested Products Fetched!", $requestedProducts);
     }
 }

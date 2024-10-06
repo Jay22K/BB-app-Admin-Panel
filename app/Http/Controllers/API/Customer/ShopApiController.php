@@ -20,7 +20,7 @@ use App\Models\Setting;
 use App\Models\Slider;
 use App\Models\Brand;
 use Illuminate\Http\Request;
-use DB;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 
@@ -131,7 +131,7 @@ class ShopApiController extends Controller
                     }
 
                     if ($section->product_type != 'custom_products' && !empty($section->product_type)) {
-                        $products = \DB::select(\DB::raw($sql));
+                        $products = DB::select(DB::raw($sql));
                         $rows = $tempRow = array();
                         foreach ($products as $product) {
                             $tempRow['product_id'] = $product->product_id;
@@ -146,7 +146,6 @@ class ShopApiController extends Controller
                     } else {
                         $where .= " AND p.id IN ($product_ids) AND p.status = 1 AND pv.stock >= 0";
                     }
-
                 } else {
                     $output = array(
                         'status' => 0,
@@ -223,8 +222,11 @@ class ShopApiController extends Controller
             $all_min_price = $productResult1->min_price;
             $all_max_price = $productResult1->max_price;
 
-            $sql = Product::with('images')->from("products as p")->select("p.*", "c.name as category_name",
-                "t.title as tax_title", "t.percentage as tax_percentage",
+            $sql = Product::with('images')->from("products as p")->select(
+                "p.*",
+                "c.name as category_name",
+                "t.title as tax_title",
+                "t.percentage as tax_percentage",
                 DB::raw("ceil(((price-discounted_price)/price)*100) as cal_discount_percentage"),
                 DB::raw("(SELECT ceil(if(t.percentage > 0 , " . $price . " + ( " . $price . " * (t.percentage / 100)), " . $price . ")) FROM product_variants as pv WHERE pv.product_id=p.id) as price"),
                 DB::raw("(select MIN(if(discounted_price > 0, discounted_price, price)) from product_variants where product_variants.product_id = p.id) as min_price"),
@@ -315,7 +317,7 @@ class ShopApiController extends Controller
 
                 $variants = $row->variants;
                 foreach ($variants as $subkey => $variant) {
-                    $taxed = ProductHelper::getTaxableAmount($variant->id);
+                    // $taxed = ProductHelper::getTaxableAmount($variant->id);
                     //$variants[$subkey]['taxable_amount'] = $taxed->taxable_amount;
 
                     //$variants[$subkey]->images = CommonHelper::getImages($variant->product_id,$variant->id);
@@ -356,8 +358,8 @@ class ShopApiController extends Controller
 
         $user_id = $request->user('api-customers') ? $request->user('api-customers')->id : 0;
         $sections = CommonHelper::getSectionWithProduct($seller_ids, $user_id);
-       
-        
+
+
 
         $sliders = Slider::where('status', 1)->orderBy('id', 'DESC')->get();
         $sliders = $sliders->makeHidden(['image', 'product', 'category', 'created_at', 'updated_at', 'status']);
@@ -387,32 +389,32 @@ class ShopApiController extends Controller
             'total_max_price' => $total_max_price  ?? 0,
             'products' => $product*/
         );
-        
-        if($is_category_section_in_homepage && $is_category_section_in_homepage==1){
+
+        if ($is_category_section_in_homepage && $is_category_section_in_homepage == 1) {
             $count_category_section_in_homepage_empty = CommonHelper::getCountCategorySectionInHomepage();
             $categories = Category::where('status', 1)
-            ->where('parent_id', 0)
-            ->where('status', 1)
-            ->orderBy('row_order', 'ASC')
-            ->limit($count_category_section_in_homepage_empty)
-            ->get(['id', 'name', 'subtitle', 'image']);
-        $categories = $categories->makeHidden(['image']);
-        $output['categories'] = $categories->toArray();
+                ->where('parent_id', 0)
+                ->where('status', 1)
+                ->orderBy('row_order', 'ASC')
+                ->limit($count_category_section_in_homepage_empty)
+                ->get(['id', 'name', 'subtitle', 'image']);
+            $categories = $categories->makeHidden(['image']);
+            $output['categories'] = $categories->toArray();
         }
 
-        
-        if($is_brand_section_in_homepage && $is_brand_section_in_homepage==1){
+
+        if ($is_brand_section_in_homepage && $is_brand_section_in_homepage == 1) {
             $count_brand_section_in_homepage_empty = CommonHelper::getCountBrandSectionInHomepage();
-            $brands = Brand::orderBy('id','ASC')->where('status',1)->whereExists(function($query) {
+            $brands = Brand::orderBy('id', 'ASC')->where('status', 1)->whereExists(function ($query) {
                 $query->select(DB::raw(1))
                     ->from('products')
                     ->whereColumn('products.brand_id', 'brands.id');
             });
             $brands = $brands->limit($count_brand_section_in_homepage_empty)->get();
-            $brands = $brands->makeHidden(['created_at','updated_at','image','status']);
+            $brands = $brands->makeHidden(['created_at', 'updated_at', 'image', 'status']);
             $output['brands'] = $brands->toArray();
         }
-       
+
         /*  if (!empty($sections)) {
 
          } else {

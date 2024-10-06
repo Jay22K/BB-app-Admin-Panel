@@ -15,5 +15,5 @@ class ProductPrice extends Model
 {
     use HasFactory;
     protected $fillable = [];
-    protected $gurded = [];
+    protected $guarded = [];
 }

@@ -11,7 +11,7 @@ use Illuminate\Database\Eloquent\Model;
  * @property string $city
  * @property string $pincode
  * @property string $state
- * @property string $preferred_devivery_time
+ * @property string $preferred_delivery_time
  */
 class B2CDetail extends Model
 {
@@ -19,5 +19,5 @@ class B2CDetail extends Model
 
     protected $table = 'b2c_details';
     protected $fillable = [];
-    protected $gurded = [];
+    protected $guarded = [];
 }

@@ -16,15 +16,19 @@ use App\Models\OrderItem;
 use App\Models\Product;
 use App\Models\ProductImages;
 use App\Models\ProductVariant;
+use App\Models\RequestedProduct;
+use App\Models\SalesChannel;
 use App\Models\Section;
 use App\Models\Seller;
 use App\Models\Setting;
 use App\Models\Tax;
 use App\Models\Transaction;
+use App\Models\User;
 use App\Models\WalletTransaction;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
@@ -68,40 +72,48 @@ class ProductApiController extends Controller
 
             $sort = ($request->sort) ?? 'row_order';
             $order = ($request->order) ?? 'asc';
+            $user = Auth::guard('api')->user();
 
+            $salesChannelKey = '';
+            if ($user->customer_type == 1) {
+                $b2bChannel = SalesChannel::where('id', $user->sales_channel)->first();
+                $salesChannelKey = $b2bChannel->slug ?? 'total_pick_up_the_franchiser_point_rate';
+            } else {
+                $salesChannelKey = 'total_pick_up_the_franchiser_point_rate';
+            }
             if ($sort == 'new') {
                 $sort = 'created_at DESC';
-                $price = 'MIN(discounted_price)';
-                $price_sort = 'pv.discounted_price  ASC';
+                $price = 'MIN(' . $salesChannelKey . ')';
+                $price_sort = 'pv.' . $salesChannelKey . '  ASC';
             } elseif ($sort == 'old') {
                 $sort = 'created_at ASC';
-                $price = 'MIN(discounted_price)';
-                $price_sort = 'pv.discounted_price  ASC';
+                $price = 'MIN(' . $salesChannelKey . ')';
+                $price_sort = 'pv.' . $salesChannelKey . '  ASC';
             } elseif ($sort == 'high') {
                 //$sort = 'price DESC';
 
                 $sort = 'max_price DESC';
 
-                $price = 'MAX(if(pv.discounted_price > 0 && pv.discounted_price != 0, pv.discounted_price, pv.price))';
-                $price_sort = 'if(pv.discounted_price > 0 && pv.discounted_price != 0, pv.discounted_price, pv.price) DESC';
+                $price = 'MAX(if(pv.' . $salesChannelKey . ' > 0 && pv.' . $salesChannelKey . ' != 0, pv.' . $salesChannelKey . ', pv.price))';
+                $price_sort = 'if(pv.' . $salesChannelKey . ' > 0 && pv.' . $salesChannelKey . ' != 0, pv.' . $salesChannelKey . ', pv.price) DESC';
             } elseif ($sort == 'low') {
                 // $sort = 'price ASC';
 
                 $sort = 'min_price ASC';
 
-                $price = 'MIN(if(pv.discounted_price > 0 && pv.discounted_price != 0, pv.discounted_price, pv.price))';
-                $price_sort = 'if(pv.discounted_price > 0 && pv.discounted_price != 0, pv.discounted_price, pv.price) ASC';
+                $price = 'MIN(if(pv.' . $salesChannelKey . ' > 0 && pv.' . $salesChannelKey . ' != 0, pv.' . $salesChannelKey . ', pv.price))';
+                $price_sort = 'if(pv.' . $salesChannelKey . ' > 0 && pv.' . $salesChannelKey . ' != 0, pv.' . $salesChannelKey . ', pv.price) ASC';
             } elseif ($sort == 'discount') {
                 $sort = 'cal_discount_percentage DESC';
-                $price = 'MIN(if(pv.discounted_price > 0 && pv.discounted_price != 0, pv.discounted_price, pv.price))';
+                $price = 'MIN(if(pv.' . $salesChannelKey . ' > 0 && pv.' . $salesChannelKey . ' != 0, pv.' . $salesChannelKey . ', pv.price))';
                 $price_sort = 'cal_discount_percentage DESC';
             } elseif ($sort == 'popular') {
                 $sort = 'order_counter DESC';
-                $price = 'MIN(pv.discounted_price)';
+                $price = 'MIN(pv.' . $salesChannelKey . ')';
                 $price_sort = 'order_counter DESC';
             } else {
                 $sort = 'p.row_order ASC';
-                $price = 'MIN(pv.discounted_price)';
+                $price = 'MIN(pv.' . $salesChannelKey . ')';
                 $price_sort = 'pv.id  ASC';
             }
 
@@ -219,9 +231,10 @@ class ProductApiController extends Controller
 
             $productSql = Product::from('products as p')->select(
                 DB::raw('COUNT(p.id) AS total'),
-                DB::raw('MIN((select MIN(if(discounted_price > 0, discounted_price, price)) from product_variants where product_variants.product_id = p.id)) as min_price'),
-                DB::raw('MAX((select MAX(if(discounted_price > 0, discounted_price, price)) from product_variants where product_variants.product_id = p.id)) as max_price')
-            )->leftJoin('product_variants as pv', 'pv.product_id', '=', 'p.id')->whereIn('p.seller_id', $seller_ids);
+                DB::raw('MIN((select MIN(if(' . $salesChannelKey . ' > 0, ' . $salesChannelKey . ', price)) from product_variants where product_variants.product_id = p.id)) as min_price'),
+                DB::raw('MAX((select MAX(if(' . $salesChannelKey . ' > 0, ' . $salesChannelKey . ', price)) from product_variants where product_variants.product_id = p.id)) as max_price')
+            )->leftJoin('product_variants as pv', 'pv.product_id', '=', 'p.id')
+                ->whereIn('p.seller_id', $seller_ids);
 
             $productResult = $productSql->first();
             $total_min_price = $productResult->min_price;
@@ -244,16 +257,16 @@ class ProductApiController extends Controller
                 's.status as seller_status',
 
                 'pv.price',
-                'pv.discounted_price',
+                'pv.' . $salesChannelKey . '',
 
-                DB::raw("if(pv.discounted_price > 0, ceil(((pv.price - pv.discounted_price)/pv.price)*100), 0)  as cal_discount_percentage"),
+                DB::raw("if(pv.$salesChannelKey > 0, ceil(((pv.price - pv.$salesChannelKey)/pv.price)*100), 0)  as cal_discount_percentage"),
 
-                DB::raw("ceil((pv.price - pv.discounted_price)) as cal_discount"),
+                DB::raw("ceil((pv.price - pv.$salesChannelKey)) as cal_discount"),
 
                 DB::raw('count(*) as order_counter'),
                 /*DB::raw("(SELECT ceil(if(t.percentage > 0 , " . $price . " + ( " . $price . " * (t.percentage / 100)), " . $price . ")) FROM product_variants as pv WHERE pv.product_id=p.id) as price"),*/
-                DB::raw("(select MIN(if(discounted_price > 0, discounted_price, price)) from product_variants where product_variants.product_id = p.id) as min_price"),
-                DB::raw("(select MAX(if(discounted_price > 0, discounted_price, price)) from product_variants where product_variants.product_id = p.id) as max_price"),
+                DB::raw("(select MIN(if('.$salesChannelKey.' > 0, '.$salesChannelKey.', price)) from product_variants where product_variants.product_id = p.id) as min_price"),
+                DB::raw("(select MAX(if('.$salesChannelKey.' > 0, '.$salesChannelKey.', price)) from product_variants where product_variants.product_id = p.id) as max_price"),
                 'co.name as country_made_in',
                 's.longitude',
                 's.latitude',
@@ -266,7 +279,8 @@ class ProductApiController extends Controller
                 ->Join("product_variants as pv", "pv.product_id", "=", "p.id")
                 ->leftJoin('sellers as s', 'p.seller_id', '=', 's.id')
                 ->leftJoin('cities', 's.city_id', '=', 'cities.id')
-                ->leftJoin('categories as c', 'p.category_id', '=', 'c.id');
+                ->leftJoin('categories as c', 'p.category_id', '=', 'c.id')
+                ->with('images');
             if ($sort == 'popular') {
                 $sql = $sql->leftJoin('order_items as oi', 'oi.product_variant_id', '=', 'pv.id');
             }
@@ -275,7 +289,8 @@ class ProductApiController extends Controller
                 ->where('c.status', 1)
                 /*->where('s.categories', 'like', DB::raw('CONCAT("%", p.category_id ,"%")'))*/
                 ->where('s.status', 1)
-                ->whereIn('p.seller_id', $seller_ids)->groupBy("p.id");
+                ->whereIn('p.seller_id', $seller_ids)
+                ->groupBy("p.id");
 
             if (isset($request->min_price) && isset($request->max_price) && intval($request->max_price)) {
                 $sql = $sql->havingRaw(" min_price > " . intval(intval($request->min_price) - 1) . " and max_price < " . intval(intval($request->max_price) + 1));
@@ -294,7 +309,9 @@ class ProductApiController extends Controller
             if ($where != "") {
                 $sql = $sql->whereRaw(substr($where, 4));
             }
-            //$total = $sql->count();
+            // $total = $sql->count();
+            // echo $sql->toSql();
+            // exit;
             $pro = $sql->get()->toArray();
             $total = count($pro);
 
@@ -320,7 +337,7 @@ class ProductApiController extends Controller
                     $sql = ProductVariant::select(
                         'pv.*',
                         DB::raw("(SELECT short_code FROM units as u WHERE u.id = pv.stock_unit_id) as stock_unit_name"),
-                        DB::raw("ceil(((pv.price - pv.discounted_price)/pv.price)*100) as cal_discount_percentage"),
+                        DB::raw("ceil(((pv.price - pv.$salesChannelKey)/pv.price)*100) as cal_discount_percentage"),
                         DB::raw("(SELECT is_unlimited_stock FROM products as p WHERE p.id = pv.product_id) as is_unlimited_stock"),
                         DB::raw('count(*) as order_counter'),
                         'pv.id as id'
@@ -342,7 +359,7 @@ class ProductApiController extends Controller
                     $sql = ProductVariant::select(
                         '*',
                         DB::raw("(SELECT short_code FROM units as u WHERE u.id = pv.stock_unit_id) as stock_unit_name"),
-                        DB::raw("ceil(((pv.price - pv.discounted_price)/pv.price)*100) as cal_discount_percentage"),
+                        DB::raw("ceil(((pv.price - pv.$salesChannelKey)/pv.price)*100) as cal_discount_percentage"),
                         DB::raw("(SELECT is_unlimited_stock FROM products as p WHERE p.id = pv.product_id) as is_unlimited_stock")
                     );
                     $sql = $sql->from('product_variants as pv');
@@ -357,7 +374,7 @@ class ProductApiController extends Controller
                         //->orderBy('pv.status','ASC');
                         ->orderByRaw($price_sort);
                 }
-                $variants = $sql->get();
+                $variants = $sql->with('images')->get();
 
 
 
@@ -385,11 +402,37 @@ class ProductApiController extends Controller
                     $row['is_favorite'] = false;
                 }
                 $row = $row->makeHidden([
-                    'seller_id', 'row_order', 'return_status',
-                    'cancelable_status', 'till_status', 'description', 'is_approved', 'return_days', 'pincodes',
-                    'cod_allowed', 'pickup_location', 'tags', 'd_type', 'seller_name', 'seller_slug', 'seller_status',
-                    'created_at', 'updated_at', 'deleted_at', 'image', 'other_images', 'price', 'discounted_price', 'cal_discount',
-                    'cal_discount_percentage', 'min_price', 'max_price', 'type', 'boundary_points', 'country_made_in', 'order_counter'
+                    'seller_id',
+                    'row_order',
+                    'return_status',
+                    'cancelable_status',
+                    'till_status',
+                    'description',
+                    'is_approved',
+                    'return_days',
+                    'pincodes',
+                    'cod_allowed',
+                    'pickup_location',
+                    'tags',
+                    'd_type',
+                    'seller_name',
+                    'seller_slug',
+                    'seller_status',
+                    'created_at',
+                    'updated_at',
+                    'deleted_at',
+                    'image',
+                    'other_images',
+                    'price',
+                    $salesChannelKey,
+                    'cal_discount',
+                    'cal_discount_percentage',
+                    'min_price',
+                    'max_price',
+                    'type',
+                    'boundary_points',
+                    'country_made_in',
+                    'order_counter'
                 ]);
 
                 $products[$i] = $row;
@@ -418,10 +461,10 @@ class ProductApiController extends Controller
                                 $variant['cart_count'] = 0;
                             }
 
-                            $taxed = ProductHelper::getTaxableAmount($variant['id']);
+                            $taxed = ProductHelper::getTaxableAmount($variant['id'], $salesChannelKey);
 
-                            $variant['discounted_price'] = CommonHelper::doubleNumber($taxed->taxable_discounted_price ?? $variant['discounted_price']);
-                            $variant['price'] = CommonHelper::doubleNumber($taxed->taxable_price ?? $variant['price']);
+                            $variant['discounted_price'] = CommonHelper::doubleNumber($taxed->taxable_discounted_price ?? $variant[$salesChannelKey]);
+                            $variant['price'] = CommonHelper::doubleNumber($taxed->price ?? $variant['mrp']);
                             $variant['taxable_amount'] = CommonHelper::doubleNumber($taxed->taxable_amount);
 
                             $variant['stock_unit_name'] = $variant['stock_unit_name'] ?? '';
@@ -450,7 +493,7 @@ class ProductApiController extends Controller
                 $brands = CommonHelper::getBrandsHavingProducts();
                 $sizes = CommonHelper::getProductVariantsSize();
                 //return CommonHelper::responseWithData($products,$total);
-                return Response::json(array(
+                return response()->json(array(
                     'status' => 1,
                     'message' => 'success',
                     'total' => $total,
@@ -467,8 +510,6 @@ class ProductApiController extends Controller
             } else {
                 return CommonHelper::responseError(__('no_products_found'));
             }
-            //dd($products);
-
         } catch (\Exception $e) {
             Log::info("Products Error : " . $e->getMessage());
             throw $e;
@@ -503,7 +544,14 @@ class ProductApiController extends Controller
         if ($validator->fails()) {
             return CommonHelper::responseError($validator->errors()->first());
         }
-
+        $user = Auth::guard('api')->user();
+        $salesChannelKey = '';
+        if ($user->customer_type == 1) {
+            $b2bChannel = SalesChannel::where('id', $user->sales_channel)->first();
+            $salesChannelKey = $b2bChannel->slug ?? 'total_pick_up_the_franchiser_point_rate';
+        } else {
+            $salesChannelKey = 'total_pick_up_the_franchiser_point_rate';
+        }
         $product_id = $request->id;
         /*$sql = Product::with(['variants' => function($q1){
             $q1->with('images')->select('*')->orderBy('status','DESC');
@@ -540,13 +588,25 @@ class ProductApiController extends Controller
             ->leftJoin('categories as c', 'p.category_id', '=', 'c.id')
             ->where('s.status', 1)
             ->where('p.id', $product_id);
-        $product = $sql->first();
+        $product = $sql->with('images')->first();
 
         if ($product) {
 
             $product = $product->makeHidden([
-                'seller_id', 'row_order', 'pincodes', 'pickup_location', 'tags', 'seller_slug', 'seller_status',
-                'created_at', 'updated_at', 'deleted_at', 'image', 'other_images', 'boundary_points', 'country_made_in'
+                'seller_id',
+                'row_order',
+                'pincodes',
+                'pickup_location',
+                'tags',
+                'seller_slug',
+                'seller_status',
+                'created_at',
+                'updated_at',
+                'deleted_at',
+                'image',
+                'other_images',
+                'boundary_points',
+                'country_made_in'
             ]);
 
             $product->images = CommonHelper::getImages($product->id);
@@ -609,9 +669,9 @@ class ProductApiController extends Controller
                 } else {
                     $variants[$key]->cart_count = 0;
                 }
-                $taxed = ProductHelper::getTaxableAmount($variants[$key]['id']);
-                $variants[$key]['discounted_price'] = CommonHelper::doubleNumber($taxed->taxable_discounted_price ?? $variants[$key]['discounted_price']);
-                $variants[$key]['price'] = CommonHelper::doubleNumber($taxed->taxable_price ?? $variants[$key]['price']);
+                $taxed = ProductHelper::getTaxableAmount($variants[$key]['id'], $salesChannelKey);
+                $variants[$key]['discounted_price'] = CommonHelper::doubleNumber($taxed->taxable_discounted_price ?? $variants[$key][$salesChannelKey]);
+                $variants[$key]['price'] = CommonHelper::doubleNumber($taxed->price ?? $variants[$key]['mrp']);
                 $variants[$key]['taxable_amount'] = CommonHelper::doubleNumber($taxed->taxable_amount);
                 $variants[$key]->images = CommonHelper::getImages($variants[$key]->product_id, $variants[$key]->id);
 
@@ -1166,5 +1226,34 @@ class ProductApiController extends Controller
         $pr_name = explode(",", $pr_names);
 
         return CommonHelper::responseWithData($pr_name);
+    }
+
+    public function requestProduct(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'product_name' => 'required',
+            'product_catagory' => 'required',
+            'product_discription' => 'nullable',
+            'product_image' => 'nullable|file|mimes:pdf,jpeg,jpg,png,gif|max:5120',
+        ]);
+        if ($validator->failed())
+            return response()->json(['status' => false, 'message' => 'Validation failed', 'data' => [], 'errors' => $validator->errors()->messages()], 200);
+
+        $user = User::find(auth()->id());
+        if ($request->hasFile('product_image')) {
+            $productImage = CommonHelper::fileUploadStorage($request->file('product_image'), 'b2b/gst');
+        } else {
+            $productImage = '';
+        }
+
+        $requestedProduct = RequestedProduct::create([
+            'user_id' => $user->id,
+            'product_name' => $request->product_name,
+            'product_catagory' => $request->product_catagory,
+            'product_discription' => $request->product_discription,
+            'product_image' => $productImage,
+        ]);
+
+        return CommonHelper::responseSuccessWithData("Product request has been saved, Our team will contact you soon.", $requestedProduct);
     }
 }
