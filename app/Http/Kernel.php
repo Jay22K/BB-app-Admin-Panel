@@ -68,5 +68,6 @@ class Kernel extends HttpKernel
         'customer.provider' => \App\Http\Middleware\CustomerUserProvider::class,
         'lang' => \App\Http\Middleware\SetLang::class,
         'customer.status' => \App\Http\Middleware\UserStatusMiddleware::class,
+        'logging' => \App\Http\Middleware\LogRequestResponse::class,
     ];
 }

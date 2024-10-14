@@ -159,7 +159,10 @@ class ProductApiController extends Controller
                 $data = array();
                 $data['measurement'] = $request->loose_measurement[$index];
                 $data['price'] = $request->loose_price[$index];
-                $data['discounted_price'] = $request->loose_discounted_price[$index];
+                $data['discounted_price'] = $request->discounted_price[$index];
+                $data['status'] = $request->status[$index];
+                $data['stock'] = $request->loose_stock[$index];
+                $data['stock_unit_id'] = $request->loose_stock_unit_id[$index];
                 $variations[] = $data;
             }
         }

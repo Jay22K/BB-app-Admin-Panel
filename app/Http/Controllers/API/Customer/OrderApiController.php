@@ -416,8 +416,7 @@ class OrderApiController extends Controller
         } catch (\Exception $e) {
             DB::rollBack();
             Log::info("Error : " . $e->getMessage());
-            throw $e;
-            return CommonHelper::responseError("Something Went Wrong!");
+            return CommonHelper::responseError("Something Went Wrong!", $e);
         }
         return CommonHelper::responseSuccess("Order deleted successfully");
     }

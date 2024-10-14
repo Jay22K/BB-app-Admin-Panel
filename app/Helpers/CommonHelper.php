@@ -50,12 +50,18 @@ use Illuminate\Support\Facades\Config;
 class CommonHelper
 {
 
-    public static function responseError($message)
+    public static function responseError($message, $err = null)
     {
+        if ($err) {
+            Log::channel('api_error')->error($err);
+        }
         return response()->json(array('status' => 0, 'message' => $message));
     }
-    public static function responseErrorWithData($message, $data)
+    public static function responseErrorWithData($message, $data, $err = null)
     {
+        if ($err) {
+            Log::channel('api_error')->error($err);
+        }
         return response()->json(array('status' => 0, 'message' => $message, 'data' => $data));
     }
 
@@ -1045,13 +1051,11 @@ class CommonHelper
             }
 
             $taxed = ProductHelper::getTaxableAmount($variant['id'], $salesChannelKey);
-
             $variant['discounted_price'] = CommonHelper::doubleNumber($taxed->taxable_discounted_price ?? $variant['discounted_price']);
             $variant['price'] = CommonHelper::doubleNumber($taxed->price ?? $variant['price']);
             $variant['taxable_amount'] = CommonHelper::doubleNumber($taxed->taxable_amount);
-
             $variant['stock_unit_name'] = $variant['stock_unit_name'] ?? '';
-
+            // $variant['images'] = self::getImages($variant->product_id, $variant->id);
             return $variant;
         }
     }
@@ -1382,6 +1386,9 @@ class CommonHelper
         $result = CommonHelper::findGoogleMapDistance($latitudeFrom, $longitudeFrom, $latitudeTo, $longitudeTo);
         // }
 
+        // Log::info("GM Place " . $result['body']);
+        // Log::info("\n req data:" . json_encode(['latitudeFrom' => $latitudeFrom, 'longitudeFrom' => $longitudeFrom, 'latitudeTo' => $latitudeTo, 'longitudeTo' => $longitudeTo, 'city_id' => $city_id, 'sub_total' => $sub_total]));
+        // Log::info("\n City :" . json_encode($city));
         if (isset($result['http_code']) && $result['http_code'] != "200") {
             $response['error'] = true;
             //$response['message'] = 'The provided API key is invalid.';
@@ -1436,15 +1443,17 @@ class CommonHelper
                             }
                         }
                     }
-                    if ($min_amount_for_free_delivery >= $sub_total) {
+                    // echo "[$min_amount_for_free_delivery, $charge]";
+                    if ($sub_total >= $min_amount_for_free_delivery) {
                         $charge = 0;
                     }
-
+                    // echo "[$min_amount_for_free_delivery, $charge]";
                     $response['error'] = false;
                     $response['message'] = 'Data fetched successfully.';
                     $response['charge'] = $charge;
                     $response['distance'] = $distance_text;
                     $response['duration'] = $time;
+                    // Log::info("GM result", $response);
                     return $response;
                 } else if (isset($result['body']['rows'][0]['elements'][0]['status']) && $result['body']['rows'][0]['elements'][0]['status'] == "ZERO_RESULTS") {
                     $response['error'] = false;

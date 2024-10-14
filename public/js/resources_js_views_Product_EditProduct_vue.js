@@ -778,6 +778,399 @@ __webpack_require__.r(__webpack_exports__);
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
 
 
 
@@ -859,8 +1252,8 @@ __webpack_require__.r(__webpack_exports__);
     }
   },
   created: function created() {
-    this.id = this.$route.params.id; // this.getCategories();
-
+    this.id = this.$route.params.id;
+    this.getCategories();
     this.getSellers();
     this.getTaxes();
     this.getUnits();
@@ -1070,13 +1463,16 @@ __webpack_require__.r(__webpack_exports__);
     getCategories: function getCategories() {
       var _this3 = this;
 
-      this.isLoading = true; //axios.get(this.$apiUrl + '/categories')
+      this.isLoading = true;
+      console.log(this.$apiUrl + '/categories/options'); //axios.get(this.$apiUrl + '/categories')
 
       axios__WEBPACK_IMPORTED_MODULE_1___default().get(this.$apiUrl + '/categories/options').then(function (response) {
         _this3.isLoading = false;
-        var data = response.data; //this.categories = data.data
-
-        _this3.categoryOptions = "<option value=\"\">--Select Category--</option>" + data; //console.log("categories : ", this.categoryOptions);
+        var data = response.data;
+        console.log(data);
+        _this3.categoryOptions = data; // this.categories = data.data
+        // this.categoryOptions = `<option value="">--Select Category--</option>` + data
+        //console.log("categories : ", this.categoryOptions);
       });
     },
     getSellers: function getSellers() {
@@ -1172,6 +1568,86 @@ __webpack_require__.r(__webpack_exports__);
         input.validationErrorDiscountedPriceLoose = null;
       }
     },
+    totalFreezerTrpMarginMethod: function totalFreezerTrpMarginMethod(input) {
+      if (!input.packet_freezer_cost && !input.packet_secondry_trp && !input.packet_company_margin) return;
+      input.packet_total_freezer_trp_margin = parseFloat(input.packet_freezer_cost) + parseFloat(input.packet_secondry_trp) + parseFloat(input.packet_company_margin);
+
+      if (input.packet_total_freezer_trp_margin > 0) {
+        var percent = input.packet_total_freezer_trp_margin / 100 * input.packet_price;
+        var totalPriceWpercent = parseFloat(percent) + parseFloat(input.packet_price);
+        input.packet_total_distributor_franchise_rate = totalPriceWpercent.toFixed(2);
+        input.packet_total_e_commerce_rate = totalPriceWpercent.toFixed(2);
+        input.packet_total_subdistributor_outlet_rate = totalPriceWpercent.toFixed(2);
+        input.packet_total_horika_cantin_rate = totalPriceWpercent.toFixed(2);
+        input.packet_total_gt_market_retailer_vikreta_rate = totalPriceWpercent.toFixed(2);
+        input.packet_total_pick_up_the_franchiser_point_rate = totalPriceWpercent.toFixed(2);
+        input.packet_total_consumer_home_delivery_customer_price = totalPriceWpercent.toFixed(2);
+        this.totalRateOfDistributorFranchiseMethod(input);
+        this.totalRateOfConsumerHomeDeliveryMethod(input);
+        this.totalRateOfPickUpFranchiserMethod(input);
+        this.totalRateOfGtMarketVikretaMethod(input);
+        this.totalRateOfHorikacantinMethod(input);
+        this.totalRateOfSubDistributorOutletMethod(input);
+        this.totalRateOfECommerceMethod(input);
+      }
+    },
+    totalRateOfConsumerHomeDeliveryMethod: function totalRateOfConsumerHomeDeliveryMethod(input) {
+      if (input.packet_total_consumer_home_delivery_customer_price > 0) {
+        var percentField = input.packet_consumer_home_delivery_customer_price / 100 * input.packet_price || 0;
+        var percentMain = input.packet_total_freezer_trp_margin / 100 * input.packet_price;
+        var totalPriceWpercent = parseFloat(input.packet_price) + parseFloat(percentMain) + parseFloat(percentField);
+        console.log(input, input.packet_total_freezer_trp_margin, "totalPriceWpercent TEst");
+        input.packet_total_consumer_home_delivery_customer_price = totalPriceWpercent.toFixed(2);
+      }
+    },
+    totalRateOfPickUpFranchiserMethod: function totalRateOfPickUpFranchiserMethod(input) {
+      if (input.packet_total_pick_up_the_franchiser_point_rate > 0) {
+        var percentField = input.packet_pick_up_the_franchiser_point_rate / 100 * input.packet_price || 0;
+        var percentMain = input.packet_total_freezer_trp_margin / 100 * input.packet_price;
+        var totalPriceWpercent = parseFloat(input.packet_price) + parseFloat(percentMain) + parseFloat(percentField);
+        input.packet_total_pick_up_the_franchiser_point_rate = totalPriceWpercent.toFixed(2);
+      }
+    },
+    totalRateOfGtMarketVikretaMethod: function totalRateOfGtMarketVikretaMethod(input) {
+      if (input.packet_total_gt_market_retailer_vikreta_rate > 0) {
+        var percentField = input.packet_gt_market_retailer_vikreta_rate / 100 * input.packet_price || 0;
+        var percentMain = input.packet_total_freezer_trp_margin / 100 * input.packet_price;
+        var totalPriceWpercent = parseFloat(input.packet_price) + parseFloat(percentMain) + parseFloat(percentField);
+        input.packet_total_gt_market_retailer_vikreta_rate = totalPriceWpercent.toFixed(2);
+      }
+    },
+    totalRateOfHorikacantinMethod: function totalRateOfHorikacantinMethod(input) {
+      if (input.packet_total_horika_cantin_rate > 0) {
+        var percentField = input.packet_horika_cantin_rate / 100 * input.packet_price || 0;
+        var percentMain = input.packet_total_freezer_trp_margin / 100 * input.packet_price;
+        var totalPriceWpercent = parseFloat(input.packet_price) + parseFloat(percentMain) + parseFloat(percentField);
+        input.packet_total_horika_cantin_rate = totalPriceWpercent.toFixed(2);
+      }
+    },
+    totalRateOfSubDistributorOutletMethod: function totalRateOfSubDistributorOutletMethod(input) {
+      if (input.packet_total_subdistributor_outlet_rate > 0) {
+        var percentField = input.packet_subdistributor_outlet_rate / 100 * input.packet_price || 0;
+        var percentMain = input.packet_total_freezer_trp_margin / 100 * input.packet_price;
+        var totalPriceWpercent = parseFloat(input.packet_price) + parseFloat(percentMain) + parseFloat(percentField);
+        input.packet_total_subdistributor_outlet_rate = totalPriceWpercent.toFixed(2);
+      }
+    },
+    totalRateOfECommerceMethod: function totalRateOfECommerceMethod(input) {
+      if (input.packet_total_e_commerce_rate > 0) {
+        var percentField = input.packet_e_commerce_rate / 100 * input.packet_price || 0;
+        var percentMain = input.packet_total_freezer_trp_margin / 100 * input.packet_price;
+        var totalPriceWpercent = parseFloat(input.packet_price) + parseFloat(percentMain) + parseFloat(percentField);
+        input.packet_total_e_commerce_rate = totalPriceWpercent.toFixed(2);
+      }
+    },
+    totalRateOfDistributorFranchiseMethod: function totalRateOfDistributorFranchiseMethod(input) {
+      if (input.packet_total_distributor_franchise_rate > 0) {
+        var percentField = input.packet_distributor_franchise_rate / 100 * input.packet_price || 0;
+        var percentMain = input.packet_total_freezer_trp_margin / 100 * input.packet_price;
+        var totalPriceWpercent = parseFloat(input.packet_price) + parseFloat(percentMain) + parseFloat(percentField);
+        input.packet_total_distributor_franchise_rate = totalPriceWpercent.toFixed(2);
+      }
+    },
     getProduct: function getProduct() {
       var _this10 = this;
 
@@ -1230,11 +1706,31 @@ __webpack_require__.r(__webpack_exports__);
                 'id': item.id ? item.id : "",
                 'packet_measurement': item.measurement,
                 //'packet_measurement_unit_id': item.measurement_unit_id,
+                'packet_mrp': item.mrp,
+                'packet_hsn': (item === null || item === void 0 ? void 0 : item.hsn) || '',
                 'packet_price': item.price,
+                'packet_secondry_trp': item.secondry_trp,
+                'packet_freezer_cost': item.freezer_cost,
+                'packet_company_margin': item.company_margin,
+                'packet_total_freezer_trp_margin': item.total_freezer_trp_margin,
                 'discounted_price': item.discounted_price,
                 'packet_stock': item.stock,
                 'packet_stock_unit_id': item.stock_unit_id,
                 'packet_status': item.status,
+                'packet_distributor_franchise_rate': item.distributor_franchise_rate,
+                'packet_e_commerce_rate': item.e_commerce_rate,
+                'packet_subdistributor_outlet_rate': item.subdistributor_outlet_rate,
+                'packet_horika_cantin_rate': item.horika_cantin_rate,
+                'packet_gt_market_retailer_vikreta_rate': item.gt_market_retailer_vikreta_rate,
+                'packet_pick_up_the_franchiser_point_rate': item.pick_up_the_franchiser_point_rate,
+                'packet_consumer_home_delivery_customer_price': item.consumer_home_delivery_customer_price,
+                'packet_total_distributor_franchise_rate': item.total_distributor_franchise_rate,
+                'packet_total_e_commerce_rate': item.total_e_commerce_rate,
+                'packet_total_subdistributor_outlet_rate': item.total_subdistributor_outlet_rate,
+                'packet_total_horika_cantin_rate': item.total_horika_cantin_rate,
+                'packet_total_gt_market_retailer_vikreta_rate': item.total_gt_market_retailer_vikreta_rate,
+                'packet_total_pick_up_the_franchiser_point_rate': item.total_pick_up_the_franchiser_point_rate,
+                'packet_total_consumer_home_delivery_customer_price': item.total_consumer_home_delivery_customer_price,
                 'images': item.images
               }; //console.log(variantData);
 
@@ -1261,10 +1757,34 @@ __webpack_require__.r(__webpack_exports__);
                 'loose_measurement': item.measurement,
                 'loose_custom_title': (_item$custom_title = item.custom_title) !== null && _item$custom_title !== void 0 ? _item$custom_title : "",
                 //'loose_measurement_unit_id': item.measurement_unit_id,
-                'loose_price': item.price,
-                'loose_discounted_price': item.discounted_price,
+                // 'loose_price': item.price,
+                // 'loose_discounted_price': item.discounted_price,
                 'packet_stock': item.stock,
-                'loose_images': item.images
+                'loose_images': item.images,
+                'packet_hsn': (item === null || item === void 0 ? void 0 : item.hsn) || '',
+                'packet_mrp': item.mrp,
+                'packet_price': item.price,
+                'packet_secondry_trp': item.secondry_trp,
+                'packet_freezer_cost': item.freezer_cost,
+                'packet_company_margin': item.company_margin,
+                'packet_total_freezer_trp_margin': item.total_freezer_trp_margin,
+                'discounted_price': item.discounted_price,
+                'packet_stock_unit_id': item.stock_unit_id,
+                'packet_status': item.status,
+                'packet_distributor_franchise_rate': item.distributor_franchise_rate,
+                'packet_e_commerce_rate': item.e_commerce_rate,
+                'packet_subdistributor_outlet_rate': item.subdistributor_outlet_rate,
+                'packet_horika_cantin_rate': item.horika_cantin_rate,
+                'packet_gt_market_retailer_vikreta_rate': item.gt_market_retailer_vikreta_rate,
+                'packet_pick_up_the_franchiser_point_rate': item.pick_up_the_franchiser_point_rate,
+                'packet_consumer_home_delivery_customer_price': item.consumer_home_delivery_customer_price,
+                'packet_total_distributor_franchise_rate': item.total_distributor_franchise_rate,
+                'packet_total_e_commerce_rate': item.total_e_commerce_rate,
+                'packet_total_subdistributor_outlet_rate': item.total_subdistributor_outlet_rate,
+                'packet_total_horika_cantin_rate': item.total_horika_cantin_rate,
+                'packet_total_gt_market_retailer_vikreta_rate': item.total_gt_market_retailer_vikreta_rate,
+                'packet_total_pick_up_the_franchiser_point_rate': item.total_pick_up_the_franchiser_point_rate,
+                'packet_total_consumer_home_delivery_customer_price': item.total_consumer_home_delivery_customer_price
               }; //console.log(variantData);
 
               vm.inputs.push(variantData);
@@ -1277,6 +1797,8 @@ __webpack_require__.r(__webpack_exports__);
             _this10.loose_stock_unit_id = loose_stock_unit_id;
             _this10.status = status;
           }
+
+          console.log(vm.inputs);
         } else {
           _this10.showError(data.message);
 
@@ -1299,6 +1821,7 @@ __webpack_require__.r(__webpack_exports__);
     saveRecord: function saveRecord() {
       var _this11 = this;
 
+      console.log("Post API calling");
       this.isLoading = true;
       var vm = this;
       var formData = new FormData();
@@ -1318,6 +1841,7 @@ __webpack_require__.r(__webpack_exports__);
       formData.append('type', this.type);
       formData.append('is_unlimited_stock', this.is_unlimited_stock);
       formData.append('fssai_lic_no', this.fssai_lic_no);
+      console.log(this.inputs);
       /*packet*/
 
       if (this.type === 'packet') {
@@ -1326,6 +1850,26 @@ __webpack_require__.r(__webpack_exports__);
           formData.append('packet_measurement[]', this.inputs[_i].packet_measurement);
           formData.append('packet_price[]', this.inputs[_i].packet_price != undefined ? this.inputs[_i].packet_price : 0);
           formData.append('discounted_price[]', this.inputs[_i].discounted_price != undefined ? this.inputs[_i].discounted_price : 0);
+          formData.append('packet_freezer_cost[]', this.inputs[_i].packet_freezer_cost != undefined ? this.inputs[_i].packet_freezer_cost : 0);
+          formData.append('packet_secondry_trp[]', this.inputs[_i].packet_secondry_trp != undefined ? this.inputs[_i].packet_secondry_trp : 0);
+          formData.append('packet_company_margin[]', this.inputs[_i].packet_company_margin != undefined ? this.inputs[_i].packet_company_margin : 0);
+          formData.append('packet_total_freezer_trp_margin[]', this.inputs[_i].packet_total_freezer_trp_margin != undefined ? this.inputs[_i].packet_total_freezer_trp_margin : 0);
+          formData.append('packet_distributor_franchise_rate[]', this.inputs[_i].packet_distributor_franchise_rate != undefined ? this.inputs[_i].packet_distributor_franchise_rate : 0);
+          formData.append('packet_e_commerce_rate[]', this.inputs[_i].packet_e_commerce_rate != undefined ? this.inputs[_i].packet_e_commerce_rate : 0);
+          formData.append('packet_subdistributor_outlet_rate[]', this.inputs[_i].packet_subdistributor_outlet_rate != undefined ? this.inputs[_i].packet_subdistributor_outlet_rate : 0);
+          formData.append('packet_horika_cantin_rate[]', this.inputs[_i].packet_horika_cantin_rate != undefined ? this.inputs[_i].packet_horika_cantin_rate : 0);
+          formData.append('packet_gt_market_retailer_vikreta_rate[]', this.inputs[_i].packet_gt_market_retailer_vikreta_rate != undefined ? this.inputs[_i].packet_gt_market_retailer_vikreta_rate : 0);
+          formData.append('packet_pick_up_the_franchiser_point_rate[]', this.inputs[_i].packet_pick_up_the_franchiser_point_rate != undefined ? this.inputs[_i].packet_pick_up_the_franchiser_point_rate : 0);
+          formData.append('packet_consumer_home_delivery_customer_price[]', this.inputs[_i].packet_consumer_home_delivery_customer_price != undefined ? this.inputs[_i].packet_consumer_home_delivery_customer_price : 0);
+          formData.append('packet_total_distributor_franchise_rate[]', this.inputs[_i].packet_total_distributor_franchise_rate != undefined ? this.inputs[_i].packet_total_distributor_franchise_rate : 0);
+          formData.append('packet_total_e_commerce_rate[]', this.inputs[_i].packet_total_e_commerce_rate != undefined ? this.inputs[_i].packet_total_e_commerce_rate : 0);
+          formData.append('packet_total_subdistributor_outlet_rate[]', this.inputs[_i].packet_total_subdistributor_outlet_rate != undefined ? this.inputs[_i].packet_total_subdistributor_outlet_rate : 0);
+          formData.append('packet_total_horika_cantin_rate[]', this.inputs[_i].packet_total_horika_cantin_rate != undefined ? this.inputs[_i].packet_total_horika_cantin_rate : 0);
+          formData.append('packet_total_gt_market_retailer_vikreta_rate[]', this.inputs[_i].packet_total_gt_market_retailer_vikreta_rate != undefined ? this.inputs[_i].packet_total_gt_market_retailer_vikreta_rate : 0);
+          formData.append('packet_total_pick_up_the_franchiser_point_rate[]', this.inputs[_i].packet_total_pick_up_the_franchiser_point_rate != undefined ? this.inputs[_i].packet_total_pick_up_the_franchiser_point_rate : 0);
+          formData.append('packet_total_consumer_home_delivery_customer_price[]', this.inputs[_i].packet_total_consumer_home_delivery_customer_price != undefined ? this.inputs[_i].packet_total_consumer_home_delivery_customer_price : 0);
+          formData.append('packet_mrp[]', this.inputs[_i].packet_mrp != undefined ? this.inputs[_i].packet_mrp : 0);
+          formData.append('packet_hsn[]', this.inputs[_i].packet_hsn != undefined ? this.inputs[_i].packet_hsn : 0);
           formData.append('packet_stock[]', this.inputs[_i].packet_stock != undefined ? this.inputs[_i].packet_stock : 0);
           formData.append('packet_stock_unit_id[]', this.inputs[_i].packet_stock_unit_id != undefined ? this.inputs[_i].packet_stock_unit_id : 0);
           formData.append('packet_status[]', this.inputs[_i].packet_status != undefined ? this.inputs[_i].packet_status : 0);
@@ -1343,9 +1887,31 @@ __webpack_require__.r(__webpack_exports__);
         for (var _i2 = 0; _i2 < this.inputs.length; _i2++) {
           formData.append('variant_id[]', this.inputs[_i2].id ? this.inputs[_i2].id : "");
           formData.append('loose_measurement[]', this.inputs[_i2].loose_measurement);
-          formData.append('loose_custom_title[]', this.inputs[_i2].loose_custom_title);
-          formData.append('loose_price[]', this.inputs[_i2].loose_price != undefined ? this.inputs[_i2].loose_price : 0);
-          formData.append('loose_discounted_price[]', this.inputs[_i2].loose_discounted_price != undefined ? this.inputs[_i2].loose_discounted_price : 0);
+          formData.append('loose_custom_title[]', this.inputs[_i2].loose_custom_title); // formData.append('loose_price[]', (this.inputs[i].loose_price != undefined) ? this.inputs[i].loose_price : 0);
+          // formData.append('loose_discounted_price[]', (this.inputs[i].loose_discounted_price != undefined) ? this.inputs[i].loose_discounted_price : 0);
+
+          formData.append('loose_price[]', this.inputs[_i2].packet_price != undefined ? this.inputs[_i2].packet_price : 0);
+          formData.append('discounted_price[]', this.inputs[_i2].discounted_price != undefined ? this.inputs[_i2].discounted_price : 0);
+          formData.append('loose_freezer_cost[]', this.inputs[_i2].packet_freezer_cost != undefined ? this.inputs[_i2].packet_freezer_cost : 0);
+          formData.append('loose_secondry_trp[]', this.inputs[_i2].packet_secondry_trp != undefined ? this.inputs[_i2].packet_secondry_trp : 0);
+          formData.append('loose_company_margin[]', this.inputs[_i2].packet_company_margin != undefined ? this.inputs[_i2].packet_company_margin : 0);
+          formData.append('loose_total_freezer_trp_margin[]', this.inputs[_i2].packet_total_freezer_trp_margin != undefined ? this.inputs[_i2].packet_total_freezer_trp_margin : 0);
+          formData.append('loose_distributor_franchise_rate[]', this.inputs[_i2].packet_distributor_franchise_rate != undefined ? this.inputs[_i2].packet_distributor_franchise_rate : 0);
+          formData.append('loose_e_commerce_rate[]', this.inputs[_i2].packet_e_commerce_rate != undefined ? this.inputs[_i2].packet_e_commerce_rate : 0);
+          formData.append('loose_subdistributor_outlet_rate[]', this.inputs[_i2].packet_subdistributor_outlet_rate != undefined ? this.inputs[_i2].packet_subdistributor_outlet_rate : 0);
+          formData.append('loose_horika_cantin_rate[]', this.inputs[_i2].packet_horika_cantin_rate != undefined ? this.inputs[_i2].packet_horika_cantin_rate : 0);
+          formData.append('loose_gt_market_retailer_vikreta_rate[]', this.inputs[_i2].packet_gt_market_retailer_vikreta_rate != undefined ? this.inputs[_i2].packet_gt_market_retailer_vikreta_rate : 0);
+          formData.append('loose_pick_up_the_franchiser_point_rate[]', this.inputs[_i2].packet_pick_up_the_franchiser_point_rate != undefined ? this.inputs[_i2].packet_pick_up_the_franchiser_point_rate : 0);
+          formData.append('loose_consumer_home_delivery_customer_price[]', this.inputs[_i2].packet_consumer_home_delivery_customer_price != undefined ? this.inputs[_i2].packet_consumer_home_delivery_customer_price : 0);
+          formData.append('loose_total_distributor_franchise_rate[]', this.inputs[_i2].packet_total_distributor_franchise_rate != undefined ? this.inputs[_i2].packet_total_distributor_franchise_rate : 0);
+          formData.append('loose_total_e_commerce_rate[]', this.inputs[_i2].packet_total_e_commerce_rate != undefined ? this.inputs[_i2].packet_total_e_commerce_rate : 0);
+          formData.append('loose_total_subdistributor_outlet_rate[]', this.inputs[_i2].packet_total_subdistributor_outlet_rate != undefined ? this.inputs[_i2].packet_total_subdistributor_outlet_rate : 0);
+          formData.append('loose_total_horika_cantin_rate[]', this.inputs[_i2].packet_total_horika_cantin_rate != undefined ? this.inputs[_i2].packet_total_horika_cantin_rate : 0);
+          formData.append('loose_total_gt_market_retailer_vikreta_rate[]', this.inputs[_i2].packet_total_gt_market_retailer_vikreta_rate != undefined ? this.inputs[_i2].packet_total_gt_market_retailer_vikreta_rate : 0);
+          formData.append('loose_total_pick_up_the_franchiser_point_rate[]', this.inputs[_i2].packet_total_pick_up_the_franchiser_point_rate != undefined ? this.inputs[_i2].packet_total_pick_up_the_franchiser_point_rate : 0);
+          formData.append('loose_total_consumer_home_delivery_customer_price[]', this.inputs[_i2].packet_total_consumer_home_delivery_customer_price != undefined ? this.inputs[_i2].packet_total_consumer_home_delivery_customer_price : 0);
+          formData.append('loose_mrp[]', this.inputs[_i2].loose_mrp != undefined ? this.inputs[_i2].loose_mrp : this.inputs[_i2].packet_mrp != undefined ? this.inputs[_i2].packet_mrp : 0);
+          formData.append('loose_hsn[]', this.inputs[_i2].packet_hsn != undefined ? this.inputs[_i2].packet_hsn : 0);
           formData.append('packet_stock[]', this.inputs[_i2].packet_stock != undefined ? this.inputs[_i2].packet_stock : 0);
 
           for (var j = 0; j < this.$refs['loose_variant_images_' + _i2][0].files.length; j++) {
@@ -1389,6 +1955,7 @@ __webpack_require__.r(__webpack_exports__);
         url = this.$apiUrl + '/products/update';
       }
 
+      console.log(formData);
       axios__WEBPACK_IMPORTED_MODULE_1___default().post(url, formData, {
         headers: {
           'Content-Type': 'multipart/form-data'
@@ -1735,22 +2302,22 @@ var render = function () {
                     _vm.id
                       ? [
                           _vm._v(
-                            "\n                                    " +
+                            "\n                                " +
                               _vm._s(_vm.__("edit")) +
-                              "\n                                "
+                              "\n                            "
                           ),
                         ]
                       : [
                           _vm._v(
-                            "\n                                    " +
+                            "\n                                " +
                               _vm._s(_vm.__("create")) +
-                              "\n                                "
+                              "\n                            "
                           ),
                         ],
                     _vm._v(
-                      "\n                                " +
+                      "\n                            " +
                         _vm._s(_vm.__("product")) +
-                        "\n                            "
+                        "\n                        "
                     ),
                   ],
                   2
@@ -2022,7 +2589,7 @@ var render = function () {
                                       [
                                         _vm._v(
                                           _vm._s(seller.name) +
-                                            "\n                                                "
+                                            "\n                                            "
                                         ),
                                       ]
                                     )
@@ -2103,7 +2670,7 @@ var render = function () {
                               [
                                 _vm._v(
                                   _vm._s(_vm.__("tags")) +
-                                    "  ( " +
+                                    " (\n                                            " +
                                     _vm._s(
                                       _vm.__(
                                         "these_tags_help_you_in_search_result"
@@ -2317,7 +2884,7 @@ var render = function () {
                           _vm._v(" "),
                           _c("span", { staticClass: "text text-primary" }, [
                             _vm._v(
-                              " *Please choose square image of larger than 350px*350px & smaller than 550px*550px."
+                              " *Please choose square image of larger than\n                                            350px*350px & smaller than 550px*550px."
                             ),
                           ]),
                           _vm._v(" "),
@@ -2418,7 +2985,8 @@ var render = function () {
                                               function (image) {
                                                 return _c("small", [
                                                   _vm._v(
-                                                    _vm._s(image.name) + ", "
+                                                    _vm._s(image.name) +
+                                                      ",\n                                                        "
                                                   ),
                                                 ])
                                               }
@@ -2433,7 +3001,7 @@ var render = function () {
                           _vm._v(" "),
                           _c("span", { staticClass: "text text-primary" }, [
                             _vm._v(
-                              " *Please choose square image of larger than 350px*350px & smaller than 550px*550px."
+                              " *Please choose square image of larger than\n                                            350px*350px & smaller than 550px*550px."
                             ),
                           ]),
                           _vm._v(" "),
@@ -2586,12 +3154,7 @@ var render = function () {
                           "div",
                           { staticClass: "form-group col-6" },
                           [
-                            _c("label", [
-                              _vm._v(_vm._s(_vm.__("type")) + " "),
-                              _c("i", { staticClass: "text-danger" }, [
-                                _vm._v("*"),
-                              ]),
-                            ]),
+                            _vm._m(3),
                             _c("br"),
                             _vm._v(" "),
                             _c("b-form-radio-group", {
@@ -2619,12 +3182,7 @@ var render = function () {
                           "div",
                           { staticClass: "form-group col-6" },
                           [
-                            _c("label", { staticClass: "control-label" }, [
-                              _vm._v(_vm._s(_vm.__("stock_limit")) + " "),
-                              _c("i", { staticClass: "text-danger" }, [
-                                _vm._v("*"),
-                              ]),
-                            ]),
+                            _vm._m(4),
                             _c("br"),
                             _vm._v(" "),
                             _c("b-form-radio-group", {
@@ -2661,11 +3219,9 @@ var render = function () {
                             },
                             [
                               _c("div", { staticClass: "row" }, [
-                                _c("div", { staticClass: "col-md-4" }, [
+                                _c("div", { staticClass: "col-md-3" }, [
                                   _c("div", { staticClass: "form-group" }, [
-                                    _c("label", [
-                                      _vm._v(_vm._s(_vm.__("measurement"))),
-                                    ]),
+                                    _c("label", [_vm._v("SKU")]),
                                     _vm._v(" "),
                                     _c("i", { staticClass: "text-danger" }, [
                                       _vm._v("*"),
@@ -2707,171 +3263,9 @@ var render = function () {
                                   ]),
                                 ]),
                                 _vm._v(" "),
-                                _c("div", { staticClass: "col-md-4" }, [
+                                _c("div", { staticClass: "col-md-3" }, [
                                   _c("div", { staticClass: "form-group" }, [
-                                    _c("label", [
-                                      _vm._v(
-                                        _vm._s(_vm.__("price")) +
-                                          " ( " +
-                                          _vm._s(_vm.$currency) +
-                                          " )"
-                                      ),
-                                    ]),
-                                    _vm._v(" "),
-                                    _c("i", { staticClass: "text-danger" }, [
-                                      _vm._v("*"),
-                                    ]),
-                                    _vm._v(" "),
-                                    _c("input", {
-                                      directives: [
-                                        {
-                                          name: "model",
-                                          rawName: "v-model",
-                                          value: input.packet_price,
-                                          expression: "input.packet_price",
-                                        },
-                                      ],
-                                      staticClass: "form-control",
-                                      attrs: {
-                                        type: "number",
-                                        min: "0",
-                                        placeholder: "0.00",
-                                        required: "",
-                                      },
-                                      domProps: { value: input.packet_price },
-                                      on: {
-                                        input: function ($event) {
-                                          if ($event.target.composing) {
-                                            return
-                                          }
-                                          _vm.$set(
-                                            input,
-                                            "packet_price",
-                                            $event.target.value
-                                          )
-                                        },
-                                      },
-                                    }),
-                                  ]),
-                                ]),
-                                _vm._v(" "),
-                                _c("div", { staticClass: "col-md-4" }, [
-                                  _c("div", { staticClass: "form-group" }, [
-                                    _c("label", [
-                                      _vm._v(
-                                        _vm._s(_vm.__("discounted_price")) +
-                                          " ( " +
-                                          _vm._s(_vm.$currency) +
-                                          " )"
-                                      ),
-                                    ]),
-                                    _vm._v(" "),
-                                    _c("input", {
-                                      directives: [
-                                        {
-                                          name: "model",
-                                          rawName: "v-model",
-                                          value: input.discounted_price,
-                                          expression: "input.discounted_price",
-                                        },
-                                      ],
-                                      staticClass: "form-control",
-                                      attrs: {
-                                        type: "number",
-                                        min: "0",
-                                        placeholder: "0.00",
-                                      },
-                                      domProps: {
-                                        value: input.discounted_price,
-                                      },
-                                      on: {
-                                        input: [
-                                          function ($event) {
-                                            if ($event.target.composing) {
-                                              return
-                                            }
-                                            _vm.$set(
-                                              input,
-                                              "discounted_price",
-                                              $event.target.value
-                                            )
-                                          },
-                                          function ($event) {
-                                            return _vm.validateDiscountedPrice(
-                                              input
-                                            )
-                                          },
-                                        ],
-                                      },
-                                    }),
-                                    _vm._v(" "),
-                                    input.validationErrorDiscountedPrice
-                                      ? _c("span", { staticClass: "error" }, [
-                                          _vm._v(
-                                            _vm._s(
-                                              input.validationErrorDiscountedPrice
-                                            )
-                                          ),
-                                        ])
-                                      : _vm._e(),
-                                  ]),
-                                ]),
-                                _vm._v(" "),
-                                _vm.is_unlimited_stock != 1
-                                  ? _c("div", { staticClass: "col-md-4" }, [
-                                      _c("div", { staticClass: "form-group" }, [
-                                        _c("label", [
-                                          _vm._v(_vm._s(_vm.__("stock"))),
-                                        ]),
-                                        _vm._v(" "),
-                                        _c(
-                                          "i",
-                                          { staticClass: "text-danger" },
-                                          [_vm._v("*")]
-                                        ),
-                                        _vm._v(" "),
-                                        _c("input", {
-                                          directives: [
-                                            {
-                                              name: "model",
-                                              rawName: "v-model",
-                                              value: input.packet_stock,
-                                              expression: "input.packet_stock",
-                                            },
-                                          ],
-                                          staticClass: "form-control",
-                                          attrs: {
-                                            type: "number",
-                                            step: "any",
-                                            min: "0",
-                                            placeholder: "0",
-                                            name: "packate_stock[]",
-                                          },
-                                          domProps: {
-                                            value: input.packet_stock,
-                                          },
-                                          on: {
-                                            input: function ($event) {
-                                              if ($event.target.composing) {
-                                                return
-                                              }
-                                              _vm.$set(
-                                                input,
-                                                "packet_stock",
-                                                $event.target.value
-                                              )
-                                            },
-                                          },
-                                        }),
-                                      ]),
-                                    ])
-                                  : _vm._e(),
-                                _vm._v(" "),
-                                _c("div", { staticClass: "col-md-4" }, [
-                                  _c("div", { staticClass: "form-group" }, [
-                                    _c("label", [
-                                      _vm._v(_vm._s(_vm.__("unit"))),
-                                    ]),
+                                    _c("label", [_vm._v("Unit")]),
                                     _vm._v(" "),
                                     _c(
                                       "select",
@@ -2920,13 +3314,16 @@ var render = function () {
                                       },
                                       [
                                         _c("option", { attrs: { value: "" } }, [
-                                          _vm._v(_vm._s(_vm.__("select_unit"))),
+                                          _vm._v("Select Unit"),
                                         ]),
                                         _vm._v(" "),
                                         _vm._l(_vm.units, function (unit, key) {
                                           return _c(
                                             "option",
-                                            { domProps: { value: unit.id } },
+                                            {
+                                              key: key,
+                                              domProps: { value: unit.id },
+                                            },
                                             [_vm._v(_vm._s(unit.short_code))]
                                           )
                                         }),
@@ -2936,11 +3333,57 @@ var render = function () {
                                   ]),
                                 ]),
                                 _vm._v(" "),
-                                _c("div", { staticClass: "col-md-4" }, [
+                                _vm.is_unlimited_stock != 1
+                                  ? _c("div", { staticClass: "col-md-3" }, [
+                                      _c("div", { staticClass: "form-group" }, [
+                                        _c("label", [_vm._v("Stock")]),
+                                        _vm._v(" "),
+                                        _c(
+                                          "i",
+                                          { staticClass: "text-danger" },
+                                          [_vm._v("*")]
+                                        ),
+                                        _vm._v(" "),
+                                        _c("input", {
+                                          directives: [
+                                            {
+                                              name: "model",
+                                              rawName: "v-model",
+                                              value: input.packet_stock,
+                                              expression: "input.packet_stock",
+                                            },
+                                          ],
+                                          staticClass: "form-control",
+                                          attrs: {
+                                            type: "number",
+                                            step: "any",
+                                            min: "0",
+                                            placeholder: "0",
+                                            name: "packate_stock[]",
+                                          },
+                                          domProps: {
+                                            value: input.packet_stock,
+                                          },
+                                          on: {
+                                            input: function ($event) {
+                                              if ($event.target.composing) {
+                                                return
+                                              }
+                                              _vm.$set(
+                                                input,
+                                                "packet_stock",
+                                                $event.target.value
+                                              )
+                                            },
+                                          },
+                                        }),
+                                      ]),
+                                    ])
+                                  : _vm._e(),
+                                _vm._v(" "),
+                                _c("div", { staticClass: "col-md-3" }, [
                                   _c("div", { staticClass: "form-group" }, [
-                                    _c("label", [
-                                      _vm._v(_vm._s(_vm.__("status"))),
-                                    ]),
+                                    _c("label", [_vm._v("Status")]),
                                     _vm._v(" "),
                                     _c(
                                       "select",
@@ -2984,9 +3427,7 @@ var render = function () {
                                       },
                                       [
                                         _c("option", { attrs: { value: "" } }, [
-                                          _vm._v(
-                                            _vm._s(_vm.__("select_status"))
-                                          ),
+                                          _vm._v("Select Status"),
                                         ]),
                                         _vm._v(" "),
                                         _c(
@@ -3005,11 +3446,1212 @@ var render = function () {
                                   ]),
                                 ]),
                                 _vm._v(" "),
+                                _c("div", { staticClass: "col-md-12" }, [
+                                  _c(
+                                    "div",
+                                    { staticClass: "row price_calucation_row" },
+                                    [
+                                      _c("div", { staticClass: "col-md-3" }, [
+                                        _c(
+                                          "div",
+                                          { staticClass: "form-group" },
+                                          [
+                                            _c("label", [
+                                              _vm._v(
+                                                _vm._s(_vm.__("base_price")) +
+                                                  " ( " +
+                                                  _vm._s(_vm.$currency) +
+                                                  " )"
+                                              ),
+                                            ]),
+                                            _vm._v(" "),
+                                            _c(
+                                              "i",
+                                              { staticClass: "text-danger" },
+                                              [_vm._v("*")]
+                                            ),
+                                            _vm._v(" "),
+                                            _c("input", {
+                                              directives: [
+                                                {
+                                                  name: "model",
+                                                  rawName: "v-model",
+                                                  value: input.packet_price,
+                                                  expression:
+                                                    "input.packet_price",
+                                                },
+                                              ],
+                                              staticClass: "form-control",
+                                              attrs: {
+                                                type: "number",
+                                                step: "any",
+                                                min: "0",
+                                                placeholder: "0.00",
+                                                required: "",
+                                              },
+                                              domProps: {
+                                                value: input.packet_price,
+                                              },
+                                              on: {
+                                                input: [
+                                                  function ($event) {
+                                                    if (
+                                                      $event.target.composing
+                                                    ) {
+                                                      return
+                                                    }
+                                                    _vm.$set(
+                                                      input,
+                                                      "packet_price",
+                                                      $event.target.value
+                                                    )
+                                                  },
+                                                  function ($event) {
+                                                    return _vm.totalFreezerTrpMarginMethod(
+                                                      input
+                                                    )
+                                                  },
+                                                ],
+                                              },
+                                            }),
+                                            _vm._v(" "),
+                                            _c("label", [
+                                              _vm._v(
+                                                _vm._s(_vm.__("gst_price")) +
+                                                  " ( " +
+                                                  _vm._s(_vm.$currency) +
+                                                  " )"
+                                              ),
+                                            ]),
+                                            _vm._v(" "),
+                                            _c(
+                                              "i",
+                                              { staticClass: "text-danger" },
+                                              [_vm._v("*")]
+                                            ),
+                                            _vm._v(" "),
+                                            _c("input", {
+                                              directives: [
+                                                {
+                                                  name: "model",
+                                                  rawName: "v-model",
+                                                  value: input.packet_price,
+                                                  expression:
+                                                    "input.packet_price",
+                                                },
+                                              ],
+                                              staticClass: "form-control",
+                                              attrs: {
+                                                type: "number",
+                                                step: "any",
+                                                min: "0",
+                                                placeholder: "0.00",
+                                                required: "",
+                                              },
+                                              domProps: {
+                                                value: input.packet_price,
+                                              },
+                                              on: {
+                                                input: [
+                                                  function ($event) {
+                                                    if (
+                                                      $event.target.composing
+                                                    ) {
+                                                      return
+                                                    }
+                                                    _vm.$set(
+                                                      input,
+                                                      "packet_price",
+                                                      $event.target.value
+                                                    )
+                                                  },
+                                                  function ($event) {
+                                                    return _vm.totalFreezerTrpMarginMethod(
+                                                      input
+                                                    )
+                                                  },
+                                                ],
+                                              },
+                                            }),
+                                          ]
+                                        ),
+                                      ]),
+                                      _vm._v(" "),
+                                      _c("div", { staticClass: "col-sm-3" }, [
+                                        _c(
+                                          "div",
+                                          { staticClass: "form-group" },
+                                          [
+                                            _vm._m(5, true),
+                                            _vm._v(" "),
+                                            _c("b-input-group", [
+                                              _c("input", {
+                                                directives: [
+                                                  {
+                                                    name: "model",
+                                                    rawName: "v-model",
+                                                    value:
+                                                      input.packet_freezer_cost,
+                                                    expression:
+                                                      "input.packet_freezer_cost",
+                                                  },
+                                                ],
+                                                staticClass: "form-control",
+                                                attrs: {
+                                                  type: "number",
+                                                  step: "any",
+                                                  min: "0",
+                                                  placeholder: "0",
+                                                  required: "",
+                                                },
+                                                domProps: {
+                                                  value:
+                                                    input.packet_freezer_cost,
+                                                },
+                                                on: {
+                                                  input: [
+                                                    function ($event) {
+                                                      if (
+                                                        $event.target.composing
+                                                      ) {
+                                                        return
+                                                      }
+                                                      _vm.$set(
+                                                        input,
+                                                        "packet_freezer_cost",
+                                                        $event.target.value
+                                                      )
+                                                    },
+                                                    function ($event) {
+                                                      return _vm.totalFreezerTrpMarginMethod(
+                                                        input
+                                                      )
+                                                    },
+                                                  ],
+                                                },
+                                              }),
+                                            ]),
+                                          ],
+                                          1
+                                        ),
+                                      ]),
+                                      _vm._v(" "),
+                                      _c("div", { staticClass: "col-sm-3" }, [
+                                        _c(
+                                          "div",
+                                          { staticClass: "form-group" },
+                                          [
+                                            _vm._m(6, true),
+                                            _vm._v(" "),
+                                            _c("b-input-group", [
+                                              _c("input", {
+                                                directives: [
+                                                  {
+                                                    name: "model",
+                                                    rawName: "v-model",
+                                                    value:
+                                                      input.packet_secondry_trp,
+                                                    expression:
+                                                      "input.packet_secondry_trp",
+                                                  },
+                                                ],
+                                                staticClass: "form-control",
+                                                attrs: {
+                                                  type: "number",
+                                                  step: "any",
+                                                  min: "0",
+                                                  placeholder: "0",
+                                                  required: "",
+                                                },
+                                                domProps: {
+                                                  value:
+                                                    input.packet_secondry_trp,
+                                                },
+                                                on: {
+                                                  input: [
+                                                    function ($event) {
+                                                      if (
+                                                        $event.target.composing
+                                                      ) {
+                                                        return
+                                                      }
+                                                      _vm.$set(
+                                                        input,
+                                                        "packet_secondry_trp",
+                                                        $event.target.value
+                                                      )
+                                                    },
+                                                    function ($event) {
+                                                      return _vm.totalFreezerTrpMarginMethod(
+                                                        input
+                                                      )
+                                                    },
+                                                  ],
+                                                },
+                                              }),
+                                            ]),
+                                          ],
+                                          1
+                                        ),
+                                      ]),
+                                      _vm._v(" "),
+                                      _c("div", { staticClass: "col-sm-3" }, [
+                                        _c(
+                                          "div",
+                                          { staticClass: "form-group" },
+                                          [
+                                            _vm._m(7, true),
+                                            _vm._v(" "),
+                                            _c("b-input-group", [
+                                              _c("input", {
+                                                directives: [
+                                                  {
+                                                    name: "model",
+                                                    rawName: "v-model",
+                                                    value:
+                                                      input.packet_company_margin,
+                                                    expression:
+                                                      "input.packet_company_margin",
+                                                  },
+                                                ],
+                                                staticClass: "form-control",
+                                                attrs: {
+                                                  type: "number",
+                                                  step: "any",
+                                                  min: "0",
+                                                  placeholder: "0",
+                                                  required: "",
+                                                },
+                                                domProps: {
+                                                  value:
+                                                    input.packet_company_margin,
+                                                },
+                                                on: {
+                                                  input: [
+                                                    function ($event) {
+                                                      if (
+                                                        $event.target.composing
+                                                      ) {
+                                                        return
+                                                      }
+                                                      _vm.$set(
+                                                        input,
+                                                        "packet_company_margin",
+                                                        $event.target.value
+                                                      )
+                                                    },
+                                                    function ($event) {
+                                                      return _vm.totalFreezerTrpMarginMethod(
+                                                        input
+                                                      )
+                                                    },
+                                                  ],
+                                                },
+                                              }),
+                                            ]),
+                                          ],
+                                          1
+                                        ),
+                                      ]),
+                                      _vm._v(" "),
+                                      _c("div", { staticClass: "col-sm-3" }, [
+                                        _c(
+                                          "div",
+                                          { staticClass: "form-group" },
+                                          [
+                                            _vm._m(8, true),
+                                            _vm._v(" "),
+                                            _c("b-input-group", [
+                                              _c("input", {
+                                                directives: [
+                                                  {
+                                                    name: "model",
+                                                    rawName: "v-model",
+                                                    value:
+                                                      input.packet_total_freezer_trp_margin,
+                                                    expression:
+                                                      "input.packet_total_freezer_trp_margin",
+                                                  },
+                                                ],
+                                                staticClass: "form-control",
+                                                attrs: {
+                                                  type: "number",
+                                                  step: "any",
+                                                  min: "0",
+                                                  placeholder: "0",
+                                                  readonly: "",
+                                                },
+                                                domProps: {
+                                                  value:
+                                                    input.packet_total_freezer_trp_margin,
+                                                },
+                                                on: {
+                                                  input: function ($event) {
+                                                    if (
+                                                      $event.target.composing
+                                                    ) {
+                                                      return
+                                                    }
+                                                    _vm.$set(
+                                                      input,
+                                                      "packet_total_freezer_trp_margin",
+                                                      $event.target.value
+                                                    )
+                                                  },
+                                                },
+                                              }),
+                                            ]),
+                                          ],
+                                          1
+                                        ),
+                                      ]),
+                                      _vm._v(" "),
+                                      _c("div", { staticClass: "col-sm-3" }, [
+                                        _c(
+                                          "div",
+                                          { staticClass: "form-group" },
+                                          [
+                                            _c("label", [
+                                              _vm._v(
+                                                "Distributor & Franchise Rate"
+                                              ),
+                                            ]),
+                                            _vm._v(" "),
+                                            _c("b-input-group", [
+                                              _c("input", {
+                                                directives: [
+                                                  {
+                                                    name: "model",
+                                                    rawName: "v-model",
+                                                    value:
+                                                      input.packet_distributor_franchise_rate,
+                                                    expression:
+                                                      "input.packet_distributor_franchise_rate",
+                                                  },
+                                                ],
+                                                staticClass: "form-control",
+                                                attrs: {
+                                                  type: "number",
+                                                  step: "any",
+                                                  min: "0",
+                                                  placeholder: "0",
+                                                },
+                                                domProps: {
+                                                  value:
+                                                    input.packet_distributor_franchise_rate,
+                                                },
+                                                on: {
+                                                  input: [
+                                                    function ($event) {
+                                                      if (
+                                                        $event.target.composing
+                                                      ) {
+                                                        return
+                                                      }
+                                                      _vm.$set(
+                                                        input,
+                                                        "packet_distributor_franchise_rate",
+                                                        $event.target.value
+                                                      )
+                                                    },
+                                                    function ($event) {
+                                                      return _vm.totalRateOfDistributorFranchiseMethod(
+                                                        input
+                                                      )
+                                                    },
+                                                  ],
+                                                },
+                                              }),
+                                            ]),
+                                            _vm._v(" "),
+                                            _c(
+                                              "b-input-group",
+                                              { staticClass: "mt-2" },
+                                              [
+                                                _c("input", {
+                                                  directives: [
+                                                    {
+                                                      name: "model",
+                                                      rawName: "v-model",
+                                                      value:
+                                                        input.packet_total_distributor_franchise_rate,
+                                                      expression:
+                                                        "input.packet_total_distributor_franchise_rate",
+                                                    },
+                                                  ],
+                                                  staticClass: "form-control",
+                                                  attrs: {
+                                                    type: "number",
+                                                    step: "any",
+                                                    min: "0",
+                                                    placeholder: "0",
+                                                    readonly: "",
+                                                  },
+                                                  domProps: {
+                                                    value:
+                                                      input.packet_total_distributor_franchise_rate,
+                                                  },
+                                                  on: {
+                                                    input: function ($event) {
+                                                      if (
+                                                        $event.target.composing
+                                                      ) {
+                                                        return
+                                                      }
+                                                      _vm.$set(
+                                                        input,
+                                                        "packet_total_distributor_franchise_rate",
+                                                        $event.target.value
+                                                      )
+                                                    },
+                                                  },
+                                                }),
+                                              ]
+                                            ),
+                                          ],
+                                          1
+                                        ),
+                                      ]),
+                                      _vm._v(" "),
+                                      _c("div", { staticClass: "col-sm-3" }, [
+                                        _c(
+                                          "div",
+                                          { staticClass: "form-group" },
+                                          [
+                                            _c("label", [
+                                              _vm._v("Wholesaler Rate"),
+                                            ]),
+                                            _vm._v(" "),
+                                            _c("b-input-group", [
+                                              _c("input", {
+                                                directives: [
+                                                  {
+                                                    name: "model",
+                                                    rawName: "v-model",
+                                                    value:
+                                                      input.packet_subdistributor_outlet_rate,
+                                                    expression:
+                                                      "input.packet_subdistributor_outlet_rate",
+                                                  },
+                                                ],
+                                                staticClass: "form-control",
+                                                attrs: {
+                                                  type: "number",
+                                                  step: "any",
+                                                  min: "0",
+                                                  placeholder: "0",
+                                                },
+                                                domProps: {
+                                                  value:
+                                                    input.packet_subdistributor_outlet_rate,
+                                                },
+                                                on: {
+                                                  input: [
+                                                    function ($event) {
+                                                      if (
+                                                        $event.target.composing
+                                                      ) {
+                                                        return
+                                                      }
+                                                      _vm.$set(
+                                                        input,
+                                                        "packet_subdistributor_outlet_rate",
+                                                        $event.target.value
+                                                      )
+                                                    },
+                                                    function ($event) {
+                                                      return _vm.totalRateOfSubDistributorOutletMethod(
+                                                        input
+                                                      )
+                                                    },
+                                                  ],
+                                                },
+                                              }),
+                                            ]),
+                                            _vm._v(" "),
+                                            _c(
+                                              "b-input-group",
+                                              { staticClass: "mt-2" },
+                                              [
+                                                _c("input", {
+                                                  directives: [
+                                                    {
+                                                      name: "model",
+                                                      rawName: "v-model",
+                                                      value:
+                                                        input.packet_total_subdistributor_outlet_rate,
+                                                      expression:
+                                                        "input.packet_total_subdistributor_outlet_rate",
+                                                    },
+                                                  ],
+                                                  staticClass: "form-control",
+                                                  attrs: {
+                                                    type: "number",
+                                                    step: "any",
+                                                    min: "0",
+                                                    placeholder: "0",
+                                                    readonly: "",
+                                                  },
+                                                  domProps: {
+                                                    value:
+                                                      input.packet_total_subdistributor_outlet_rate,
+                                                  },
+                                                  on: {
+                                                    input: function ($event) {
+                                                      if (
+                                                        $event.target.composing
+                                                      ) {
+                                                        return
+                                                      }
+                                                      _vm.$set(
+                                                        input,
+                                                        "packet_total_subdistributor_outlet_rate",
+                                                        $event.target.value
+                                                      )
+                                                    },
+                                                  },
+                                                }),
+                                              ]
+                                            ),
+                                          ],
+                                          1
+                                        ),
+                                      ]),
+                                      _vm._v(" "),
+                                      _c("div", { staticClass: "col-sm-3" }, [
+                                        _c(
+                                          "div",
+                                          { staticClass: "form-group" },
+                                          [
+                                            _c("label", [
+                                              _vm._v("Retailer Rate"),
+                                            ]),
+                                            _vm._v(" "),
+                                            _c("b-input-group", [
+                                              _c("input", {
+                                                directives: [
+                                                  {
+                                                    name: "model",
+                                                    rawName: "v-model",
+                                                    value:
+                                                      input.packet_gt_market_retailer_vikreta_rate,
+                                                    expression:
+                                                      "input.packet_gt_market_retailer_vikreta_rate",
+                                                  },
+                                                ],
+                                                staticClass: "form-control",
+                                                attrs: {
+                                                  type: "number",
+                                                  step: "any",
+                                                  min: "0",
+                                                  placeholder: "0",
+                                                },
+                                                domProps: {
+                                                  value:
+                                                    input.packet_gt_market_retailer_vikreta_rate,
+                                                },
+                                                on: {
+                                                  input: [
+                                                    function ($event) {
+                                                      if (
+                                                        $event.target.composing
+                                                      ) {
+                                                        return
+                                                      }
+                                                      _vm.$set(
+                                                        input,
+                                                        "packet_gt_market_retailer_vikreta_rate",
+                                                        $event.target.value
+                                                      )
+                                                    },
+                                                    function ($event) {
+                                                      return _vm.totalRateOfGtMarketVikretaMethod(
+                                                        input
+                                                      )
+                                                    },
+                                                  ],
+                                                },
+                                              }),
+                                            ]),
+                                            _vm._v(" "),
+                                            _c(
+                                              "b-input-group",
+                                              { staticClass: "mt-2" },
+                                              [
+                                                _c("input", {
+                                                  directives: [
+                                                    {
+                                                      name: "model",
+                                                      rawName: "v-model",
+                                                      value:
+                                                        input.packet_total_gt_market_retailer_vikreta_rate,
+                                                      expression:
+                                                        "input.packet_total_gt_market_retailer_vikreta_rate",
+                                                    },
+                                                  ],
+                                                  staticClass: "form-control",
+                                                  attrs: {
+                                                    type: "number",
+                                                    step: "any",
+                                                    min: "0",
+                                                    placeholder: "0",
+                                                    readonly: "",
+                                                  },
+                                                  domProps: {
+                                                    value:
+                                                      input.packet_total_gt_market_retailer_vikreta_rate,
+                                                  },
+                                                  on: {
+                                                    input: function ($event) {
+                                                      if (
+                                                        $event.target.composing
+                                                      ) {
+                                                        return
+                                                      }
+                                                      _vm.$set(
+                                                        input,
+                                                        "packet_total_gt_market_retailer_vikreta_rate",
+                                                        $event.target.value
+                                                      )
+                                                    },
+                                                  },
+                                                }),
+                                              ]
+                                            ),
+                                          ],
+                                          1
+                                        ),
+                                      ]),
+                                      _vm._v(" "),
+                                      _c("div", { staticClass: "col-sm-3" }, [
+                                        _c(
+                                          "div",
+                                          { staticClass: "form-group" },
+                                          [
+                                            _c("label", [
+                                              _vm._v(
+                                                "E- commerce & Modern treat Rate"
+                                              ),
+                                            ]),
+                                            _vm._v(" "),
+                                            _c("b-input-group", [
+                                              _c("input", {
+                                                directives: [
+                                                  {
+                                                    name: "model",
+                                                    rawName: "v-model",
+                                                    value:
+                                                      input.packet_e_commerce_rate,
+                                                    expression:
+                                                      "input.packet_e_commerce_rate",
+                                                  },
+                                                ],
+                                                staticClass: "form-control",
+                                                attrs: {
+                                                  type: "number",
+                                                  step: "any",
+                                                  min: "0",
+                                                  placeholder: "0",
+                                                },
+                                                domProps: {
+                                                  value:
+                                                    input.packet_e_commerce_rate,
+                                                },
+                                                on: {
+                                                  input: [
+                                                    function ($event) {
+                                                      if (
+                                                        $event.target.composing
+                                                      ) {
+                                                        return
+                                                      }
+                                                      _vm.$set(
+                                                        input,
+                                                        "packet_e_commerce_rate",
+                                                        $event.target.value
+                                                      )
+                                                    },
+                                                    function ($event) {
+                                                      return _vm.totalRateOfECommerceMethod(
+                                                        input
+                                                      )
+                                                    },
+                                                  ],
+                                                },
+                                              }),
+                                            ]),
+                                            _vm._v(" "),
+                                            _c(
+                                              "b-input-group",
+                                              { staticClass: "mt-2" },
+                                              [
+                                                _c("input", {
+                                                  directives: [
+                                                    {
+                                                      name: "model",
+                                                      rawName: "v-model",
+                                                      value:
+                                                        input.packet_total_e_commerce_rate,
+                                                      expression:
+                                                        "input.packet_total_e_commerce_rate",
+                                                    },
+                                                  ],
+                                                  staticClass: "form-control",
+                                                  attrs: {
+                                                    type: "number",
+                                                    step: "any",
+                                                    min: "0",
+                                                    placeholder: "0",
+                                                    readonly: "",
+                                                  },
+                                                  domProps: {
+                                                    value:
+                                                      input.packet_total_e_commerce_rate,
+                                                  },
+                                                  on: {
+                                                    input: function ($event) {
+                                                      if (
+                                                        $event.target.composing
+                                                      ) {
+                                                        return
+                                                      }
+                                                      _vm.$set(
+                                                        input,
+                                                        "packet_total_e_commerce_rate",
+                                                        $event.target.value
+                                                      )
+                                                    },
+                                                  },
+                                                }),
+                                              ]
+                                            ),
+                                          ],
+                                          1
+                                        ),
+                                      ]),
+                                      _vm._v(" "),
+                                      _c("div", { staticClass: "col-sm-3" }, [
+                                        _c(
+                                          "div",
+                                          { staticClass: "form-group" },
+                                          [
+                                            _c("label", [
+                                              _vm._v("Horica Rate"),
+                                            ]),
+                                            _vm._v(" "),
+                                            _c("b-input-group", [
+                                              _c("input", {
+                                                directives: [
+                                                  {
+                                                    name: "model",
+                                                    rawName: "v-model",
+                                                    value:
+                                                      input.packet_horika_cantin_rate,
+                                                    expression:
+                                                      "input.packet_horika_cantin_rate",
+                                                  },
+                                                ],
+                                                staticClass: "form-control",
+                                                attrs: {
+                                                  type: "number",
+                                                  step: "any",
+                                                  min: "0",
+                                                  placeholder: "0",
+                                                },
+                                                domProps: {
+                                                  value:
+                                                    input.packet_horika_cantin_rate,
+                                                },
+                                                on: {
+                                                  input: [
+                                                    function ($event) {
+                                                      if (
+                                                        $event.target.composing
+                                                      ) {
+                                                        return
+                                                      }
+                                                      _vm.$set(
+                                                        input,
+                                                        "packet_horika_cantin_rate",
+                                                        $event.target.value
+                                                      )
+                                                    },
+                                                    function ($event) {
+                                                      return _vm.totalRateOfHorikacantinMethod(
+                                                        input
+                                                      )
+                                                    },
+                                                  ],
+                                                },
+                                              }),
+                                            ]),
+                                            _vm._v(" "),
+                                            _c(
+                                              "b-input-group",
+                                              { staticClass: "mt-2" },
+                                              [
+                                                _c("input", {
+                                                  directives: [
+                                                    {
+                                                      name: "model",
+                                                      rawName: "v-model",
+                                                      value:
+                                                        input.packet_total_horika_cantin_rate,
+                                                      expression:
+                                                        "input.packet_total_horika_cantin_rate",
+                                                    },
+                                                  ],
+                                                  staticClass: "form-control",
+                                                  attrs: {
+                                                    type: "number",
+                                                    step: "any",
+                                                    min: "0",
+                                                    placeholder: "0",
+                                                    readonly: "",
+                                                  },
+                                                  domProps: {
+                                                    value:
+                                                      input.packet_total_horika_cantin_rate,
+                                                  },
+                                                  on: {
+                                                    input: function ($event) {
+                                                      if (
+                                                        $event.target.composing
+                                                      ) {
+                                                        return
+                                                      }
+                                                      _vm.$set(
+                                                        input,
+                                                        "packet_total_horika_cantin_rate",
+                                                        $event.target.value
+                                                      )
+                                                    },
+                                                  },
+                                                }),
+                                              ]
+                                            ),
+                                          ],
+                                          1
+                                        ),
+                                      ]),
+                                      _vm._v(" "),
+                                      _c("div", { staticClass: "col-sm-3" }, [
+                                        _c(
+                                          "div",
+                                          { staticClass: "form-group" },
+                                          [
+                                            _c("label", [
+                                              _vm._v(
+                                                "Pick-up the franchiser point Rate"
+                                              ),
+                                            ]),
+                                            _vm._v(" "),
+                                            _c("b-input-group", [
+                                              _c("input", {
+                                                directives: [
+                                                  {
+                                                    name: "model",
+                                                    rawName: "v-model",
+                                                    value:
+                                                      input.packet_pick_up_the_franchiser_point_rate,
+                                                    expression:
+                                                      "input.packet_pick_up_the_franchiser_point_rate",
+                                                  },
+                                                ],
+                                                staticClass: "form-control",
+                                                attrs: {
+                                                  type: "number",
+                                                  step: "any",
+                                                  min: "0",
+                                                  placeholder: "0",
+                                                },
+                                                domProps: {
+                                                  value:
+                                                    input.packet_pick_up_the_franchiser_point_rate,
+                                                },
+                                                on: {
+                                                  input: [
+                                                    function ($event) {
+                                                      if (
+                                                        $event.target.composing
+                                                      ) {
+                                                        return
+                                                      }
+                                                      _vm.$set(
+                                                        input,
+                                                        "packet_pick_up_the_franchiser_point_rate",
+                                                        $event.target.value
+                                                      )
+                                                    },
+                                                    function ($event) {
+                                                      return _vm.totalRateOfPickUpFranchiserMethod(
+                                                        input
+                                                      )
+                                                    },
+                                                  ],
+                                                },
+                                              }),
+                                            ]),
+                                            _vm._v(" "),
+                                            _c(
+                                              "b-input-group",
+                                              { staticClass: "mt-2" },
+                                              [
+                                                _c("input", {
+                                                  directives: [
+                                                    {
+                                                      name: "model",
+                                                      rawName: "v-model",
+                                                      value:
+                                                        input.packet_total_pick_up_the_franchiser_point_rate,
+                                                      expression:
+                                                        "input.packet_total_pick_up_the_franchiser_point_rate",
+                                                    },
+                                                  ],
+                                                  staticClass: "form-control",
+                                                  attrs: {
+                                                    type: "number",
+                                                    step: "any",
+                                                    min: "0",
+                                                    placeholder: "0",
+                                                    readonly: "",
+                                                  },
+                                                  domProps: {
+                                                    value:
+                                                      input.packet_total_pick_up_the_franchiser_point_rate,
+                                                  },
+                                                  on: {
+                                                    input: function ($event) {
+                                                      if (
+                                                        $event.target.composing
+                                                      ) {
+                                                        return
+                                                      }
+                                                      _vm.$set(
+                                                        input,
+                                                        "packet_total_pick_up_the_franchiser_point_rate",
+                                                        $event.target.value
+                                                      )
+                                                    },
+                                                  },
+                                                }),
+                                              ]
+                                            ),
+                                          ],
+                                          1
+                                        ),
+                                      ]),
+                                      _vm._v(" "),
+                                      _c("div", { staticClass: "col-sm-3" }, [
+                                        _c(
+                                          "div",
+                                          { staticClass: "form-group" },
+                                          [
+                                            _c("label", [
+                                              _vm._v(
+                                                "Consumer Home Delivery Customer Rate"
+                                              ),
+                                            ]),
+                                            _vm._v(" "),
+                                            _c("b-input-group", [
+                                              _c("input", {
+                                                directives: [
+                                                  {
+                                                    name: "model",
+                                                    rawName: "v-model",
+                                                    value:
+                                                      input.packet_consumer_home_delivery_customer_price,
+                                                    expression:
+                                                      "input.packet_consumer_home_delivery_customer_price",
+                                                  },
+                                                ],
+                                                staticClass: "form-control",
+                                                attrs: {
+                                                  type: "number",
+                                                  step: "any",
+                                                  min: "0",
+                                                  placeholder: "0",
+                                                },
+                                                domProps: {
+                                                  value:
+                                                    input.packet_consumer_home_delivery_customer_price,
+                                                },
+                                                on: {
+                                                  input: [
+                                                    function ($event) {
+                                                      if (
+                                                        $event.target.composing
+                                                      ) {
+                                                        return
+                                                      }
+                                                      _vm.$set(
+                                                        input,
+                                                        "packet_consumer_home_delivery_customer_price",
+                                                        $event.target.value
+                                                      )
+                                                    },
+                                                    function ($event) {
+                                                      return _vm.totalRateOfConsumerHomeDeliveryMethod(
+                                                        input
+                                                      )
+                                                    },
+                                                  ],
+                                                },
+                                              }),
+                                            ]),
+                                            _vm._v(" "),
+                                            _c(
+                                              "b-input-group",
+                                              { staticClass: "mt-2" },
+                                              [
+                                                _c("input", {
+                                                  directives: [
+                                                    {
+                                                      name: "model",
+                                                      rawName: "v-model",
+                                                      value:
+                                                        input.packet_total_consumer_home_delivery_customer_price,
+                                                      expression:
+                                                        "input.packet_total_consumer_home_delivery_customer_price",
+                                                    },
+                                                  ],
+                                                  staticClass: "form-control",
+                                                  attrs: {
+                                                    type: "number",
+                                                    step: "any",
+                                                    min: "0",
+                                                    placeholder: "0",
+                                                    readonly: "",
+                                                  },
+                                                  domProps: {
+                                                    value:
+                                                      input.packet_total_consumer_home_delivery_customer_price,
+                                                  },
+                                                  on: {
+                                                    input: function ($event) {
+                                                      if (
+                                                        $event.target.composing
+                                                      ) {
+                                                        return
+                                                      }
+                                                      _vm.$set(
+                                                        input,
+                                                        "packet_total_consumer_home_delivery_customer_price",
+                                                        $event.target.value
+                                                      )
+                                                    },
+                                                  },
+                                                }),
+                                              ]
+                                            ),
+                                          ],
+                                          1
+                                        ),
+                                      ]),
+                                      _vm._v(" "),
+                                      _c("div", { staticClass: "col-sm-3" }, [
+                                        _c(
+                                          "div",
+                                          { staticClass: "form-group" },
+                                          [
+                                            _vm._m(9, true),
+                                            _vm._v(" "),
+                                            _c("b-input-group", [
+                                              _c("input", {
+                                                directives: [
+                                                  {
+                                                    name: "model",
+                                                    rawName: "v-model",
+                                                    value: input.packet_mrp,
+                                                    expression:
+                                                      "input.packet_mrp",
+                                                  },
+                                                ],
+                                                staticClass: "form-control",
+                                                attrs: {
+                                                  type: "number",
+                                                  step: "any",
+                                                  min: "0",
+                                                  placeholder: "0",
+                                                  required: "",
+                                                },
+                                                domProps: {
+                                                  value: input.packet_mrp,
+                                                },
+                                                on: {
+                                                  input: function ($event) {
+                                                    if (
+                                                      $event.target.composing
+                                                    ) {
+                                                      return
+                                                    }
+                                                    _vm.$set(
+                                                      input,
+                                                      "packet_mrp",
+                                                      $event.target.value
+                                                    )
+                                                  },
+                                                },
+                                              }),
+                                            ]),
+                                          ],
+                                          1
+                                        ),
+                                      ]),
+                                      _vm._v(" "),
+                                      _c("div", { staticClass: "col-sm-5" }, [
+                                        _c(
+                                          "div",
+                                          { staticClass: "form-group" },
+                                          [
+                                            _c("label", [_vm._v("HSN Code ")]),
+                                            _vm._v(" "),
+                                            _c("b-input-group", [
+                                              _c("input", {
+                                                directives: [
+                                                  {
+                                                    name: "model",
+                                                    rawName: "v-model",
+                                                    value: input.packet_hsn,
+                                                    expression:
+                                                      "input.packet_hsn",
+                                                  },
+                                                ],
+                                                staticClass: "form-control",
+                                                attrs: {
+                                                  type: "text",
+                                                  placeholder: "hsn code",
+                                                },
+                                                domProps: {
+                                                  value: input.packet_hsn,
+                                                },
+                                                on: {
+                                                  input: function ($event) {
+                                                    if (
+                                                      $event.target.composing
+                                                    ) {
+                                                      return
+                                                    }
+                                                    _vm.$set(
+                                                      input,
+                                                      "packet_hsn",
+                                                      $event.target.value
+                                                    )
+                                                  },
+                                                },
+                                              }),
+                                            ]),
+                                          ],
+                                          1
+                                        ),
+                                      ]),
+                                    ]
+                                  ),
+                                ]),
+                                _vm._v(" "),
                                 _c("div", { staticClass: "col-md-12 " }, [
                                   _c("div", { staticClass: "form-group" }, [
-                                    _c("label", [
-                                      _vm._v(_vm._s(_vm.__("variant_images"))),
-                                    ]),
+                                    _c("label", [_vm._v("Variant Images")]),
                                     _vm._v(" "),
                                     _c("input", {
                                       ref: "packet_variant_images_" + k,
@@ -3043,7 +4685,7 @@ var render = function () {
                                         },
                                       },
                                       [
-                                        _vm._m(3, true),
+                                        _vm._m(10, true),
                                         _vm._v(" "),
                                         _c("label", [
                                           _vm._v(
@@ -3062,7 +4704,7 @@ var render = function () {
                                       { staticClass: "text text-primary" },
                                       [
                                         _vm._v(
-                                          "Please choose square image of larger than 350px*350px & smaller than 550px*550px."
+                                          "Please choose square image of larger\n                                                than 350px*350px & smaller than 550px*550px."
                                         ),
                                       ]
                                     ),
@@ -3195,9 +4837,7 @@ var render = function () {
                                               staticClass: "fa fa-plus-square",
                                             }),
                                             _vm._v(
-                                              " " +
-                                                _vm._s(_vm.__("add_variant")) +
-                                                "\n                                            "
+                                              " Add Variant\n                                        "
                                             ),
                                           ]
                                         ),
@@ -3240,11 +4880,7 @@ var render = function () {
                                               staticClass: "fa fa-times",
                                             }),
                                             _vm._v(
-                                              " " +
-                                                _vm._s(
-                                                  _vm.__("remove_variant")
-                                                ) +
-                                                "\n                                            "
+                                              " Remove Variant\n                                        "
                                             ),
                                           ]
                                         ),
@@ -3267,13 +4903,13 @@ var render = function () {
                               { key: k, staticClass: "list-group-item" },
                               [
                                 _c("div", { staticClass: "row" }, [
-                                  _c("div", { staticClass: "col-md-4" }, [
+                                  _c("div", { staticClass: "col-md-3" }, [
                                     _c(
                                       "div",
                                       { staticClass: "form-group loose_div" },
                                       [
                                         _c("label", [
-                                          _vm._v(_vm._s(_vm.__("measurement"))),
+                                          _vm._v(_vm._s(_vm.__("weight"))),
                                         ]),
                                         _vm._v(" "),
                                         _c(
@@ -3327,139 +4963,1367 @@ var render = function () {
                                     ),
                                   ]),
                                   _vm._v(" "),
-                                  _c("div", { staticClass: "col-md-4" }, [
+                                  _c("div", { staticClass: "col-md-3" }, [
+                                    _vm.is_unlimited_stock != 1
+                                      ? _c(
+                                          "div",
+                                          { staticClass: "form-group" },
+                                          [
+                                            _c("label", [_vm._v("Stock ")]),
+                                            _vm._v(" "),
+                                            _c(
+                                              "i",
+                                              { staticClass: "text-danger" },
+                                              [_vm._v("*")]
+                                            ),
+                                            _vm._v(" "),
+                                            _c("input", {
+                                              directives: [
+                                                {
+                                                  name: "model",
+                                                  rawName: "v-model",
+                                                  value: _vm.loose_stock,
+                                                  expression: "loose_stock",
+                                                },
+                                              ],
+                                              staticClass: "form-control",
+                                              attrs: {
+                                                type: "number",
+                                                step: "any",
+                                                min: "0",
+                                              },
+                                              domProps: {
+                                                value: _vm.loose_stock,
+                                              },
+                                              on: {
+                                                input: function ($event) {
+                                                  if ($event.target.composing) {
+                                                    return
+                                                  }
+                                                  _vm.loose_stock =
+                                                    $event.target.value
+                                                },
+                                              },
+                                            }),
+                                            _c("br"),
+                                          ]
+                                        )
+                                      : _vm._e(),
+                                  ]),
+                                  _vm._v(" "),
+                                  _c("div", { staticClass: "col-md-3" }, [
+                                    _c("div", { staticClass: "form-group" }, [
+                                      _c("label", [_vm._v("Unit ")]),
+                                      _vm._v(" "),
+                                      _c(
+                                        "select",
+                                        {
+                                          directives: [
+                                            {
+                                              name: "model",
+                                              rawName: "v-model",
+                                              value: _vm.loose_stock_unit_id,
+                                              expression: "loose_stock_unit_id",
+                                            },
+                                          ],
+                                          staticClass:
+                                            "form-control form-select",
+                                          attrs: {
+                                            name: "loose_stock_unit_id",
+                                          },
+                                          on: {
+                                            change: function ($event) {
+                                              var $$selectedVal =
+                                                Array.prototype.filter
+                                                  .call(
+                                                    $event.target.options,
+                                                    function (o) {
+                                                      return o.selected
+                                                    }
+                                                  )
+                                                  .map(function (o) {
+                                                    var val =
+                                                      "_value" in o
+                                                        ? o._value
+                                                        : o.value
+                                                    return val
+                                                  })
+                                              _vm.loose_stock_unit_id = $event
+                                                .target.multiple
+                                                ? $$selectedVal
+                                                : $$selectedVal[0]
+                                            },
+                                          },
+                                        },
+                                        [
+                                          _c(
+                                            "option",
+                                            { attrs: { value: "" } },
+                                            [
+                                              _vm._v(
+                                                _vm._s(_vm.__("select_unit"))
+                                              ),
+                                            ]
+                                          ),
+                                          _vm._v(" "),
+                                          _vm._l(
+                                            _vm.units,
+                                            function (unit, key) {
+                                              return _c(
+                                                "option",
+                                                {
+                                                  domProps: { value: unit.id },
+                                                },
+                                                [
+                                                  _vm._v(
+                                                    _vm._s(unit.short_code)
+                                                  ),
+                                                ]
+                                              )
+                                            }
+                                          ),
+                                        ],
+                                        2
+                                      ),
+                                    ]),
+                                  ]),
+                                  _vm._v(" "),
+                                  _c("div", { staticClass: "col-md-3" }, [
+                                    _c("div", { staticClass: "form-group" }, [
+                                      _c("label", [_vm._v("Status ")]),
+                                      _vm._v(" "),
+                                      _c(
+                                        "select",
+                                        {
+                                          directives: [
+                                            {
+                                              name: "model",
+                                              rawName: "v-model",
+                                              value: _vm.status,
+                                              expression: "status",
+                                            },
+                                          ],
+                                          staticClass:
+                                            "form-control form-select",
+                                          attrs: { name: "status" },
+                                          on: {
+                                            change: function ($event) {
+                                              var $$selectedVal =
+                                                Array.prototype.filter
+                                                  .call(
+                                                    $event.target.options,
+                                                    function (o) {
+                                                      return o.selected
+                                                    }
+                                                  )
+                                                  .map(function (o) {
+                                                    var val =
+                                                      "_value" in o
+                                                        ? o._value
+                                                        : o.value
+                                                    return val
+                                                  })
+                                              _vm.status = $event.target
+                                                .multiple
+                                                ? $$selectedVal
+                                                : $$selectedVal[0]
+                                            },
+                                          },
+                                        },
+                                        [
+                                          _c(
+                                            "option",
+                                            { attrs: { value: "" } },
+                                            [
+                                              _vm._v(
+                                                _vm._s(_vm.__("select_status"))
+                                              ),
+                                            ]
+                                          ),
+                                          _vm._v(" "),
+                                          _c(
+                                            "option",
+                                            { attrs: { value: "1" } },
+                                            [
+                                              _vm._v(
+                                                _vm._s(_vm.__("available"))
+                                              ),
+                                            ]
+                                          ),
+                                          _vm._v(" "),
+                                          _c(
+                                            "option",
+                                            { attrs: { value: "0" } },
+                                            [_vm._v(_vm._s(_vm.__("sold_out")))]
+                                          ),
+                                        ]
+                                      ),
+                                    ]),
+                                  ]),
+                                  _vm._v(" "),
+                                  _c("div", { staticClass: "col-md-12" }, [
                                     _c(
                                       "div",
-                                      { staticClass: "form-group loose_div" },
+                                      {
+                                        staticClass: "row price_calucation_row",
+                                      },
                                       [
-                                        _c("label", [
-                                          _vm._v(
-                                            _vm._s(_vm.__("price")) +
-                                              " ( " +
-                                              _vm._s(_vm.$currency) +
-                                              " ):"
+                                        _c("div", { staticClass: "col-md-3" }, [
+                                          _c(
+                                            "div",
+                                            { staticClass: "form-group" },
+                                            [
+                                              _c("label", [
+                                                _vm._v(
+                                                  _vm._s(_vm.__("base_price")) +
+                                                    " ( " +
+                                                    _vm._s(_vm.$currency) +
+                                                    " )"
+                                                ),
+                                              ]),
+                                              _vm._v(" "),
+                                              _c(
+                                                "i",
+                                                { staticClass: "text-danger" },
+                                                [_vm._v("*")]
+                                              ),
+                                              _vm._v(" "),
+                                              _c("input", {
+                                                directives: [
+                                                  {
+                                                    name: "model",
+                                                    rawName: "v-model",
+                                                    value: input.packet_price,
+                                                    expression:
+                                                      "input.packet_price",
+                                                  },
+                                                ],
+                                                staticClass: "form-control",
+                                                attrs: {
+                                                  type: "number",
+                                                  min: "0",
+                                                  placeholder: "0.00",
+                                                  required: "",
+                                                },
+                                                domProps: {
+                                                  value: input.packet_price,
+                                                },
+                                                on: {
+                                                  input: [
+                                                    function ($event) {
+                                                      if (
+                                                        $event.target.composing
+                                                      ) {
+                                                        return
+                                                      }
+                                                      _vm.$set(
+                                                        input,
+                                                        "packet_price",
+                                                        $event.target.value
+                                                      )
+                                                    },
+                                                    function ($event) {
+                                                      return _vm.totalFreezerTrpMarginMethod(
+                                                        input
+                                                      )
+                                                    },
+                                                  ],
+                                                },
+                                              }),
+                                            ]
                                           ),
                                         ]),
                                         _vm._v(" "),
-                                        _c(
-                                          "i",
-                                          { staticClass: "text-danger" },
-                                          [_vm._v("*")]
-                                        ),
-                                        _vm._v(" "),
-                                        _c("input", {
-                                          directives: [
-                                            {
-                                              name: "model",
-                                              rawName: "v-model",
-                                              value: input.loose_price,
-                                              expression: "input.loose_price",
-                                            },
-                                          ],
-                                          staticClass: "form-control",
-                                          attrs: {
-                                            type: "number",
-                                            min: "0",
-                                            placeholder: "0.00",
-                                            required: "",
-                                          },
-                                          domProps: {
-                                            value: input.loose_price,
-                                          },
-                                          on: {
-                                            input: function ($event) {
-                                              if ($event.target.composing) {
-                                                return
-                                              }
-                                              _vm.$set(
-                                                input,
-                                                "loose_price",
-                                                $event.target.value
-                                              )
-                                            },
-                                          },
-                                        }),
-                                      ]
-                                    ),
-                                  ]),
-                                  _vm._v(" "),
-                                  _c("div", { staticClass: "col-md-4" }, [
-                                    _c(
-                                      "div",
-                                      { staticClass: "form-group loose_div" },
-                                      [
-                                        _c(
-                                          "label",
-                                          {
-                                            attrs: { for: "discounted_price" },
-                                          },
-                                          [
-                                            _vm._v(
-                                              _vm._s(
-                                                _vm.__("discounted_price")
-                                              ) +
-                                                " ( " +
-                                                _vm._s(_vm.$currency) +
-                                                " ):"
-                                            ),
-                                          ]
-                                        ),
-                                        _vm._v(" "),
-                                        _c("input", {
-                                          directives: [
-                                            {
-                                              name: "model",
-                                              rawName: "v-model",
-                                              value:
-                                                input.loose_discounted_price,
-                                              expression:
-                                                "input.loose_discounted_price",
-                                            },
-                                          ],
-                                          staticClass: "form-control",
-                                          attrs: {
-                                            type: "number",
-                                            min: "0",
-                                            placeholder: "0.00",
-                                            id: "discounted_price",
-                                          },
-                                          domProps: {
-                                            value: input.loose_discounted_price,
-                                          },
-                                          on: {
-                                            input: [
-                                              function ($event) {
-                                                if ($event.target.composing) {
-                                                  return
-                                                }
-                                                _vm.$set(
-                                                  input,
-                                                  "loose_discounted_price",
-                                                  $event.target.value
-                                                )
-                                              },
-                                              function ($event) {
-                                                return _vm.validateDiscountedPriceLoose(
-                                                  input
-                                                )
-                                              },
+                                        _c("div", { staticClass: "col-sm-3" }, [
+                                          _c(
+                                            "div",
+                                            { staticClass: "form-group" },
+                                            [
+                                              _vm._m(11, true),
+                                              _vm._v(" "),
+                                              _c("b-input-group", [
+                                                _c("input", {
+                                                  directives: [
+                                                    {
+                                                      name: "model",
+                                                      rawName: "v-model",
+                                                      value:
+                                                        input.packet_freezer_cost,
+                                                      expression:
+                                                        "input.packet_freezer_cost",
+                                                    },
+                                                  ],
+                                                  staticClass: "form-control",
+                                                  attrs: {
+                                                    type: "number",
+                                                    step: "any",
+                                                    min: "0",
+                                                    placeholder: "0",
+                                                    required: "",
+                                                  },
+                                                  domProps: {
+                                                    value:
+                                                      input.packet_freezer_cost,
+                                                  },
+                                                  on: {
+                                                    input: [
+                                                      function ($event) {
+                                                        if (
+                                                          $event.target
+                                                            .composing
+                                                        ) {
+                                                          return
+                                                        }
+                                                        _vm.$set(
+                                                          input,
+                                                          "packet_freezer_cost",
+                                                          $event.target.value
+                                                        )
+                                                      },
+                                                      function ($event) {
+                                                        return _vm.totalFreezerTrpMarginMethod(
+                                                          input
+                                                        )
+                                                      },
+                                                    ],
+                                                  },
+                                                }),
+                                              ]),
                                             ],
-                                          },
-                                        }),
+                                            1
+                                          ),
+                                        ]),
                                         _vm._v(" "),
-                                        input.validationErrorDiscountedPriceLoose
-                                          ? _c(
-                                              "span",
-                                              { staticClass: "error" },
-                                              [
+                                        _c("div", { staticClass: "col-sm-3" }, [
+                                          _c(
+                                            "div",
+                                            { staticClass: "form-group" },
+                                            [
+                                              _vm._m(12, true),
+                                              _vm._v(" "),
+                                              _c("b-input-group", [
+                                                _c("input", {
+                                                  directives: [
+                                                    {
+                                                      name: "model",
+                                                      rawName: "v-model",
+                                                      value:
+                                                        input.packet_secondry_trp,
+                                                      expression:
+                                                        "input.packet_secondry_trp",
+                                                    },
+                                                  ],
+                                                  staticClass: "form-control",
+                                                  attrs: {
+                                                    type: "number",
+                                                    step: "any",
+                                                    min: "0",
+                                                    placeholder: "0",
+                                                    required: "",
+                                                  },
+                                                  domProps: {
+                                                    value:
+                                                      input.packet_secondry_trp,
+                                                  },
+                                                  on: {
+                                                    input: [
+                                                      function ($event) {
+                                                        if (
+                                                          $event.target
+                                                            .composing
+                                                        ) {
+                                                          return
+                                                        }
+                                                        _vm.$set(
+                                                          input,
+                                                          "packet_secondry_trp",
+                                                          $event.target.value
+                                                        )
+                                                      },
+                                                      function ($event) {
+                                                        return _vm.totalFreezerTrpMarginMethod(
+                                                          input
+                                                        )
+                                                      },
+                                                    ],
+                                                  },
+                                                }),
+                                              ]),
+                                            ],
+                                            1
+                                          ),
+                                        ]),
+                                        _vm._v(" "),
+                                        _c("div", { staticClass: "col-sm-3" }, [
+                                          _c(
+                                            "div",
+                                            { staticClass: "form-group" },
+                                            [
+                                              _vm._m(13, true),
+                                              _vm._v(" "),
+                                              _c("b-input-group", [
+                                                _c("input", {
+                                                  directives: [
+                                                    {
+                                                      name: "model",
+                                                      rawName: "v-model",
+                                                      value:
+                                                        input.packet_company_margin,
+                                                      expression:
+                                                        "input.packet_company_margin",
+                                                    },
+                                                  ],
+                                                  staticClass: "form-control",
+                                                  attrs: {
+                                                    type: "number",
+                                                    step: "any",
+                                                    min: "0",
+                                                    placeholder: "0",
+                                                    required: "",
+                                                  },
+                                                  domProps: {
+                                                    value:
+                                                      input.packet_company_margin,
+                                                  },
+                                                  on: {
+                                                    input: [
+                                                      function ($event) {
+                                                        if (
+                                                          $event.target
+                                                            .composing
+                                                        ) {
+                                                          return
+                                                        }
+                                                        _vm.$set(
+                                                          input,
+                                                          "packet_company_margin",
+                                                          $event.target.value
+                                                        )
+                                                      },
+                                                      function ($event) {
+                                                        return _vm.totalFreezerTrpMarginMethod(
+                                                          input
+                                                        )
+                                                      },
+                                                    ],
+                                                  },
+                                                }),
+                                              ]),
+                                            ],
+                                            1
+                                          ),
+                                        ]),
+                                        _vm._v(" "),
+                                        _c("div", { staticClass: "col-sm-3" }, [
+                                          _c(
+                                            "div",
+                                            { staticClass: "form-group" },
+                                            [
+                                              _vm._m(14, true),
+                                              _vm._v(" "),
+                                              _c("b-input-group", [
+                                                _c("input", {
+                                                  directives: [
+                                                    {
+                                                      name: "model",
+                                                      rawName: "v-model",
+                                                      value:
+                                                        input.packet_total_freezer_trp_margin,
+                                                      expression:
+                                                        "input.packet_total_freezer_trp_margin",
+                                                    },
+                                                  ],
+                                                  staticClass: "form-control",
+                                                  attrs: {
+                                                    type: "number",
+                                                    step: "any",
+                                                    min: "0",
+                                                    placeholder: "0",
+                                                    readonly: "",
+                                                  },
+                                                  domProps: {
+                                                    value:
+                                                      input.packet_total_freezer_trp_margin,
+                                                  },
+                                                  on: {
+                                                    input: function ($event) {
+                                                      if (
+                                                        $event.target.composing
+                                                      ) {
+                                                        return
+                                                      }
+                                                      _vm.$set(
+                                                        input,
+                                                        "packet_total_freezer_trp_margin",
+                                                        $event.target.value
+                                                      )
+                                                    },
+                                                  },
+                                                }),
+                                              ]),
+                                            ],
+                                            1
+                                          ),
+                                        ]),
+                                        _vm._v(" "),
+                                        _c("div", { staticClass: "col-sm-3" }, [
+                                          _c(
+                                            "div",
+                                            { staticClass: "form-group" },
+                                            [
+                                              _c("label", [
                                                 _vm._v(
-                                                  _vm._s(
-                                                    input.validationErrorDiscountedPriceLoose
-                                                  )
+                                                  "Distributor & Franchise Rate"
                                                 ),
-                                              ]
-                                            )
-                                          : _vm._e(),
+                                              ]),
+                                              _vm._v(" "),
+                                              _c("b-input-group", [
+                                                _c("input", {
+                                                  directives: [
+                                                    {
+                                                      name: "model",
+                                                      rawName: "v-model",
+                                                      value:
+                                                        input.packet_distributor_franchise_rate,
+                                                      expression:
+                                                        "input.packet_distributor_franchise_rate",
+                                                    },
+                                                  ],
+                                                  staticClass: "form-control",
+                                                  attrs: {
+                                                    type: "number",
+                                                    step: "any",
+                                                    min: "0",
+                                                    placeholder: "0",
+                                                  },
+                                                  domProps: {
+                                                    value:
+                                                      input.packet_distributor_franchise_rate,
+                                                  },
+                                                  on: {
+                                                    input: [
+                                                      function ($event) {
+                                                        if (
+                                                          $event.target
+                                                            .composing
+                                                        ) {
+                                                          return
+                                                        }
+                                                        _vm.$set(
+                                                          input,
+                                                          "packet_distributor_franchise_rate",
+                                                          $event.target.value
+                                                        )
+                                                      },
+                                                      function ($event) {
+                                                        return _vm.totalRateOfDistributorFranchiseMethod(
+                                                          input
+                                                        )
+                                                      },
+                                                    ],
+                                                  },
+                                                }),
+                                              ]),
+                                              _vm._v(" "),
+                                              _c(
+                                                "b-input-group",
+                                                { staticClass: "mt-2" },
+                                                [
+                                                  _c("input", {
+                                                    directives: [
+                                                      {
+                                                        name: "model",
+                                                        rawName: "v-model",
+                                                        value:
+                                                          input.packet_total_distributor_franchise_rate,
+                                                        expression:
+                                                          "input.packet_total_distributor_franchise_rate",
+                                                      },
+                                                    ],
+                                                    staticClass: "form-control",
+                                                    attrs: {
+                                                      type: "number",
+                                                      step: "any",
+                                                      min: "0",
+                                                      placeholder: "0",
+                                                      readonly: "",
+                                                    },
+                                                    domProps: {
+                                                      value:
+                                                        input.packet_total_distributor_franchise_rate,
+                                                    },
+                                                    on: {
+                                                      input: function ($event) {
+                                                        if (
+                                                          $event.target
+                                                            .composing
+                                                        ) {
+                                                          return
+                                                        }
+                                                        _vm.$set(
+                                                          input,
+                                                          "packet_total_distributor_franchise_rate",
+                                                          $event.target.value
+                                                        )
+                                                      },
+                                                    },
+                                                  }),
+                                                ]
+                                              ),
+                                            ],
+                                            1
+                                          ),
+                                        ]),
+                                        _vm._v(" "),
+                                        _c("div", { staticClass: "col-sm-3" }, [
+                                          _c(
+                                            "div",
+                                            { staticClass: "form-group" },
+                                            [
+                                              _c("label", [
+                                                _vm._v(
+                                                  "E- commerce & Modern treat Rate"
+                                                ),
+                                              ]),
+                                              _vm._v(" "),
+                                              _c("b-input-group", [
+                                                _c("input", {
+                                                  directives: [
+                                                    {
+                                                      name: "model",
+                                                      rawName: "v-model",
+                                                      value:
+                                                        input.packet_e_commerce_rate,
+                                                      expression:
+                                                        "input.packet_e_commerce_rate",
+                                                    },
+                                                  ],
+                                                  staticClass: "form-control",
+                                                  attrs: {
+                                                    type: "number",
+                                                    step: "any",
+                                                    min: "0",
+                                                    placeholder: "0",
+                                                  },
+                                                  domProps: {
+                                                    value:
+                                                      input.packet_e_commerce_rate,
+                                                  },
+                                                  on: {
+                                                    input: [
+                                                      function ($event) {
+                                                        if (
+                                                          $event.target
+                                                            .composing
+                                                        ) {
+                                                          return
+                                                        }
+                                                        _vm.$set(
+                                                          input,
+                                                          "packet_e_commerce_rate",
+                                                          $event.target.value
+                                                        )
+                                                      },
+                                                      function ($event) {
+                                                        return _vm.totalRateOfECommerceMethod(
+                                                          input
+                                                        )
+                                                      },
+                                                    ],
+                                                  },
+                                                }),
+                                              ]),
+                                              _vm._v(" "),
+                                              _c(
+                                                "b-input-group",
+                                                { staticClass: "mt-2" },
+                                                [
+                                                  _c("input", {
+                                                    directives: [
+                                                      {
+                                                        name: "model",
+                                                        rawName: "v-model",
+                                                        value:
+                                                          input.packet_total_e_commerce_rate,
+                                                        expression:
+                                                          "input.packet_total_e_commerce_rate",
+                                                      },
+                                                    ],
+                                                    staticClass: "form-control",
+                                                    attrs: {
+                                                      type: "number",
+                                                      step: "any",
+                                                      min: "0",
+                                                      placeholder: "0",
+                                                      readonly: "",
+                                                    },
+                                                    domProps: {
+                                                      value:
+                                                        input.packet_total_e_commerce_rate,
+                                                    },
+                                                    on: {
+                                                      input: function ($event) {
+                                                        if (
+                                                          $event.target
+                                                            .composing
+                                                        ) {
+                                                          return
+                                                        }
+                                                        _vm.$set(
+                                                          input,
+                                                          "packet_total_e_commerce_rate",
+                                                          $event.target.value
+                                                        )
+                                                      },
+                                                    },
+                                                  }),
+                                                ]
+                                              ),
+                                            ],
+                                            1
+                                          ),
+                                        ]),
+                                        _vm._v(" "),
+                                        _c("div", { staticClass: "col-sm-3" }, [
+                                          _c(
+                                            "div",
+                                            { staticClass: "form-group" },
+                                            [
+                                              _c("label", [
+                                                _vm._v(
+                                                  "Subdistributor & Dairy Outlet Rate"
+                                                ),
+                                              ]),
+                                              _vm._v(" "),
+                                              _c("b-input-group", [
+                                                _c("input", {
+                                                  directives: [
+                                                    {
+                                                      name: "model",
+                                                      rawName: "v-model",
+                                                      value:
+                                                        input.packet_subdistributor_outlet_rate,
+                                                      expression:
+                                                        "input.packet_subdistributor_outlet_rate",
+                                                    },
+                                                  ],
+                                                  staticClass: "form-control",
+                                                  attrs: {
+                                                    type: "number",
+                                                    step: "any",
+                                                    min: "0",
+                                                    placeholder: "0",
+                                                  },
+                                                  domProps: {
+                                                    value:
+                                                      input.packet_subdistributor_outlet_rate,
+                                                  },
+                                                  on: {
+                                                    input: [
+                                                      function ($event) {
+                                                        if (
+                                                          $event.target
+                                                            .composing
+                                                        ) {
+                                                          return
+                                                        }
+                                                        _vm.$set(
+                                                          input,
+                                                          "packet_subdistributor_outlet_rate",
+                                                          $event.target.value
+                                                        )
+                                                      },
+                                                      function ($event) {
+                                                        return _vm.totalRateOfSubDistributorOutletMethod(
+                                                          input
+                                                        )
+                                                      },
+                                                    ],
+                                                  },
+                                                }),
+                                              ]),
+                                              _vm._v(" "),
+                                              _c(
+                                                "b-input-group",
+                                                { staticClass: "mt-2" },
+                                                [
+                                                  _c("input", {
+                                                    directives: [
+                                                      {
+                                                        name: "model",
+                                                        rawName: "v-model",
+                                                        value:
+                                                          input.packet_total_subdistributor_outlet_rate,
+                                                        expression:
+                                                          "input.packet_total_subdistributor_outlet_rate",
+                                                      },
+                                                    ],
+                                                    staticClass: "form-control",
+                                                    attrs: {
+                                                      type: "number",
+                                                      step: "any",
+                                                      min: "0",
+                                                      placeholder: "0",
+                                                      readonly: "",
+                                                    },
+                                                    domProps: {
+                                                      value:
+                                                        input.packet_total_subdistributor_outlet_rate,
+                                                    },
+                                                    on: {
+                                                      input: function ($event) {
+                                                        if (
+                                                          $event.target
+                                                            .composing
+                                                        ) {
+                                                          return
+                                                        }
+                                                        _vm.$set(
+                                                          input,
+                                                          "packet_total_subdistributor_outlet_rate",
+                                                          $event.target.value
+                                                        )
+                                                      },
+                                                    },
+                                                  }),
+                                                ]
+                                              ),
+                                            ],
+                                            1
+                                          ),
+                                        ]),
+                                        _vm._v(" "),
+                                        _c("div", { staticClass: "col-sm-3" }, [
+                                          _c(
+                                            "div",
+                                            { staticClass: "form-group" },
+                                            [
+                                              _c("label", [
+                                                _vm._v("Horika & Cantin Rate"),
+                                              ]),
+                                              _vm._v(" "),
+                                              _c("b-input-group", [
+                                                _c("input", {
+                                                  directives: [
+                                                    {
+                                                      name: "model",
+                                                      rawName: "v-model",
+                                                      value:
+                                                        input.packet_horika_cantin_rate,
+                                                      expression:
+                                                        "input.packet_horika_cantin_rate",
+                                                    },
+                                                  ],
+                                                  staticClass: "form-control",
+                                                  attrs: {
+                                                    type: "number",
+                                                    step: "any",
+                                                    min: "0",
+                                                    placeholder: "0",
+                                                  },
+                                                  domProps: {
+                                                    value:
+                                                      input.packet_horika_cantin_rate,
+                                                  },
+                                                  on: {
+                                                    input: [
+                                                      function ($event) {
+                                                        if (
+                                                          $event.target
+                                                            .composing
+                                                        ) {
+                                                          return
+                                                        }
+                                                        _vm.$set(
+                                                          input,
+                                                          "packet_horika_cantin_rate",
+                                                          $event.target.value
+                                                        )
+                                                      },
+                                                      function ($event) {
+                                                        return _vm.totalRateOfHorikacantinMethod(
+                                                          input
+                                                        )
+                                                      },
+                                                    ],
+                                                  },
+                                                }),
+                                              ]),
+                                              _vm._v(" "),
+                                              _c(
+                                                "b-input-group",
+                                                { staticClass: "mt-2" },
+                                                [
+                                                  _c("input", {
+                                                    directives: [
+                                                      {
+                                                        name: "model",
+                                                        rawName: "v-model",
+                                                        value:
+                                                          input.packet_total_horika_cantin_rate,
+                                                        expression:
+                                                          "input.packet_total_horika_cantin_rate",
+                                                      },
+                                                    ],
+                                                    staticClass: "form-control",
+                                                    attrs: {
+                                                      type: "number",
+                                                      step: "any",
+                                                      min: "0",
+                                                      placeholder: "0",
+                                                      readonly: "",
+                                                    },
+                                                    domProps: {
+                                                      value:
+                                                        input.packet_total_horika_cantin_rate,
+                                                    },
+                                                    on: {
+                                                      input: function ($event) {
+                                                        if (
+                                                          $event.target
+                                                            .composing
+                                                        ) {
+                                                          return
+                                                        }
+                                                        _vm.$set(
+                                                          input,
+                                                          "packet_total_horika_cantin_rate",
+                                                          $event.target.value
+                                                        )
+                                                      },
+                                                    },
+                                                  }),
+                                                ]
+                                              ),
+                                            ],
+                                            1
+                                          ),
+                                        ]),
+                                        _vm._v(" "),
+                                        _c("div", { staticClass: "col-sm-3" }, [
+                                          _c(
+                                            "div",
+                                            { staticClass: "form-group" },
+                                            [
+                                              _c("label", [
+                                                _vm._v(
+                                                  "GT Market Retailer Vikreta Rate"
+                                                ),
+                                              ]),
+                                              _vm._v(" "),
+                                              _c("b-input-group", [
+                                                _c("input", {
+                                                  directives: [
+                                                    {
+                                                      name: "model",
+                                                      rawName: "v-model",
+                                                      value:
+                                                        input.packet_gt_market_retailer_vikreta_rate,
+                                                      expression:
+                                                        "input.packet_gt_market_retailer_vikreta_rate",
+                                                    },
+                                                  ],
+                                                  staticClass: "form-control",
+                                                  attrs: {
+                                                    type: "number",
+                                                    step: "any",
+                                                    min: "0",
+                                                    placeholder: "0",
+                                                  },
+                                                  domProps: {
+                                                    value:
+                                                      input.packet_gt_market_retailer_vikreta_rate,
+                                                  },
+                                                  on: {
+                                                    input: [
+                                                      function ($event) {
+                                                        if (
+                                                          $event.target
+                                                            .composing
+                                                        ) {
+                                                          return
+                                                        }
+                                                        _vm.$set(
+                                                          input,
+                                                          "packet_gt_market_retailer_vikreta_rate",
+                                                          $event.target.value
+                                                        )
+                                                      },
+                                                      function ($event) {
+                                                        return _vm.totalRateOfGtMarketVikretaMethod(
+                                                          input
+                                                        )
+                                                      },
+                                                    ],
+                                                  },
+                                                }),
+                                              ]),
+                                              _vm._v(" "),
+                                              _c(
+                                                "b-input-group",
+                                                { staticClass: "mt-2" },
+                                                [
+                                                  _c("input", {
+                                                    directives: [
+                                                      {
+                                                        name: "model",
+                                                        rawName: "v-model",
+                                                        value:
+                                                          input.packet_total_gt_market_retailer_vikreta_rate,
+                                                        expression:
+                                                          "input.packet_total_gt_market_retailer_vikreta_rate",
+                                                      },
+                                                    ],
+                                                    staticClass: "form-control",
+                                                    attrs: {
+                                                      type: "number",
+                                                      step: "any",
+                                                      min: "0",
+                                                      placeholder: "0",
+                                                      readonly: "",
+                                                    },
+                                                    domProps: {
+                                                      value:
+                                                        input.packet_total_gt_market_retailer_vikreta_rate,
+                                                    },
+                                                    on: {
+                                                      input: function ($event) {
+                                                        if (
+                                                          $event.target
+                                                            .composing
+                                                        ) {
+                                                          return
+                                                        }
+                                                        _vm.$set(
+                                                          input,
+                                                          "packet_total_gt_market_retailer_vikreta_rate",
+                                                          $event.target.value
+                                                        )
+                                                      },
+                                                    },
+                                                  }),
+                                                ]
+                                              ),
+                                            ],
+                                            1
+                                          ),
+                                        ]),
+                                        _vm._v(" "),
+                                        _c("div", { staticClass: "col-sm-3" }, [
+                                          _c(
+                                            "div",
+                                            { staticClass: "form-group" },
+                                            [
+                                              _c("label", [
+                                                _vm._v(
+                                                  "Pick-up the franchiser point Rate"
+                                                ),
+                                              ]),
+                                              _vm._v(" "),
+                                              _c("b-input-group", [
+                                                _c("input", {
+                                                  directives: [
+                                                    {
+                                                      name: "model",
+                                                      rawName: "v-model",
+                                                      value:
+                                                        input.packet_pick_up_the_franchiser_point_rate,
+                                                      expression:
+                                                        "input.packet_pick_up_the_franchiser_point_rate",
+                                                    },
+                                                  ],
+                                                  staticClass: "form-control",
+                                                  attrs: {
+                                                    type: "number",
+                                                    step: "any",
+                                                    min: "0",
+                                                    placeholder: "0",
+                                                  },
+                                                  domProps: {
+                                                    value:
+                                                      input.packet_pick_up_the_franchiser_point_rate,
+                                                  },
+                                                  on: {
+                                                    input: [
+                                                      function ($event) {
+                                                        if (
+                                                          $event.target
+                                                            .composing
+                                                        ) {
+                                                          return
+                                                        }
+                                                        _vm.$set(
+                                                          input,
+                                                          "packet_pick_up_the_franchiser_point_rate",
+                                                          $event.target.value
+                                                        )
+                                                      },
+                                                      function ($event) {
+                                                        return _vm.totalRateOfPickUpFranchiserMethod(
+                                                          input
+                                                        )
+                                                      },
+                                                    ],
+                                                  },
+                                                }),
+                                              ]),
+                                              _vm._v(" "),
+                                              _c(
+                                                "b-input-group",
+                                                { staticClass: "mt-2" },
+                                                [
+                                                  _c("input", {
+                                                    directives: [
+                                                      {
+                                                        name: "model",
+                                                        rawName: "v-model",
+                                                        value:
+                                                          input.packet_total_pick_up_the_franchiser_point_rate,
+                                                        expression:
+                                                          "input.packet_total_pick_up_the_franchiser_point_rate",
+                                                      },
+                                                    ],
+                                                    staticClass: "form-control",
+                                                    attrs: {
+                                                      type: "number",
+                                                      step: "any",
+                                                      min: "0",
+                                                      placeholder: "0",
+                                                      readonly: "",
+                                                    },
+                                                    domProps: {
+                                                      value:
+                                                        input.packet_total_pick_up_the_franchiser_point_rate,
+                                                    },
+                                                    on: {
+                                                      input: function ($event) {
+                                                        if (
+                                                          $event.target
+                                                            .composing
+                                                        ) {
+                                                          return
+                                                        }
+                                                        _vm.$set(
+                                                          input,
+                                                          "packet_total_pick_up_the_franchiser_point_rate",
+                                                          $event.target.value
+                                                        )
+                                                      },
+                                                    },
+                                                  }),
+                                                ]
+                                              ),
+                                            ],
+                                            1
+                                          ),
+                                        ]),
+                                        _vm._v(" "),
+                                        _c("div", { staticClass: "col-sm-3" }, [
+                                          _c(
+                                            "div",
+                                            { staticClass: "form-group" },
+                                            [
+                                              _c("label", [
+                                                _vm._v(
+                                                  "Consumer Home Delivery Customer Price"
+                                                ),
+                                              ]),
+                                              _vm._v(" "),
+                                              _c("b-input-group", [
+                                                _c("input", {
+                                                  directives: [
+                                                    {
+                                                      name: "model",
+                                                      rawName: "v-model",
+                                                      value:
+                                                        input.packet_consumer_home_delivery_customer_price,
+                                                      expression:
+                                                        "input.packet_consumer_home_delivery_customer_price",
+                                                    },
+                                                  ],
+                                                  staticClass: "form-control",
+                                                  attrs: {
+                                                    type: "number",
+                                                    step: "any",
+                                                    min: "0",
+                                                    placeholder: "0",
+                                                  },
+                                                  domProps: {
+                                                    value:
+                                                      input.packet_consumer_home_delivery_customer_price,
+                                                  },
+                                                  on: {
+                                                    input: [
+                                                      function ($event) {
+                                                        if (
+                                                          $event.target
+                                                            .composing
+                                                        ) {
+                                                          return
+                                                        }
+                                                        _vm.$set(
+                                                          input,
+                                                          "packet_consumer_home_delivery_customer_price",
+                                                          $event.target.value
+                                                        )
+                                                      },
+                                                      function ($event) {
+                                                        return _vm.totalRateOfConsumerHomeDeliveryMethod(
+                                                          input
+                                                        )
+                                                      },
+                                                    ],
+                                                  },
+                                                }),
+                                              ]),
+                                              _vm._v(" "),
+                                              _c(
+                                                "b-input-group",
+                                                { staticClass: "mt-2" },
+                                                [
+                                                  _c("input", {
+                                                    directives: [
+                                                      {
+                                                        name: "model",
+                                                        rawName: "v-model",
+                                                        value:
+                                                          input.packet_total_consumer_home_delivery_customer_price,
+                                                        expression:
+                                                          "input.packet_total_consumer_home_delivery_customer_price",
+                                                      },
+                                                    ],
+                                                    staticClass: "form-control",
+                                                    attrs: {
+                                                      type: "number",
+                                                      step: "any",
+                                                      min: "0",
+                                                      placeholder: "0",
+                                                      readonly: "",
+                                                    },
+                                                    domProps: {
+                                                      value:
+                                                        input.packet_total_consumer_home_delivery_customer_price,
+                                                    },
+                                                    on: {
+                                                      input: function ($event) {
+                                                        if (
+                                                          $event.target
+                                                            .composing
+                                                        ) {
+                                                          return
+                                                        }
+                                                        _vm.$set(
+                                                          input,
+                                                          "packet_total_consumer_home_delivery_customer_price",
+                                                          $event.target.value
+                                                        )
+                                                      },
+                                                    },
+                                                  }),
+                                                ]
+                                              ),
+                                            ],
+                                            1
+                                          ),
+                                        ]),
+                                        _vm._v(" "),
+                                        _c("div", { staticClass: "col-sm-3" }, [
+                                          _c(
+                                            "div",
+                                            { staticClass: "form-group" },
+                                            [
+                                              _vm._m(15, true),
+                                              _vm._v(" "),
+                                              _c("b-input-group", [
+                                                _c("input", {
+                                                  directives: [
+                                                    {
+                                                      name: "model",
+                                                      rawName: "v-model",
+                                                      value: input.packet_mrp,
+                                                      expression:
+                                                        "input.packet_mrp",
+                                                    },
+                                                  ],
+                                                  staticClass: "form-control",
+                                                  attrs: {
+                                                    type: "number",
+                                                    step: "any",
+                                                    min: "0",
+                                                    placeholder: "0",
+                                                    required: "",
+                                                  },
+                                                  domProps: {
+                                                    value: input.packet_mrp,
+                                                  },
+                                                  on: {
+                                                    input: function ($event) {
+                                                      if (
+                                                        $event.target.composing
+                                                      ) {
+                                                        return
+                                                      }
+                                                      _vm.$set(
+                                                        input,
+                                                        "packet_mrp",
+                                                        $event.target.value
+                                                      )
+                                                    },
+                                                  },
+                                                }),
+                                              ]),
+                                            ],
+                                            1
+                                          ),
+                                        ]),
+                                        _vm._v(" "),
+                                        _c("div", { staticClass: "col-sm-3" }, [
+                                          _c(
+                                            "div",
+                                            { staticClass: "form-group" },
+                                            [
+                                              _vm._m(16, true),
+                                              _vm._v(" "),
+                                              _c("b-input-group", [
+                                                _c("input", {
+                                                  directives: [
+                                                    {
+                                                      name: "model",
+                                                      rawName: "v-model",
+                                                      value: input.packet_hsn,
+                                                      expression:
+                                                        "input.packet_hsn",
+                                                    },
+                                                  ],
+                                                  staticClass: "form-control",
+                                                  attrs: {
+                                                    type: "text",
+                                                    placeholder: "0",
+                                                    required: "",
+                                                  },
+                                                  domProps: {
+                                                    value: input.packet_hsn,
+                                                  },
+                                                  on: {
+                                                    input: function ($event) {
+                                                      if (
+                                                        $event.target.composing
+                                                      ) {
+                                                        return
+                                                      }
+                                                      _vm.$set(
+                                                        input,
+                                                        "packet_hsn",
+                                                        $event.target.value
+                                                      )
+                                                    },
+                                                  },
+                                                }),
+                                              ]),
+                                            ],
+                                            1
+                                          ),
+                                        ]),
                                       ]
                                     ),
                                   ]),
@@ -3469,11 +6333,7 @@ var render = function () {
                                       "div",
                                       { staticClass: "form-group loose_div" },
                                       [
-                                        _c("label", [
-                                          _vm._v(
-                                            _vm._s(_vm.__("variant_images"))
-                                          ),
-                                        ]),
+                                        _c("label", [_vm._v("Variant Images")]),
                                         _vm._v(" "),
                                         _c("input", {
                                           ref: "loose_variant_images_" + k,
@@ -3507,7 +6367,7 @@ var render = function () {
                                             },
                                           },
                                           [
-                                            _vm._m(4, true),
+                                            _vm._m(17, true),
                                             _vm._v(" "),
                                             _c("label", [
                                               _vm._v(
@@ -3526,7 +6386,7 @@ var render = function () {
                                           { staticClass: "text text-primary" },
                                           [
                                             _vm._v(
-                                              "Please choose square image\n                                                        of larger than 350px*350px & smaller than\n                                                        550px*550px."
+                                              "Please choose square image\n                                                    of larger than 350px*350px & smaller than\n                                                    550px*550px."
                                             ),
                                           ]
                                         ),
@@ -3664,11 +6524,7 @@ var render = function () {
                                                   "fa fa-plus-square",
                                               }),
                                               _vm._v(
-                                                " " +
-                                                  _vm._s(
-                                                    _vm.__("add_variant")
-                                                  ) +
-                                                  "\n                                                "
+                                                " Add Variant\n                                            "
                                               ),
                                             ]
                                           ),
@@ -3713,11 +6569,7 @@ var render = function () {
                                                 staticClass: "fa fa-times",
                                               }),
                                               _vm._v(
-                                                " " +
-                                                  _vm._s(
-                                                    _vm.__("remove_variant")
-                                                  ) +
-                                                  "\n                                                "
+                                                " Remove Variant\n                                            "
                                               ),
                                             ]
                                           ),
@@ -3731,187 +6583,13 @@ var render = function () {
                           0
                         )
                       : _vm._e(),
-                    _vm._v(" "),
-                    _vm.type === "loose"
-                      ? _c(
-                          "div",
-                          {
-                            staticClass: "row mt-3",
-                            attrs: { id: "loose_stock_div" },
-                          },
-                          [
-                            _c("div", { staticClass: "col-md-4" }, [
-                              _vm.is_unlimited_stock != 1
-                                ? _c("div", { staticClass: "form-group" }, [
-                                    _c("label", [
-                                      _vm._v(_vm._s(_vm.__("stock")) + " "),
-                                    ]),
-                                    _vm._v(" "),
-                                    _c("i", { staticClass: "text-danger" }, [
-                                      _vm._v("*"),
-                                    ]),
-                                    _vm._v(" "),
-                                    _c("input", {
-                                      directives: [
-                                        {
-                                          name: "model",
-                                          rawName: "v-model",
-                                          value: _vm.loose_stock,
-                                          expression: "loose_stock",
-                                        },
-                                      ],
-                                      staticClass: "form-control",
-                                      attrs: {
-                                        type: "number",
-                                        step: "any",
-                                        min: "0",
-                                      },
-                                      domProps: { value: _vm.loose_stock },
-                                      on: {
-                                        input: function ($event) {
-                                          if ($event.target.composing) {
-                                            return
-                                          }
-                                          _vm.loose_stock = $event.target.value
-                                        },
-                                      },
-                                    }),
-                                    _c("br"),
-                                  ])
-                                : _vm._e(),
-                            ]),
-                            _vm._v(" "),
-                            _c("div", { staticClass: "col-md-4" }, [
-                              _c("div", { staticClass: "form-group" }, [
-                                _c("label", [
-                                  _vm._v(_vm._s(_vm.__("unit")) + " "),
-                                ]),
-                                _vm._v(" "),
-                                _c(
-                                  "select",
-                                  {
-                                    directives: [
-                                      {
-                                        name: "model",
-                                        rawName: "v-model",
-                                        value: _vm.loose_stock_unit_id,
-                                        expression: "loose_stock_unit_id",
-                                      },
-                                    ],
-                                    staticClass: "form-control form-select",
-                                    attrs: { name: "loose_stock_unit_id" },
-                                    on: {
-                                      change: function ($event) {
-                                        var $$selectedVal =
-                                          Array.prototype.filter
-                                            .call(
-                                              $event.target.options,
-                                              function (o) {
-                                                return o.selected
-                                              }
-                                            )
-                                            .map(function (o) {
-                                              var val =
-                                                "_value" in o
-                                                  ? o._value
-                                                  : o.value
-                                              return val
-                                            })
-                                        _vm.loose_stock_unit_id = $event.target
-                                          .multiple
-                                          ? $$selectedVal
-                                          : $$selectedVal[0]
-                                      },
-                                    },
-                                  },
-                                  [
-                                    _c("option", { attrs: { value: "" } }, [
-                                      _vm._v(_vm._s(_vm.__("select_unit"))),
-                                    ]),
-                                    _vm._v(" "),
-                                    _vm._l(_vm.units, function (unit, key) {
-                                      return _c(
-                                        "option",
-                                        { domProps: { value: unit.id } },
-                                        [_vm._v(_vm._s(unit.short_code))]
-                                      )
-                                    }),
-                                  ],
-                                  2
-                                ),
-                              ]),
-                            ]),
-                            _vm._v(" "),
-                            _c("div", { staticClass: "col-md-4" }, [
-                              _c("div", { staticClass: "form-group" }, [
-                                _c("label", [
-                                  _vm._v(_vm._s(_vm.__("status")) + " "),
-                                ]),
-                                _vm._v(" "),
-                                _c(
-                                  "select",
-                                  {
-                                    directives: [
-                                      {
-                                        name: "model",
-                                        rawName: "v-model",
-                                        value: _vm.status,
-                                        expression: "status",
-                                      },
-                                    ],
-                                    staticClass: "form-control form-select",
-                                    attrs: { name: "status" },
-                                    on: {
-                                      change: function ($event) {
-                                        var $$selectedVal =
-                                          Array.prototype.filter
-                                            .call(
-                                              $event.target.options,
-                                              function (o) {
-                                                return o.selected
-                                              }
-                                            )
-                                            .map(function (o) {
-                                              var val =
-                                                "_value" in o
-                                                  ? o._value
-                                                  : o.value
-                                              return val
-                                            })
-                                        _vm.status = $event.target.multiple
-                                          ? $$selectedVal
-                                          : $$selectedVal[0]
-                                      },
-                                    },
-                                  },
-                                  [
-                                    _c("option", { attrs: { value: "" } }, [
-                                      _vm._v(_vm._s(_vm.__("select_status"))),
-                                    ]),
-                                    _vm._v(" "),
-                                    _c("option", { attrs: { value: "1" } }, [
-                                      _vm._v(_vm._s(_vm.__("available"))),
-                                    ]),
-                                    _vm._v(" "),
-                                    _c("option", { attrs: { value: "0" } }, [
-                                      _vm._v(_vm._s(_vm.__("sold_out"))),
-                                    ]),
-                                  ]
-                                ),
-                              ]),
-                            ]),
-                          ]
-                        )
-                      : _vm._e(),
                   ],
                   2
                 ),
               ]),
               _vm._v(" "),
               _c("div", { staticClass: "card" }, [
-                _c("div", { staticClass: "card-header" }, [
-                  _c("h4", [_vm._v(_vm._s(_vm.__("product_settings")))]),
-                ]),
+                _vm._m(18),
                 _vm._v(" "),
                 _c("div", { staticClass: "card-body" }, [
                   _c("div", { staticClass: "row" }, [
@@ -4156,7 +6834,9 @@ var render = function () {
                                 ])
                               : _vm.isValid
                               ? _c("p", { staticStyle: { color: "green" } }, [
-                                  _vm._v("FSSAI License Number is valid!"),
+                                  _vm._v(
+                                    "FSSAI License Number is\n                                                    valid!"
+                                  ),
                                 ])
                               : _vm._e(),
                           ]),
@@ -4362,7 +7042,7 @@ var render = function () {
                                             [
                                               _vm._v(
                                                 _vm._s(status.status) +
-                                                  "\n                                                "
+                                                  "\n                                                    "
                                               ),
                                             ]
                                           )
@@ -4450,7 +7130,7 @@ var render = function () {
                           _c("div", { staticClass: "form-group" }, [
                             _c("label", [
                               _vm._v(
-                                _vm._s(_vm.__("total_allowed_quantity")) + "  "
+                                _vm._s(_vm.__("total_allowed_quantity")) + " "
                               ),
                             ]),
                             _vm._v(" "),
@@ -4561,7 +7241,7 @@ var render = function () {
                                           },
                                         }),
                                         _vm._v(
-                                          " Approved\n                                                    "
+                                          " Approved\n                                                "
                                         ),
                                       ]
                                     ),
@@ -4600,7 +7280,7 @@ var render = function () {
                                           },
                                         }),
                                         _vm._v(
-                                          "\n                                                        Not-Approved\n                                                    "
+                                          "\n                                                    Not-Approved\n                                                "
                                         ),
                                       ]
                                     ),
@@ -4645,11 +7325,7 @@ var render = function () {
                         },
                       },
                       [
-                        _vm._v(
-                          " " +
-                            _vm._s(_vm.__("save")) +
-                            "\n                                    "
-                        ),
+                        _vm._v(" Save\n                                "),
                         _vm.isLoading
                           ? _c("b-spinner", {
                               attrs: { small: "", label: "Spinning" },
@@ -4703,13 +7379,138 @@ var staticRenderFns = [
     var _vm = this
     var _h = _vm.$createElement
     var _c = _vm._self._c || _h
-    return _c("label", [_c("i", { staticClass: "fa fa-cloud-upload fa-2x" })])
+    return _c("label", [
+      _vm._v("Type"),
+      _c("i", { staticClass: "text-danger" }, [_vm._v("*")]),
+    ])
+  },
+  function () {
+    var _vm = this
+    var _h = _vm.$createElement
+    var _c = _vm._self._c || _h
+    return _c("label", { staticClass: "control-label" }, [
+      _vm._v("Stock Limit "),
+      _c("i", { staticClass: "text-danger" }, [_vm._v("*")]),
+    ])
+  },
+  function () {
+    var _vm = this
+    var _h = _vm.$createElement
+    var _c = _vm._self._c || _h
+    return _c("label", [
+      _vm._v("Freezer Cost "),
+      _c("i", { staticClass: "text-danger" }, [_vm._v("*")]),
+    ])
+  },
+  function () {
+    var _vm = this
+    var _h = _vm.$createElement
+    var _c = _vm._self._c || _h
+    return _c("label", [
+      _vm._v("Secondry Trp "),
+      _c("i", { staticClass: "text-danger" }, [_vm._v("*")]),
+    ])
+  },
+  function () {
+    var _vm = this
+    var _h = _vm.$createElement
+    var _c = _vm._self._c || _h
+    return _c("label", [
+      _vm._v("Company Margin "),
+      _c("i", { staticClass: "text-danger" }, [_vm._v("*")]),
+    ])
+  },
+  function () {
+    var _vm = this
+    var _h = _vm.$createElement
+    var _c = _vm._self._c || _h
+    return _c("label", [
+      _vm._v("Total Freezer + Trp + Margin "),
+      _c("i", { staticClass: "text-danger" }, [_vm._v("*")]),
+    ])
+  },
+  function () {
+    var _vm = this
+    var _h = _vm.$createElement
+    var _c = _vm._self._c || _h
+    return _c("label", [
+      _vm._v("MRP "),
+      _c("i", { staticClass: "text-danger" }, [_vm._v("*")]),
+    ])
   },
   function () {
     var _vm = this
     var _h = _vm.$createElement
     var _c = _vm._self._c || _h
     return _c("label", [_c("i", { staticClass: "fa fa-cloud-upload fa-2x" })])
+  },
+  function () {
+    var _vm = this
+    var _h = _vm.$createElement
+    var _c = _vm._self._c || _h
+    return _c("label", [
+      _vm._v("Freezer Cost "),
+      _c("i", { staticClass: "text-danger" }, [_vm._v("*")]),
+    ])
+  },
+  function () {
+    var _vm = this
+    var _h = _vm.$createElement
+    var _c = _vm._self._c || _h
+    return _c("label", [
+      _vm._v("Secondry Trp "),
+      _c("i", { staticClass: "text-danger" }, [_vm._v("*")]),
+    ])
+  },
+  function () {
+    var _vm = this
+    var _h = _vm.$createElement
+    var _c = _vm._self._c || _h
+    return _c("label", [
+      _vm._v("Company Margin "),
+      _c("i", { staticClass: "text-danger" }, [_vm._v("*")]),
+    ])
+  },
+  function () {
+    var _vm = this
+    var _h = _vm.$createElement
+    var _c = _vm._self._c || _h
+    return _c("label", [
+      _vm._v("Total Freezer + Trp + Margin "),
+      _c("i", { staticClass: "text-danger" }, [_vm._v("*")]),
+    ])
+  },
+  function () {
+    var _vm = this
+    var _h = _vm.$createElement
+    var _c = _vm._self._c || _h
+    return _c("label", [
+      _vm._v("MRP "),
+      _c("i", { staticClass: "text-danger" }, [_vm._v("*")]),
+    ])
+  },
+  function () {
+    var _vm = this
+    var _h = _vm.$createElement
+    var _c = _vm._self._c || _h
+    return _c("label", [
+      _vm._v("HSN Code "),
+      _c("i", { staticClass: "text-danger" }, [_vm._v("*")]),
+    ])
+  },
+  function () {
+    var _vm = this
+    var _h = _vm.$createElement
+    var _c = _vm._self._c || _h
+    return _c("label", [_c("i", { staticClass: "fa fa-cloud-upload fa-2x" })])
+  },
+  function () {
+    var _vm = this
+    var _h = _vm.$createElement
+    var _c = _vm._self._c || _h
+    return _c("div", { staticClass: "card-header" }, [
+      _c("h4", [_vm._v("Product Settings")]),
+    ])
   },
 ]
 render._withStripped = true

@@ -365,10 +365,6 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
 //
 //
 //
-//
-//
-//
-//
 
 
 
@@ -1597,9 +1593,13 @@ var render = function () {
                           fn: function (row) {
                             return [
                               _vm._v(
-                                "\n                                        " +
-                                  _vm._s(row.item.measurement) +
-                                  "\n                                    "
+                                "\n                                       " +
+                                  _vm._s(
+                                    row.item.measurement +
+                                      " " +
+                                      row.item.short_code
+                                  ) +
+                                  "\n\n                                    "
                               ),
                             ]
                           },
@@ -1614,13 +1614,8 @@ var render = function () {
                                     _vm._v(
                                       "\n                                            " +
                                         _vm._s(row.item.stock) +
-                                        " "
+                                        "\n                                            "
                                     ),
-                                    row.item.stock_unit
-                                      ? _c("span", [
-                                          _vm._v(_vm._s(row.item.stock_unit)),
-                                        ])
-                                      : _vm._e(),
                                   ],
                             ]
                           },

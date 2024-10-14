@@ -18,6 +18,7 @@ class UserStatusMiddleware
     public function handle(Request $request, Closure $next)
     {
         $user = Auth::guard('api')->user() ?? $request->user();
+        print_r($user);
         if ($user && $user->status == 1) {
             return $next($request);
         } else if (!$user) {

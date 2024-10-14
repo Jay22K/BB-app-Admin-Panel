@@ -561,7 +561,9 @@ __webpack_require__.r(__webpack_exports__);
     var self = this;
     console.log(this.$apiAdress);
     axios__WEBPACK_IMPORTED_MODULE_0___default().get(this.$apiAdress + '/api/menu?token=' + localStorage.getItem("api_token")).then(function (response) {
+      console.log(response);
       self.nav = self.rebuildData(response.data);
+      console.log(self.nav);
     })["catch"](function (error) {
       console.log(error);
       self.$router.push({

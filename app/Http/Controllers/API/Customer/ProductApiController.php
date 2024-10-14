@@ -588,7 +588,7 @@ class ProductApiController extends Controller
             ->leftJoin('categories as c', 'p.category_id', '=', 'c.id')
             ->where('s.status', 1)
             ->where('p.id', $product_id);
-        $product = $sql->with('images')->first();
+        $product = $sql->first();
 
         if ($product) {
 
@@ -673,7 +673,7 @@ class ProductApiController extends Controller
                 $variants[$key]['discounted_price'] = CommonHelper::doubleNumber($taxed->taxable_discounted_price ?? $variants[$key][$salesChannelKey]);
                 $variants[$key]['price'] = CommonHelper::doubleNumber($taxed->price ?? $variants[$key]['mrp']);
                 $variants[$key]['taxable_amount'] = CommonHelper::doubleNumber($taxed->taxable_amount);
-                $variants[$key]->images = CommonHelper::getImages($variants[$key]->product_id, $variants[$key]->id);
+                $variants[$key]['images'] = CommonHelper::getImages($variants[$key]->product_id, $variants[$key]->id);
 
                 $variants[$key]->stock_unit_name = $variants[$key]->stock_unit_name ?? '';
             }

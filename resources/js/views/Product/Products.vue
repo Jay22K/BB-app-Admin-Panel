@@ -72,7 +72,7 @@
 
                                 <template v-if="$roleSeller == login_user.role.name">
 
-                                    <input type="hidden" v-model="seller = login_user.seller.id" >
+                                <input type="hidden" v-model="seller = login_user.seller.id" >
                                 </template>
                                 <template v-else>
                                     <b-col md="3">
@@ -168,11 +168,6 @@
                                                class="form-check-input">
                                         <!-- <span> {{ all_select == true ? 'Uncheck All' : "Select All" }} </span>-->
                                     </template>
-
-
-
-
-
                                     <template #cell(select)="row">
                                         <input type="checkbox" v-model="selectedItems" @change="selectCheckBox"
                                                :value="`${row.item.product_variant_id}`" class="form-check-input">
@@ -181,22 +176,23 @@
                                     <template #cell(seller_name)="row">
                                         {{ row.item.seller_name }}
                                     </template>
-                                    <template #cell(seller_name)="row">
+                                    <!-- <template #cell(seller_name)="row">
                                         {{ row.item.seller_name }}
-                                    </template>
+                                    </template> -->
                                     <template #cell(image)="row">
                                         <img :src="$storageUrl + row.item.image" height="50" v-if="row.item.image"/>
                                     </template>
                                     <template #cell(measurement)="row">
-<!--                                        {{ row.item.measurement + " " + row.item.short_code }}-->
-                                        {{ row.item.measurement }}
+                                       {{ row.item.measurement + " " + row.item.short_code }}
+
                                     </template>
 
                                     <template #cell(stock)="row">
 
                                         <span v-if="row.item.is_unlimited_stock">Unlimited</span>
                                         <template v-else>
-                                            {{ row.item.stock }} <span v-if="row.item.stock_unit">{{row.item.stock_unit}}</span>
+                                            {{ row.item.stock }}
+                                            <!-- {{ row.item.stock }} <span v-if="row.item.stock_unit">{{row.item.stock_unit}}</span> -->
                                         </template>
 <!--                                        {{ row.item.stock }} <span v-if="row.item.stock_unit">{{row.item.stock_unit}}</span>-->
                                     </template>

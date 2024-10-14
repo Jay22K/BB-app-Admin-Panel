@@ -222,7 +222,7 @@ class ShopApiController extends Controller
             $all_min_price = $productResult1->min_price;
             $all_max_price = $productResult1->max_price;
 
-            $sql = Product::with('images')->from("products as p")->select(
+            $sql = Product::from("products as p")->select(
                 "p.*",
                 "c.name as category_name",
                 "t.title as tax_title",
@@ -343,8 +343,8 @@ class ShopApiController extends Controller
             }
         } catch (\Exception $e) {
             Log::info("Shop api Error : " . $e->getMessage());
-            throw $e;
-            return CommonHelper::responseError("Something Went Wrong!");
+            // throw $e;
+            return CommonHelper::responseError("Something Went Wrong!", $e);
         }
 
 

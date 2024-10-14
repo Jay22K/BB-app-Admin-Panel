@@ -12,19 +12,16 @@
     "categories": "Categories",
     "add_category": "Add Category",
     "edit_category": "Edit Category",
-
     "manage_categories": "Manage Categories",
     "order_categories": "Order Categories",
     "categories_order": "Categories Order",
     "categories_order_list": "Categories Order List",
     "enable_drag_and_drop": "Enable drag and drop",
-
     "sort_by_original_order": "Sort by original order",
     "delete_selected_products": "Delete Selected Products",
     "filter_by_products_category": "Filter by Products Category",
     "filter_products_by_status": "Filter Products by Status",
     "filter_products_by_seller": "Filter Products by Seller",
-
     "product": "Product",
     "products": "Products",
     "manage_products": "Manage Products",
@@ -40,7 +37,6 @@
     "size": "Size",
     "seller_name": "Seller Name",
     "delete_selected_media": "Delete Selected Media",
-
     "bulk_upload": "Bulk Upload",
     "product_bulk_upload_form": "Product Bulk Upload Form",
     "always_download_and_use_new_sample_file_if_you_did_updated_admin_panel_version": "Always download and use new sample file if you did updated admin panel version.",
@@ -48,23 +44,17 @@
     "csv_file": "CSV File",
     "download_sample_file": "Download Sample File",
     "download_instructions": "Download Instructions",
-
     "taxes": "Taxes",
     "title": "title",
     "enter_tax_title": "Enter tax title.",
     "add_tax": "Add Taxes",
     "edit_tax": "Edit Taxes",
     "percentage": "Percentage",
-
-
     "product_order": "Product Order",
     "product_id": "Product ID",
     "tax_id": "Tax ID",
-
-
     "sellers": "Sellers",
     "all_sellers": "All Sellers",
-
     "manage_sellers": "Manage Sellers",
     "add_seller": "Add Seller",
     "seller_requests": "Seller Requests",
@@ -73,23 +63,18 @@
     "home_sliders": "Home Sliders",
     "add_home_slider": "Add Home Slider",
     "manager_home_sliders": "Manager Home Sliders",
-
-
     "offer_image": "Offer Image",
     "add_offer_image": "Add Offer Image",
     "manage_offer_images": "Manage Offer Images",
     "manage_popup_offer": "Manage Popup Offer",
-
     "promo_code": "Promo Code",
     "add_promo_code": "Add Promo Code",
     "manage_promo_code": "Manage Promo Code",
-
     "return_requests": "Return Requests",
     "withdrawal_requests": "Withdrawal Requests",
     "delivery_boys": "Delivery Boys",
     "delivery_boy": "Delivery Boy",
     "dlivery_boy_requests": "Delivery Boy Requests",
-
     "add_delivery_boy": "Add Delivery Boy",
     "manage_delivery_boys": "Manage Delivery Boys",
     "fund_transfers": "Fund Transfers",
@@ -132,9 +117,8 @@
     "add_section": "Add Section",
     "manage_section": "Manage Section",
     "order_section": "Order Section",
-
-
     "customers": "Customers",
+    "b2bcustomers": "B2B Customers",
     "wishlists": "Wishlists",
     "transactions": "Transactions",
     "manage_customer_wallet": "Manage Customer Wallet",
@@ -158,9 +142,7 @@
     "search": "Search",
     "latest_orders": "Latest Orders",
     "order_list": "Order List",
-
     "all_orders": "All Orders",
-
     "loading": "Loading...",
     "total": "Total",
     "dcharges": "D.Charges",
@@ -174,7 +156,6 @@
     "tags": "Tags",
     "enter_product_tag": "Enter Product Tag.",
     "these_tags_help_you_in_search_result": "These tags help you in search result",
-
     "brands": "Brands",
     "enter_name": "Enter name",
     "add_brand": "Add Brand",
@@ -182,16 +163,17 @@
     "no_image": "No Image",
     "products_order_list": "Products Order List",
     "select_category": "Select Category",
-
     "select_and_search_brands": "Select & Search Brands",
     "description": "Description",
     "enter_product_description": "Enter product description",
-    "main_image": "Main Image",
+    "main_image": "Front Image",
     "other_images_of_the_product": "Other Images of the Product",
     "type": "Type",
     "stock_limit": "Stock Limit",
     "measurement": "Measurement",
-    "price":"Price",
+    "weight": "Weight",
+    "price": "Price",
+    "base_price": "Base Price",
     "discounted_price": "Discounted Price",
     "stock": "Stock",
     "unit": "Unit",
@@ -217,8 +199,6 @@
     "total_allowed_quantity": "Total allowed quantity",
     "keep_blank_if_no_such_limit": "Keep blank if no such limit",
     "product_status": "Product Status",
-
-
     "disc": "Disc.",
     "promo_disc": "Promo Disc.",
     "wallet_used": "Wallet Used",
@@ -230,12 +210,10 @@
     "select_order_statue": "Select Order Statue.",
     "is_cod_allowed": "Is COD allowed?",
     "tax_included_in_prices": "Tax included in prices?",
-
     "answer": "Answer",
     "save": "Save",
     "cancel": "Cancel",
     "back": "Back",
-
     "save_order": "Save Order",
     "products_order": "Products Order",
     "select_a_categories_for_update_products_order_list": "Select a Categories for update products order list.",
@@ -249,7 +227,6 @@
     "store_name": "Store Name",
     "name": "Name",
     "actions": "Actions",
-
     "oid": "O.ID",
     "user": "User",
     "mobile": "Mobile",
@@ -299,11 +276,8 @@
     "please_pass_all_the_fields": "Please pass all the fields",
     "user_register_successfully": "User Register Successfully",
     "user_not_found": "User not found",
-
     "user_is_unauthorised_kindly_contact_admin": "User is unauthorised, Kindly Contact Admin",
-
     "this_customer_account_is_deactivated_kindly_contact_admin": "This customer account is deactivated, Kindly Contact Admin",
-
     "you_have_been_successfully_logged_out": "You have been successfully logged out",
     "unauthorized": "Unauthorized",
     "profile_updated_successfully": "Profile Updated Successfully",
@@ -343,7 +317,6 @@
     "image": "Image",
     "required_fields": "Required fields.",
     "per_page": "Per page",
-
     "settings": "Settings",
     "order_status": "Order Status",
     "mail": "Mail",
@@ -353,17 +326,14 @@
     "current_password": "Current Password",
     "password": "Password",
     "confirm_password": "Confirm Password",
-
     "general_web_settings": "General Web Settings",
     "web_settings_form": "Web Settings Form",
     "header_settings": "Header Settings",
     "site_title": "Site Title",
     "website_url": "Website Url",
-
     "color": "Color",
     "light_color": "Light Color",
     "dark_color": "Dark Color",
-
     "favicon_icon": "Favicon Icon",
     "web_logo": "Web Logo",
     "app_title": "App Title",
@@ -380,29 +350,26 @@
     "ios_application_url": "IOS Application's URL",
     "enter_ios_spp_url": "Enter IOS App URL",
     "ios_store_logo": "IOS store logo",
-
-
     "app_download_section": "App download Section",
     "footer_setting": "Footer settings",
-    "copyright_details" : "Copyright Details",
-    "enter_copyright_details" : "Enter Copyright Details",
-    "enter_copyright_details_here" : "Enter Copyright Details Here!",
-
-    "manage_languages" : "Manage Languages",
-    "languages" : "Languages",
-    "language" : "Language",
-    "add_language" : "Add Language",
-    "edit_language" : "Edit Language",
-    "supported_languages" : "Supported Languages",
-    "supported_language" : "Supported Language",
-    "select_supported_language" : "Select Supported Language",
+    "copyright_details": "Copyright Details",
+    "enter_copyright_details": "Enter Copyright Details",
+    "enter_copyright_details_here": "Enter Copyright Details Here!",
+    "manage_languages": "Manage Languages",
+    "languages": "Languages",
+    "language": "Language",
+    "add_language": "Add Language",
+    "edit_language": "Edit Language",
+    "supported_languages": "Supported Languages",
+    "supported_language": "Supported Language",
+    "select_supported_language": "Select Supported Language",
     "json_file": "Json File",
     "json_data": "Json Data",
-    "supported_languages_list" : "Supported Languages List",
+    "supported_languages_list": "Supported Languages List",
     "system_type": "System type",
     "select_system_type": "Select system type",
     "all_system_types": "All system types",
     "default": "Default",
-    "display_name": "Display Name"
-
+    "display_name": "Display Name",
+    "new_product_request": "New Product Request"
 }

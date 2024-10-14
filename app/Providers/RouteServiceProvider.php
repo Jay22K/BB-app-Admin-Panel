@@ -49,6 +49,7 @@ class RouteServiceProvider extends ServiceProvider
 
             Route::prefix('customer')
                 ->middleware('api')
+                ->middleware('logging')
                 ->namespace($this->namespace)
                 ->group(base_path('routes/customer.php'));
         });

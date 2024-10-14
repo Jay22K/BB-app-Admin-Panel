@@ -76,7 +76,7 @@ Vue.prototype.$mobileWidth = 991;
 Vue.prototype.$currentWidth = window.innerWidth;
 Vue.prototype.$currentHeight = window.innerHeight;
 
-Vue.prototype.$setWindowSize = function(){
+Vue.prototype.$setWindowSize = function () {
     if (typeof (window.innerWidth) == 'number') {
         Vue.prototype.$currentWidth = window.innerWidth;
         Vue.prototype.$currentHeight = window.innerHeight;
@@ -97,9 +97,6 @@ window.addEventListener('resize', Vue.prototype.$setWindowSize);
 window.addEventListener('DOMContentLoaded', Vue.prototype.$setWindowSize);
 
 
-
-
-
 window.Swal = Swal;
 window.moment = require('moment');
 window.toastr = require('toastr');
@@ -116,11 +113,12 @@ Vue.use(Clipboard);
 
 Vue.component('Select2', Select2);
 
-Vue.prototype.$baseUrl = window.baseUrl;
-Vue.prototype.$apiUrl = window.baseUrl+'/api';
-Vue.prototype.$sellerApiUrl = window.baseUrl+'/api/seller';
-Vue.prototype.$deliveryBoyApiUrl = window.baseUrl+'/api/delivery_boy';
-Vue.prototype.$storageUrl = window.baseUrl+'/storage/';
+// Vue.prototype.$baseUrl = window.baseUrl;
+Vue.prototype.$baseUrl = 'https://dashboard.brahmabasket.com';
+Vue.prototype.$apiUrl = Vue.prototype.$baseUrl + '/api';
+Vue.prototype.$sellerApiUrl = Vue.prototype.$baseUrl + '/api/seller';
+Vue.prototype.$deliveryBoyApiUrl = Vue.prototype.$baseUrl + '/api/delivery_boy';
+Vue.prototype.$storageUrl = Vue.prototype.$baseUrl + '/storage/';
 
 
 //Role
@@ -142,7 +140,7 @@ Vue.prototype.$returned = "Returned";
 
 
 
-Vue.prototype.$editorKey = "3j9qkngy8xdb5fhtx0gav1iu0ayq2vvy2nmdu2qaxsm31wdd";
+Vue.prototype.$editorKey = "2thz2p15ykujh26h5recy0fl3oy3oekw6f9ho3pr2w6dkifp";
 Vue.prototype.$editorPlugins = [
     'a11ychecker', 'advlist', 'advcode', 'advtable', 'autolink', 'checklist', 'export', 'forecolor backcolor',
     'lists', 'link', 'image', 'charmap', 'preview', 'code', 'anchor', 'searchreplace', 'visualblocks',
@@ -151,7 +149,7 @@ Vue.prototype.$editorPlugins = [
 Vue.prototype.$editorToolbar = 'undo redo | image media | code fullscreen| formatpainter casechange blocks fontsize | bold italic forecolor backcolor | ' +
     'alignleft aligncenter alignright alignjustify | ' +
     'bullist numlist checklist outdent indent | removeformat | ltr rtl |a11ycheck table help';
-Vue.prototype.$editorFont_size_formats =  '8pt 10pt 12pt 14pt 16pt 18pt 24pt 36pt 48pt';
+Vue.prototype.$editorFont_size_formats = '8pt 10pt 12pt 14pt 16pt 18pt 24pt 36pt 48pt';
 
 Vue.prototype.$swal = window.Swal;
 // Vue.prototype.$currency = '$';
@@ -204,16 +202,16 @@ Vue.prototype.$eventBus = new Vue();
     window.localStorage.setItem('currency', currency);
 };*/
 
-Vue.prototype.updateLogo = function(logo){
+Vue.prototype.updateLogo = function (logo) {
     Vue.prototype.$logo = logo;
     window.localStorage.setItem('logo', logo);
 };
 
-Vue.prototype.isImage = function(url){
+Vue.prototype.isImage = function (url) {
     return /\.(jpg|jpeg|png|webp|avif|gif|svg)$/.test(url);
 };
 
-Vue.prototype.$dragoverFile = function(event) {
+Vue.prototype.$dragoverFile = function (event) {
     event.preventDefault();
     // Add some visual fluff to show the user can drop its files
     if (!event.currentTarget.classList.contains('bg-green-300')) {
@@ -221,7 +219,7 @@ Vue.prototype.$dragoverFile = function(event) {
         event.currentTarget.classList.add('bg-green-300');
     }
 };
-Vue.prototype.$dragleaveFile = function(event) {
+Vue.prototype.$dragleaveFile = function (event) {
     // Clean up
     event.currentTarget.classList.add('bg-gray-100');
     event.currentTarget.classList.remove('bg-green-300');
@@ -229,14 +227,14 @@ Vue.prototype.$dragleaveFile = function(event) {
 
 
 
-Vue.prototype.formattedName = function(name){
+Vue.prototype.formattedName = function (name) {
     var newName = name.replace(/_/g, ' ');
     newName = newName.toLowerCase().replace(/(?<= )[^\s]|^./g, a => a.toUpperCase())
     return newName;
 };
 
 
-Vue.prototype.showMessage = function(variant, message){
+Vue.prototype.showMessage = function (variant, message) {
     console.log('showMessage : ' + message)
     Vue.$toast.open({
         type: variant,
@@ -244,7 +242,7 @@ Vue.prototype.showMessage = function(variant, message){
     });
 };
 
-Vue.prototype.showSuccess = function(message){
+Vue.prototype.showSuccess = function (message) {
     this.$swal.fire({
         title: 'Success',
         text: message,
@@ -253,7 +251,7 @@ Vue.prototype.showSuccess = function(message){
     });
 };
 
-Vue.prototype.showError = function(error_message){
+Vue.prototype.showError = function (error_message) {
     this.$swal.fire({
         title: 'Error',
         text: error_message,
@@ -261,7 +259,7 @@ Vue.prototype.showError = function(error_message){
         confirmButtonText: "Ok",
     });
 };
-Vue.prototype.showWarning = function(error_message){
+Vue.prototype.showWarning = function (error_message) {
     this.$swal.fire({
         title: 'Warning',
         text: error_message,
@@ -270,7 +268,7 @@ Vue.prototype.showWarning = function(error_message){
     });
 };
 
-Vue.filter('emailMask', function(value) {
+Vue.filter('emailMask', function (value) {
     if (Vue.prototype.$isDemo === 0 || Vue.prototype.$isDemo === "0") return value;
     if (!value) return '';
     const [username, domain] = value.split('@');
@@ -278,12 +276,12 @@ Vue.filter('emailMask', function(value) {
     let last = username.slice(-2);
     let center = username.slice(2, -2);
     let maskedCenter = center.replace(/./g, '*');
-    const maskedUsername = first+maskedCenter+last;
+    const maskedUsername = first + maskedCenter + last;
     return `${maskedUsername}@${domain}`;
 
 });
 
-Vue.filter('mobileMask', function(value) {
+Vue.filter('mobileMask', function (value) {
     if (Vue.prototype.$isDemo === 0 || Vue.prototype.$isDemo === "0") return value;
     if (!value) return '';
     let first = value.substring(0, 2);

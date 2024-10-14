@@ -80,11 +80,19 @@
                             <template #cell(created_at)="row">
                                 {{ new Date(row.item.created_at).toLocaleString()  }}
                             </template>
+                            <template #cell(channel_type)="row">
+                                <template v-if="row.item.customer_type == '0'">B2C</template>
+                                <template v-else>B2B</template>
+                            </template>
+                            
                             <template #cell(actions)="row">
                                 <a  class="btn btn-sm" @click="updateStatusCustomer(row.index,row.item.id)">
                                     <span class="primary-toggal" v-if="row.item.status == 1" ><i class="fa fa-toggle-on fa-2x"></i></span>
                                     <span class="text-danger" v-else><i class="fa fa-toggle-off fa-2x"></i></span>
                                 </a>
+                               <button  class="btn btn-sm btn-success offset-2" @click="showCustomerInfoModalMethod(row.item)">
+                                    <i class="fa fa-eye"></i>
+                                </button>
 <!--                                <button  class="btn btn-sm btn-danger" @click="updateStatusCustomer(row.index,row.item.id)">
                                     <i class="fa fa-toggle-off"></i>
                                 </button>-->
@@ -132,13 +140,18 @@
                 </div>
             </section>
         </div>
-
-
+        <b-modal v-model="b2bCustomerInfoPopupState" size="xl" title="Customer Info">
+           <b2b-customer-info-popup :b2bCustomerInfoByID="b2bCustomerInfoById" :b2bCustomerID="b2bCustomerId"></b2b-customer-info-popup>
+        </b-modal>
     </div>
 </template>
 <script>
 
+import B2bCustomerInfoPopup from './B2bCustomerInfoPopup.vue';
 export default {
+  components: {
+    'b2b-customer-info-popup' : B2bCustomerInfoPopup,
+  },
     data: function() {
         return {
             isLoading: false,
@@ -155,6 +168,7 @@ export default {
 
                 { key: 'status', label: 'Status', sortable: true, class: 'text-center' },
                 { key: 'created_at', label: 'Date & Time', sortable: true, class: 'text-center' },
+                { key: 'channel_type', label: 'Channel Type', sortable: true, class: 'text-center' },
                 { key: 'actions', label: 'Action' }
             ],
             totalRows: 1,
@@ -177,6 +191,9 @@ export default {
             //edit_record : null,
 
             customers: [],
+            b2bCustomerInfoPopupState:false,
+            b2bCustomerId:'',
+            b2bCustomerInfoById:null
         }
     },
     computed: {
@@ -190,6 +207,7 @@ export default {
         }
     },
     mounted() {
+        // Inactive: 0, Active: 1, Pending: 2, Pending Approval: 3, Suspended: 4 => Status described of users
         // Set the initial number of items
         this.totalRows = this.customers.length
     },
@@ -202,6 +220,11 @@ export default {
         this.getCustomers();
     },
     methods: {
+        showCustomerInfoModalMethod(data){
+            this.b2bCustomerInfoById = data
+            this.b2bCustomerId = data.id
+            this.b2bCustomerInfoPopupState = true
+        },
         addFilter(){
             this.customers = [];
             this.totalRows = 1;
