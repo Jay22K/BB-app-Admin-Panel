@@ -18,7 +18,8 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Auth;
 use App\Models\User;
-use Illuminate\Http\Response;
+use App\Models\UserAddress;
+use Response;
 use Kreait\Firebase\Factory;
 
 
@@ -67,7 +68,6 @@ class CustomerAuthController extends Controller
 
             return CommonHelper::responseWithData(__('user_register_successfully'));
         } catch (\Exception $e) {
-
             return CommonHelper::responseError(__('user_not_found'));
         }
     }
@@ -84,28 +84,28 @@ class CustomerAuthController extends Controller
             return CommonHelper::responseError($validator->errors()->first());
         }
 
-        /*if (!Hash::check(request()->password, $user->password)) {
+        /*if (!Hash::check($request->password, $user->password)) {
             return CommonHelper::responseError('Email/Password is wrong!');
         }*/
 
         try {
 
-            if ($request->auth_uid != 123456) {
-                $factory = (new Factory)->withServiceAccount(base_path('config/firebase.json'));
-                $auth = $factory->createAuth();
-                $user = $auth->getUser($request->auth_uid);
-                if ($user->uid != $request->auth_uid) {
-                    return CommonHelper::responseError("Invalid OTP!");
-                }
-            }
+            // if ($request->auth_uid != 123456) {
+            //     $factory = (new Factory)->withServiceAccount(base_path('config/firebase.json'));
+            //     $auth = $factory->createAuth();
+            //     $user = $auth->getUser($request->auth_uid);
+            //     if ($user->uid != $request->auth_uid) {
+            //         return CommonHelper::responseError("Invalid OTP!");
+            //     }
+            // }
 
             $user = User::select('auth_uid', 'id', 'name', 'email', 'country_code', 'mobile', 'profile', 'balance', 'referral_code', 'status')
-                ->where('mobile', request()->mobile)->first();
-            //$user = User::where('mobile', request()->mobile)->first();
+                ->where('auth_uid', $request->auth_uid)->orWhere('mobile', $request->mobile)->first();
+            //$user = User::where('mobile', $request->mobile)->first();
 
             if ($user) {
                 // if user exist and auth id is different
-                if ($user->auth_uid != request()->auth_uid) {
+                if ($user->auth_uid != $request->auth_uid) {
                     return CommonHelper::responseError(__('user_is_unauthorised_kindly_contact_admin'));
                 }
 
@@ -142,6 +142,7 @@ class CustomerAuthController extends Controller
             $accessToken = $user->createToken('authToken')->accessToken;
             $user->referral_code = $user->referral_code ?? "";
             $user->status = intval($user->status) ?? 0;
+            $user = User::where('id', $user->id)->with(['b2c_details', 'b2b_details'])->first();
             $res = ['user' => $user, 'access_token' => $accessToken];
 
             if (isset($request->fcm_token)) {
@@ -160,7 +161,7 @@ class CustomerAuthController extends Controller
 
             return CommonHelper::responseWithData($res);
         } catch (\Exception $e) {
-
+            // throw $e;
             Log::error('Login : ' . $e->getMessage());
             return CommonHelper::responseError($e->getMessage());
         }
@@ -181,14 +182,15 @@ class CustomerAuthController extends Controller
         if (empty($request->user_type)) {
             return CommonHelper::responseError('Please select a user type first');
         }
+        $action = $request->get('action', 'add');
         $rules = $request->user_type == 'b2c' ? [
             'delivery_address' => 'required',
             'city' => 'required',
             'pincode' => 'required|min:6|max:6',
             'state' => 'required',
-            'preferred_devivery_time' => 'nullable|date_format:H:i'
+            'preferred_delivery_time' => 'nullable|date_format:H:i'
         ] : [
-            'sales_channel' => 'required|exists:sales_channels|id',
+            'sales_channel' => 'required|exists:sales_channels,id',
             'outlet_name' => 'required',
             'legal_name' => 'required',
             'business_person_name' => 'required',
@@ -197,40 +199,47 @@ class CustomerAuthController extends Controller
             'city' => 'required',
             'pincode' => 'required|min:6|max:6',
             'state' => 'required',
-            'prefered_devivery_time' => 'nullable|date_format:H:i',
+            'preferred_delivery_time' => 'nullable|date_format:H:i',
             'pan_number' => 'required',
-            'pan_card_image' => 'required|image|mims:mimes:jpeg,jpg,png,gif|size:5120',
-            'gst_certificate_image' => 'required|image|mims:mimes:jpeg,jpg,png,gif|size:5120',
+            'pan_card_image' => $action == 'add' ? 'required' : 'nullable' . '|file|mimes:pdf,jpeg,jpg,png,gif|max:5120',
+            'gst_certificate_image' => $action == 'add' ? 'required' : 'nullable' . '|file|mimes:pdf,jpeg,jpg,png,gif|max:5120',
             'fssai_number' => 'required',
-            'fssai_certificate_image' => 'nullable|image|mims:mimes:jpeg,jpg,png,gif|size:5120',
-            'monthly_turnover' => 'required|digits',
+            'fssai_certificate_image' => 'nullable|file|mimes:pdf,jpeg,jpg,png,gif|max:5120',
+            'monthly_turnover' => 'required|numeric',
         ];
         $rules = array_merge($rules, [
             'name' => 'required',
             'email' => 'required|email',
-            'phone' => 'required|digits:10',
+            // 'phone' => 'required|digits:10',
         ]);
-        $validator = validator($request->all(), $rules);
 
-        if ($validator->failed()) {
+        $validator = Validator::make($request->all(), $rules);
+
+        if ($validator->fails()) {
             return response()->json(['status' => 0, 'message' => 'Validaion failed', 'errors' => $validator->errors()]);
         }
         try {
-            $user = $request->user();
+            $user = Auth::guard('api')->user();
+
+            $user = User::find($user->id);
             if ($request->user_type == 'b2c') {
-                B2CDetail::updateOrCreate([
+                $user->status = 1;
+                B2CDetail::updateOrCreate(
                     ['user_id' => $user->id],
                     [
                         'delivery_address' => $request->delivery_address,
                         'city' => $request->city,
                         'pincode' => $request->pincode,
                         'state' => $request->state,
-                        'preferred_devivery_time' => $request->preferred_devivery_time,
+                        'preferred_delivery_time' => $request->preferred_delivery_time,
                     ]
-                ]);
+                );
             } elseif ($request->user_type == 'b2b') {
-                B2BDetail::updateOrCreate([
-                    ['user_id' => $user->id],
+                $panImage = $gstImage = $fssaiImage = '';
+                if ($action == 'add')
+                    $user->status = 2;
+
+                $userDtails =
                     [
                         'outlet_name' => $request->outlet_name,
                         'legal_name' => $request->legal_name,
@@ -240,29 +249,88 @@ class CustomerAuthController extends Controller
                         'city' => $request->city,
                         'pincode' => $request->pincode,
                         'state' => $request->state,
-                        'prefered_devivery_time' => $request->prefered_devivery_time,
+                        'preferred_delivery_time' => $request->preferred_delivery_time,
                         'pan_number' => $request->pan_number,
-                        'pan_card_image' => $request->pan_card_image,
-                        'gst_certificate_image' => $request->gst_certificate_image,
                         'fssai_number' => $request->fssai_number,
-                        'fssai_certificate_image' => $request->fssai_certificate_image,
                         'monthly_turnover' => $request->monthly_turnover,
-                    ]
-                ]);
+                    ];
+                if ($request->hasFile('pan_card_image')) {
+                    $panImage = CommonHelper::fileUploadStorage($request->file('pan_card_image'), 'b2b/pan');
+                    $userDtails['pan_card_image'] = $panImage;
+                }
+
+                if ($request->hasFile('gst_certificate_image')) {
+                    $gstImage = CommonHelper::fileUploadStorage($request->file('gst_certificate_image'), 'b2b/gst');
+                    $userDtails['gst_certificate_image'] = $gstImage;
+                }
+
+                if ($request->hasFile('fssai_certificate_image')) {
+                    $fssaiImage = CommonHelper::fileUploadStorage($request->file('fssai_certificate_image'), 'b2b/fssai');
+                    $userDtails['fssai_certificate_image'] = $fssaiImage;
+                }
+
+                B2BDetail::updateOrCreate(
+                    ['user_id' => $user->id],
+                    $userDtails
+                );
             } else {
                 return CommonHelper::responseError('Invalid user type');
             }
+            if (!UserAddress::where(['user_id' => $user->id])->exists()) {
+                $address = UserAddress::create([
+                    'user_id' => $user->id,
+                    'name' => $request->name,
+                    'mobile' => $user->mobile,
+                    'type' => 'home',
+                    'address' => $request->delivery_address,
+                    'latitude' => $request->latitude ?? '',
+                    'longitude' => $request->longitude ?? '',
+                    'pincode' => $request->pincode,
+                    'city_id' => 1,
+                    'city' => $request->city ?? '',
+                    'landmark' => $request->city ?? '',
+                    'area' => $request->city ?? '',
+                    'state' => $request->state ?? '',
+                    'country' => $request->country ?? 'India',
+                    'is_default' => 1
+                ]);
+            } else {
+                $address = UserAddress::where('user_id', $user->id)->where('is_default', 1)->update([
+                    'name' => $request->name,
+                    'mobile' => $user->mobile,
+                    'address' => $request->delivery_address,
+                    'latitude' => $request->latitude ?? '',
+                    'longitude' => $request->longitude ?? '',
+                    'pincode' => $request->pincode,
+                    'city' => $request->city ?? '',
+                    'landmark' => $request->city ?? '',
+                    'area' => $request->city ?? '',
+                    'state' => $request->state ?? '',
+                    'country' => $request->country ?? 'India'
+                ]);
+            }
 
-            $user = User::find($user->id);
+            if ($request->hasFile('profile_image')) {
+                $file = $request->file('profile_image');
+
+                $fileName = time() . '_' . $user->id . '.' . $file->getClientOriginalExtension();
+
+                $image = Storage::disk('public')->putFileAs('customers', $file, $fileName);
+                $user->profile = $image;
+            }
             $user->customer_type = $request->user_type == 'b2b' ? 1 : 0;
-            if ($user->status == 2) {
-                $user->status =  $user->customer_type ? 3 : 1;
+            $user->name = $request->name;
+            $user->email = $request->email;
+            if ($request->user_type == 'b2b')
                 $user->sales_channel = $request->sales_channel;
+            if ($user->status == 2 && $action == 'add') {
+                $user->status =  $user->customer_type ? 3 : 1;
             }
             $user->update();
-
-            return CommonHelper::responseSuccessWithData('User account details updated', $user->with('details'));
+            $user = User::where('id', $user->id)->with(['b2c_details', 'b2b_details'])->first();
+            return CommonHelper::responseSuccessWithData('User account details updated', $user);
         } catch (\Exception $e) {
+            Log::error('Login : ' . $e->getMessage());
             return response()->json(['status' => 0, 'message' => 'Something went wrong', 'errors' => $e->getMessage()], 500);
         }
     }
@@ -463,12 +531,13 @@ class CustomerAuthController extends Controller
 
     public function getLoginUserDetails(Request $request)
     {
+        $user = Auth::guard('api')->user();
         $user_id = $request->user('api-customers') ? $request->user('api-customers')->id : '';
         $total = Cart::select(DB::raw('COUNT(carts.id) AS total'))->Join('products', 'carts.product_id', '=', 'products.id')->where('carts.save_for_later', '=', 0)->where('user_id', '=', $user_id)->first();
         $total = $total->makeHidden(['image_url']);
-        $user = User::select('id', 'name', 'email', 'country_code', 'mobile', 'profile', 'balance', 'referral_code', 'status')->where('id', $user_id)->first();
+        $user = User::where('id', $user->id)->with(['b2c_details', 'b2b_details'])->first();
         if (!empty($user)) {
-            return Response::json(array('status' => 1, 'message' => 'success', 'total' => 1, 'cart_items_count' => $total->total, 'user' => $user));
+            return response()->json(array('status' => 1, 'message' => 'success', 'total' => 1, 'cart_items_count' => $total->total, 'user' => $user));
         } else {
             return CommonHelper::responseError(__('unauthorized'));
         }

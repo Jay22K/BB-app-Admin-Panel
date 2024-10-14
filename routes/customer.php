@@ -13,6 +13,7 @@ use App\Http\Controllers\API\Customer\{
     SectionsApiController,
     WithdrawalApiController,
 };
+use Illuminate\Http\Request;
 
 header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Methods: PUT, GET, POST, DELETE, OPTIONS");
@@ -75,7 +76,6 @@ Route::group(['middleware' => ['customer.provider']], function () {
     Route::group(['middleware' => ['auth:api-customers', 'customer.status']], function () {
 
         //Route::group(['middleware' => ['auth:api']], function () {
-
         // User
         Route::post('logout', [CustomerAuthController::class, 'logout']);
         Route::post('delete_account', [CustomerAuthController::class, 'deleteAccount']);
@@ -84,6 +84,7 @@ Route::group(['middleware' => ['customer.provider']], function () {
         Route::post('upload_profile', [CustomerAuthController::class, 'uploadProfile']);
         Route::post('update_fcm_token', [CustomerAuthController::class, 'updateFcmToken']);
         Route::get('user_details', [CustomerAuthController::class, 'getLoginUserDetails']);
+
 
         // Transactions
         Route::get('get_user_transactions', [BasicApiController::class, 'getUserTransactions']);
@@ -119,8 +120,6 @@ Route::group(['middleware' => ['customer.provider']], function () {
             Route::post('/remove', [CartApiController::class, 'removeFromCart']);
             Route::post('/save_for_later', [CartApiController::class, 'addToSaveForLater']);
         });
-
-
 
         // Offers
         Route::group(['prefix' => 'offers'], function () {

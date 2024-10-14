@@ -11,24 +11,25 @@ class CustomersApiController extends Controller
 {
     /*public function index(){}*/
 
-    public function getCustomers(Request $request){
+    public function getCustomers(Request $request)
+    {
 
-        $limit = $request->get('limit',5);
-        $offset = $request->get('offset',0);
+        $limit = $request->get('limit', 5);
+        $offset = $request->get('offset', 0);
 
-        $query = User::where('status','!=', 2);
+        $query = User::where('status', '!=', 2);
 
         // Apply search filters
         if ($request->has('search')) {
             $searchTerm = $request->input('search');
             $query->where(function ($query) use ($searchTerm) {
-                $query->where('name', 'like', '%'.$searchTerm.'%')
-                    ->orWhere('email', 'like', '%'.$searchTerm.'%')
-                    ->orWhere('mobile', 'like', '%'.$searchTerm.'%')
-                    ->orWhere('balance', 'like', '%'.$searchTerm.'%')
-                    ->orWhere('referral_code', 'like', '%'.$searchTerm.'%')
-                    ->orWhere('friends_code', 'like', '%'.$searchTerm.'%')
-                    ->orWhere('status', 'like', '%'.$searchTerm.'%');
+                $query->where('name', 'like', '%' . $searchTerm . '%')
+                    ->orWhere('email', 'like', '%' . $searchTerm . '%')
+                    ->orWhere('mobile', 'like', '%' . $searchTerm . '%')
+                    ->orWhere('balance', 'like', '%' . $searchTerm . '%')
+                    ->orWhere('referral_code', 'like', '%' . $searchTerm . '%')
+                    ->orWhere('friends_code', 'like', '%' . $searchTerm . '%')
+                    ->orWhere('status', 'like', '%' . $searchTerm . '%');
             });
         }
 
@@ -42,18 +43,19 @@ class CustomersApiController extends Controller
 
         // Get the total count for pagination
         $total = $query->count();
-        $customers = $query->get();
+        $customers = $query->with('b2b_details', 'b2c_details', 'salesChannel')->get();
 
         return CommonHelper::responseWithData($customers, $total);
     }
-    public function changeStatus(Request $request){
-        if(isset($request->id)){
+    public function changeStatus(Request $request)
+    {
+        if (isset($request->id)) {
             $customers = User::find($request->id);
-            if($customers){
-                $customers->status = ( $customers->status == 1 ) ? 0 : 1;
+            if ($customers) {
+                $customers->status = ($customers->status == 1) ? 0 : 1;
                 $customers->save();
                 return CommonHelper::responseSuccess("Customers Status Updated Successfully!");
-            }else{
+            } else {
                 return CommonHelper::responseSuccess("Customer Record not found!");
             }
         }

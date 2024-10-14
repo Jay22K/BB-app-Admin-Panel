@@ -8,21 +8,21 @@
                 <div class="col-12 col-md-6 order-md-2 order-first">
                     <nav aria-label="breadcrumb" class="breadcrumb-header float-start float-lg-end">
                         <ol class="breadcrumb">
-                             <!-- Conditionally render breadcrumb item based on the current route -->
+                            <!-- Conditionally render breadcrumb item based on the current route -->
                             <li class="breadcrumb-item" v-if="isSellerRoute">
                                 <router-link to="/seller/dashboard">{{ __('dashboard') }}</router-link>
                             </li>
                             <li class="breadcrumb-item" v-else>
                                 <router-link to="/dashboard">{{ __('dashboard') }}</router-link>
                             </li>
-                                                    <!-- Conditionally render breadcrumb item based on the current route -->
+                            <!-- Conditionally render breadcrumb item based on the current route -->
                             <li class="breadcrumb-item" v-if="isSellerRoute">
                                 <router-link to="/seller/manage_products">{{ __('manage_products') }}</router-link>
                             </li>
                             <li class="breadcrumb-item" v-else>
                                 <router-link to="/manage_products">{{__('manage_products') }}</router-link>
                             </li>
-                           
+
                             <li class="breadcrumb-item active" aria-current="page">
                                 <template v-if="id">
                                     {{ __('edit') }}
@@ -42,31 +42,39 @@
                     <form ref="my-form" @submit.prevent="saveRecord" @keydown.enter="$event.preventDefault()">
                         <div class="card">
                             <div class="card-header">
-                                <h4><template v-if="id">{{ __('edit') }}</template><template v-else>{{ __('create') }}</template> {{ __('product') }}</h4>
+                                <h4><template v-if="id">{{ __('edit') }}</template><template v-else>{{ __('create')
+                                        }}</template> {{ __('product') }}</h4>
                                 <span class="pull-right">
                                     <template v-if="$roleSeller == login_user.role.name">
-                                         <router-link to="/seller/manage_products" class="btn btn-primary" v-b-tooltip.hover title="Manage Product">{{ __('manage_products') }}</router-link>
+                                        <router-link to="/seller/manage_products" class="btn btn-primary"
+                                            v-b-tooltip.hover title="Manage Product">{{ __('manage_products')
+                                            }}</router-link>
                                     </template>
                                     <template v-else>
-                                        <router-link to="/manage_products" class="btn btn-primary" v-b-tooltip.hover title="Manage Product">{{ __('manage_products') }}</router-link>
+                                        <router-link to="/manage_products" class="btn btn-primary" v-b-tooltip.hover
+                                            title="Manage Product">{{ __('manage_products') }}</router-link>
                                     </template>
                                 </span>
                             </div>
                             <div class="card-body">
 
                                 <label><span class="text-danger text-xs">*</span> {{__('required_fields')}}</label>
-                                <div class="divider"><div class="divider-text">{{__('add_product_form')}}</div></div>
+                                <div class="divider">
+                                    <div class="divider-text">{{__('add_product_form')}}</div>
+                                </div>
 
                                 <div class="row">
                                     <div class="col-md-6">
                                         <label>{{ __('product_name') }}</label>
                                         <i class="text-danger">*</i>
-                                        <input type="text" class="form-control" :placeholder="__('enter_product_name')" v-model="name" v-on:keyup="createSlug" required>
+                                        <input type="text" class="form-control" :placeholder="__('enter_product_name')"
+                                            v-model="name" v-on:keyup="createSlug" required>
                                     </div>
                                     <div class="col-md-6">
                                         <label>{{ __('slug') }}</label>
                                         <i class="text-danger">*</i>
-                                        <input type="text" class="form-control" :placeholder="__('enter_product_slug')" v-model="slug">
+                                        <input type="text" class="form-control" :placeholder="__('enter_product_slug')"
+                                            v-model="slug">
                                     </div>
                                     <template v-if="this.$roleSeller == login_user.role.name">
                                         <input type="hidden" v-model="seller_id">
@@ -76,7 +84,7 @@
                                             <label class="control-label" for="seller_id">{{ __('seller') }}</label>
                                             <i class="text-danger">*</i>
                                             <select id="seller_id" name="seller_id" class="form-control form-select"
-                                                    v-model="seller_id" required @change="getSellerCategories">
+                                                v-model="seller_id" required @change="getSellerCategories">
                                                 <option value="">{{ __('select_seller') }}</option>
                                                 <option v-for="seller in sellers" :value="seller.id">{{ seller.name }}
                                                 </option>
@@ -86,33 +94,27 @@
                                     <div class="col-md-6">
                                         <label for="tax_id" class="control-label">{{ __('tax') }}</label>
                                         <select id="tax_id" name="tax_id" class="form-control form-select"
-                                                v-model="tax_id">
+                                            v-model="tax_id">
                                             <option value="0">Select Tax</option>
                                             <option v-for="tax in taxes" :value="tax.id">{{ tax.title }}</option>
                                         </select>
                                     </div>
                                     <div class="col-md-6">
                                         <div class="form-group">
-                                            <label for="tags" class="control-label" >{{ __('tags') }}  ( {{__('these_tags_help_you_in_search_result')}} )</label>
-                                            <b-form-tags
-                                                input-id="tags"
-                                                v-model="tags"
-                                                tag-variant="primary"
-                                                separator=" ,;"
-                                                :placeholder="__('enter_product_tag')"
-                                                no-add-on-enter
-                                            ></b-form-tags>
+                                            <label for="tags" class="control-label">{{ __('tags') }} (
+                                                {{__('these_tags_help_you_in_search_result')}} )</label>
+                                            <b-form-tags input-id="tags" v-model="tags" tag-variant="primary"
+                                                separator=" ,;" :placeholder="__('enter_product_tag')"
+                                                no-add-on-enter></b-form-tags>
 
                                         </div>
                                     </div>
                                     <div class="col-md-6">
                                         <div class="form-group">
                                             <label>{{ __('brands') }}</label>
-                                            <multiselect v-model="brand"
-                                                         :options="brands"
-                                                         :placeholder="__('select_and_search_brands')"
-                                                         label="name"
-                                                         track-by="name" required>
+                                            <multiselect v-model="brand" :options="brands"
+                                                :placeholder="__('select_and_search_brands')" label="name"
+                                                track-by="name" required>
                                                 <template slot="singleLabel" slot-scope="props">
                                                     <span class="option__desc">
                                                         <span class="option__title">{{ props.option.name }}</span>
@@ -121,7 +123,8 @@
                                                 <template slot="option" slot-scope="props">
                                                     <div class="option__desc">
                                                         <span class="option__small">
-                                                            <img style="height: 25px; " class="option__image" :src="props.option.image_url" alt="Brand Logo">
+                                                            <img style="height: 25px; " class="option__image"
+                                                                :src="props.option.image_url" alt="Brand Logo">
                                                         </span>
                                                         <span class="option__title">{{ props.option.name }}</span>
                                                     </div>
@@ -132,25 +135,23 @@
                                     <div class="col-md-12">
                                         <div class="form-group">
                                             <label>{{ __('description') }} <i class="text-danger">*</i></label>
-                                            <editor
-                                                :placeholder="__('enter_product_description')"
-                                                v-model="description"
-                                                :api-key="this.$editorKey"
-                                                :init="{
+                                            <editor :placeholder="__('enter_product_description')" v-model="description"
+                                                :api-key="this.$editorKey" :init="{
                                                     height:400,
                                                     plugins: this.$editorPlugins ,
                                                     toolbar: this.$editorToolbar,
                                                     font_size_formats: this.$editorFont_size_formats,
-                                                   }"
-                                            />
+                                                   }" />
                                         </div>
                                     </div>
                                     <div class="col-md-6">
                                         <div class="form-group">
                                             <label>{{ __('main_image')}} <i class="text-danger">*</i></label>
-                                            <input type="file" name="image" accept="image/*" ref="file_image" v-on:change="fileImage" class="file-input">
+                                            <input type="file" name="image" accept="image/*" ref="file_image"
+                                                v-on:change="fileImage" class="file-input">
 
-                                            <div class="file-input-div bg-gray-100" @click="$refs.file_image.click()" @drop="dropFile" @dragover="$dragoverFile" @dragleave="$dragleaveFile" >
+                                            <div class="file-input-div bg-gray-100" @click="$refs.file_image.click()"
+                                                @drop="dropFile" @dragover="$dragoverFile" @dragleave="$dragleaveFile">
                                                 <template v-if="main_image_name == ''">
                                                     <label><i class="fa fa-cloud-upload fa-2x"></i></label>
                                                     <label>{{ __('drop_files_here_or_click_to_upload') }}</label>
@@ -159,12 +160,14 @@
                                                     <label>Selected file name:- {{ main_image_name }}</label>
                                                 </template>
                                             </div>
-                                            <span class="text text-primary"> *Please choose square image of larger than 350px*350px &amp; smaller than 550px*550px.</span>
+                                            <span class="text text-primary"> *Please choose square image of larger than
+                                                350px*350px &amp; smaller than 550px*550px.</span>
                                             <p v-if="mainImageerror" class="error">{{ mainImageerror }}</p>
 
                                             <div class="row" v-if="main_image_path">
                                                 <div class="col-md-4">
-                                                    <img class="custom-image" :src="main_image_path" title='Main Image' alt='Main Image'/>
+                                                    <img class="custom-image" :src="main_image_path" title='Main Image'
+                                                        alt='Main Image' />
                                                 </div>
                                             </div>
                                         </div>
@@ -173,9 +176,13 @@
                                         <div class="form-group">
                                             <label for="other_images">{{ __('other_images_of_the_product') }}</label>
 
-                                            <input type="file" name="other_images[]" accept="image/*" id="other_images" v-on:change="otherImage" multiple="" ref="file_other_images" class="file-input">
+                                            <input type="file" name="other_images[]" accept="image/*" id="other_images"
+                                                v-on:change="otherImage" multiple="" ref="file_other_images"
+                                                class="file-input">
 
-                                            <div class="file-input-div bg-gray-100" @click="$refs.file_other_images.click()" @drop="dropFileOtherImage" @dragover="$dragoverFile" @dragleave="$dragleaveFile">
+                                            <div class="file-input-div bg-gray-100"
+                                                @click="$refs.file_other_images.click()" @drop="dropFileOtherImage"
+                                                @dragover="$dragoverFile" @dragleave="$dragleaveFile">
                                                 <template v-if="images.length === 0 ">
                                                     <label><i class="fa fa-cloud-upload fa-2x"></i></label>
                                                     <label>{{ __('drop_files_here_or_click_to_upload') }}</label>
@@ -186,26 +193,38 @@
                                                     </template>
                                                     <template v-else>
                                                         <label>{{ images.length }} files Selected</label>
-                                                        <span><small v-for="image in images">{{ image.name }}, </small></span>
+                                                        <span><small v-for="image in images">{{ image.name }},
+                                                            </small></span>
                                                     </template>
                                                 </template>
                                             </div>
-                                            <span class="text text-primary"> *Please choose square image of larger than 350px*350px &amp; smaller than 550px*550px.</span>
+                                            <span class="text text-primary"> *Please choose square image of larger than
+                                                350px*350px &amp; smaller than 550px*550px.</span>
                                             <p v-if="otherImageerror" class="error">{{ otherImageerror }}</p>
 
                                             <div class="row" v-if="images && images.length !== 0">
                                                 <h6 class="mt-3">Seleted Other Image List.</h6>
-                                                <div class="col-md-4 image-container" v-if="images.length !== 0" v-for="(image, index) in images">
-                                                    <img class="img-thumbnail custom-image" :src="image.url" title='Selected Other Image' alt='Selected Other Image'/>
-                                                    <button type="button" @click="removeOtherImage(images.indexOf(image))" class="btn btn-sm btn-danger btn-remove"> <i class="fa fa-times-circle"></i> </button>
+                                                <div class="col-md-4 image-container" v-if="images.length !== 0"
+                                                    v-for="(image, index) in images">
+                                                    <img class="img-thumbnail custom-image" :src="image.url"
+                                                        title='Selected Other Image' alt='Selected Other Image' />
+                                                    <button type="button"
+                                                        @click="removeOtherImage(images.indexOf(image))"
+                                                        class="btn btn-sm btn-danger btn-remove"> <i
+                                                            class="fa fa-times-circle"></i> </button>
                                                 </div>
                                             </div>
 
                                             <div class="row" v-if="other_images && other_images.length !== 0">
                                                 <h6 class="mt-3">Uploaded Other Image List.</h6>
-                                                <div class="col-md-4 image-container" v-if="other_images.length !== 0" v-for="(image, index) in other_images">
-                                                    <img class="img-thumbnail custom-image" :src="$storageUrl + image.image" title='Other Image' alt='Other Image'/>
-                                                    <button type="button" @click="deleteImage(index, image.id, true)" class="btn btn-sm btn-danger btn-remove"> <i class="fa fa-times-circle"></i> </button>
+                                                <div class="col-md-4 image-container" v-if="other_images.length !== 0"
+                                                    v-for="(image, index) in other_images">
+                                                    <img class="img-thumbnail custom-image"
+                                                        :src="$storageUrl + image.image" title='Other Image'
+                                                        alt='Other Image' />
+                                                    <button type="button" @click="deleteImage(index, image.id, true)"
+                                                        class="btn btn-sm btn-danger btn-remove"> <i
+                                                            class="fa fa-times-circle"></i> </button>
                                                 </div>
                                             </div>
 
@@ -214,7 +233,7 @@
                                 </div>
                             </div>
                         </div>
-
+                        <!-- <ProductVariant></ProductVariant> -->
                         <div class="card">
                             <div class="card-header">
                                 <h4>Product Variant</h4>
@@ -223,133 +242,306 @@
                                 <div class="col-md-6">
                                     <div class="row">
                                         <div class="form-group col-6">
-                                            <label>{{ __('type') }} <i class="text-danger">*</i></label><br>
-                                            <b-form-radio-group
-                                                v-model="type"
-                                                :options="[
+                                            <label>Type<i class="text-danger">*</i></label><br>
+                                            <b-form-radio-group v-model="type" :options="[
                                                         { text: ' Packet', 'value': 'packet' },
                                                         { text: ' Loose', 'value': 'loose' },
-                                                        ]"
-                                                buttons button-variant="outline-primary"
-                                            ></b-form-radio-group>
+                                                        ]" buttons
+                                                button-variant="outline-primary"></b-form-radio-group>
                                         </div>
                                         <div class="form-group col-6">
-                                            <label class="control-label">{{ __('stock_limit') }} <i class="text-danger">*</i></label><br>
-                                            <b-form-radio-group
-                                                v-model="is_unlimited_stock"
-                                                :options="[
+                                            <label class="control-label">Stock Limit <i
+                                                    class="text-danger">*</i></label><br>
+                                            <b-form-radio-group v-model="is_unlimited_stock" :options="[
                                                             { text: ' Limited', 'value': 0 },
                                                             { text: ' Unlimited', 'value': 1 },
-                                                        ]"
-                                                buttons
-                                                button-variant="outline-primary"
-                                            ></b-form-radio-group>
+                                                        ]" buttons
+                                                button-variant="outline-primary"></b-form-radio-group>
                                         </div>
                                     </div>
                                 </div>
-
-                                <div id="packate_div" class="list-group-item" v-if="type === 'packet'" v-for="(input,k) in inputs" :key="k">
+                                <div id="packate_div" class="list-group-item" v-if="type === 'packet'"
+                                    v-for="(input,k) in inputs" :key="k">
                                     <div class="row">
-                                        <div class="col-md-4">
+                                        <div class="col-md-3">
                                             <div class="form-group">
-                                                <label>{{ __('measurement') }}</label>
+                                                <!-- <label>{{__('weight (SKU)')}}</label> -->
+                                                <label>SKU</label>
                                                 <i class="text-danger">*</i>
-                                                <input type="number" step="any" min="0" class="form-control" placeholder="0"
-                                                       v-model="input.packet_measurement">
+                                                <input type="number" step="any" min="0" class="form-control"
+                                                    placeholder="0" v-model="input.packet_measurement">
                                             </div>
                                         </div>
-                                        <!--                                            <div class="col-md-3">
-                                                                                        <div class="form-group">
-                                                                                            <label>Unit:</label>
-                                                                                            <select class="form-control form-select" @change="changeUnits()"
-                                                                                                    :disabled="k>0" v-model="input.packet_measurement_unit_id = inputs[0].packet_measurement_unit_id">
-                                                                                                <option v-for="(unit,key) in units" :value="unit.id">{{ unit.short_code }}</option>
-                                                                                            </select>
-                                                                                        </div>
-                                                                                    </div>-->
-                                        <div class="col-md-4">
+                                        <div class="col-md-3">
                                             <div class="form-group">
-                                                <label>{{ __('price') }} ( {{ $currency }} )</label> <i class="text-danger">*</i>
-                                                <input type="number"  min="0" class="form-control" placeholder="0.00"
-                                                       v-model="input.packet_price" required>
-                                            </div>
-                                        </div>
-                                        <div class="col-md-4">
-                                            <div class="form-group">
-                                                <label>{{__('discounted_price')}} ( {{ $currency }} )</label>
-                                                <input type="number" min="0" class="form-control" placeholder="0.00"
-                                                       v-model="input.discounted_price" @input="validateDiscountedPrice(input)">
-                                                       <span v-if="input.validationErrorDiscountedPrice" class="error">{{ input.validationErrorDiscountedPrice }}</span>
-                                            </div>
-                                        </div>
-                                        <div class="col-md-4" v-if="is_unlimited_stock!=1">
-                                            <div class="form-group">
-                                                <label>{{ __('stock') }}</label> <i class="text-danger">*</i>
-                                                <input type="number" step="any" min="0" class="form-control" placeholder="0"
-                                                       name="packate_stock[]" v-model="input.packet_stock">
-                                            </div>
-                                        </div>
-                                        <div class="col-md-4">
-                                            <div class="form-group">
-                                                <label>{{ __('unit') }}</label>
-<!--                                                <select class="form-control form-select" @change="changeUnits()" v-model="input.packet_stock_unit_id = inputs[0].packet_stock_unit_id">-->
-                                                <select class="form-control form-select" @change="changeUnits()" v-model="input.packet_stock_unit_id">
-                                                    <option value="">{{ __('select_unit') }}</option>
-
-                                                    <option v-for="(unit,key) in units" :value="unit.id">{{ unit.short_code }}</option>
+                                                <label>Unit</label>
+                                                <!--<select class="form-control form-select" @change="changeUnits()" v-model="input.packet_stock_unit_id = inputs[0].packet_stock_unit_id">-->
+                                                <select class="form-control form-select" @change="changeUnits()"
+                                                    v-model="input.packet_stock_unit_id">
+                                                    <option value="">Select Unit</option>
+                                                    <option v-for="(unit, key) in units" :value="unit.id" :key="key">{{
+                                                        unit.short_code }}</option>
                                                 </select>
                                             </div>
                                         </div>
-                                        <div class="col-md-4">
+                                        <div class="col-md-3" v-if="is_unlimited_stock!=1">
                                             <div class="form-group">
-                                                <label>{{ __('status') }}</label>
-                                                <select class="form-control form-select" v-model="input.packet_status" required>
-                                                    <option value="">{{ __('select_status') }}</option>
+                                                <label>Stock</label> <i class="text-danger">*</i>
+                                                <input type="number" step="any" min="0" class="form-control"
+                                                    placeholder="0" name="packate_stock[]" v-model="input.packet_stock">
+                                            </div>
+                                        </div>
+
+                                        <div class="col-md-3">
+                                            <div class="form-group">
+                                                <label>Status</label>
+                                                <select class="form-control form-select" v-model="input.packet_status"
+                                                    required>
+                                                    <option value="">Select Status</option>
                                                     <option value="1">{{ __('available') }}</option>
                                                     <option value="0">{{ __('sold_out') }}</option>
                                                 </select>
                                             </div>
                                         </div>
+                                        <!--<div class="col-md-3">
+                                            <div class="form-group">
+                                                <label>Unit:</label>
+                                                <select class="form-control form-select" @change="changeUnits()"
+                                                        :disabled="k>0" v-model="input.packet_measurement_unit_id = inputs[0].packet_measurement_unit_id">
+                                                    <option v-for="(unit,key) in units" :value="unit.id">{{ unit.short_code }}</option>
+                                                </select>
+                                            </div>
+                                        </div>-->
+                                        <div class="col-md-12">
+                                            <div class="row price_calucation_row">
+                                                <div class="col-md-3">
+                                                    <div class="form-group">
+                                                        <label>{{__('base_price')}} ( {{ $currency }} )</label> <i
+                                                            class="text-danger">*</i>
+                                                        <input type="number" step="any" min="0" class="form-control"
+                                                            placeholder="0.00" v-model="input.packet_price"  @input="totalFreezerTrpMarginMethod(input)" required>
+                                                            <!-- <label>GST + Price ( {{ $currency }} )</label> <i
+                                                            class="text-danger">*</i>
+                                                        <input type="number" step="any" min="0" class="form-control"
+                                                            placeholder="0.00" v-model="input.packet_price"  @input="totalFreezerTrpMarginMethod(input)" required> -->
+                                                    </div>
+                                                </div>
+                                                <div class="col-sm-3">
+                                                    <div class="form-group">
+                                                        <label>Freezer Cost <i class="text-danger">*</i></label>
+                                                        <b-input-group>
+                                                            <input type="number" step="any" min="0" class="form-control"
+                                                                placeholder="0" v-model="input.packet_freezer_cost"
+                                                                required @input="totalFreezerTrpMarginMethod(input)">
+                                                        </b-input-group>
+                                                    </div>
+                                                </div>
+                                                <div class="col-sm-3">
+                                                    <div class="form-group">
+                                                        <label>Secondry Trp <i class="text-danger">*</i></label>
+                                                        <b-input-group>
+                                                            <input type="number" step="any" min="0" class="form-control"
+                                                                placeholder="0" v-model="input.packet_secondry_trp"
+                                                                required @input="totalFreezerTrpMarginMethod(input)">
+                                                        </b-input-group>
+                                                    </div>
+                                                </div>
+                                                <div class="col-sm-3">
+                                                    <div class="form-group">
+                                                        <label>Company Margin <i class="text-danger">*</i></label>
+                                                        <b-input-group>
+                                                            <input type="number" step="any" min="0" class="form-control"
+                                                                placeholder="0" v-model="input.packet_company_margin"
+                                                                required @input="totalFreezerTrpMarginMethod(input)">
+                                                        </b-input-group>
+                                                    </div>
+                                                </div>
+                                                <div class="col-sm-3">
+                                                    <div class="form-group">
+                                                        <label>Total Freezer + Trp + Margin <i
+                                                                class="text-danger">*</i></label>
+                                                        <b-input-group>
+                                                            <input type="number" step="any" min="0" class="form-control"
+                                                                placeholder="0" v-model="input.packet_total_freezer_trp_margin" readonly>
+                                                        </b-input-group>
+                                                    </div>
+                                                </div>
+                                                <div class="col-sm-3">
+                                                    <div class="form-group">
+                                                        <label>Distributor & Franchise Rate</label>
+                                                        <b-input-group>
+                                                            <input type="number" step="any" min="0" class="form-control"
+                                                                placeholder="0" v-model="input.packet_distributor_franchise_rate" @input="totalRateOfDistributorFranchiseMethod(input)">
+                                                        </b-input-group>
+                                                        <b-input-group class="mt-2">
+                                                            <input type="number" step="any" min="0" class="form-control"
+                                                                placeholder="0" v-model="input.packet_total_distributor_franchise_rate" readonly>
+                                                        </b-input-group>
+                                                    </div>
+                                                </div>
+                                                <div class="col-sm-3">
+                                                    <div class="form-group">
+                                                        <label>Wholesaler Rate</label>
+                                                        <!-- <label>Subdistributor & Dairy Outlet Rate</label> -->
+                                                        <b-input-group>
+                                                            <input type="number" step="any" min="0" class="form-control"
+                                                                placeholder="0" v-model="input.packet_subdistributor_outlet_rate" @input="totalRateOfSubDistributorOutletMethod(input)">
+                                                        </b-input-group>
+                                                        <b-input-group class="mt-2">
+                                                            <input type="number" step="any" min="0" class="form-control"
+                                                                placeholder="0" v-model="input.packet_total_subdistributor_outlet_rate" readonly>
+                                                        </b-input-group>
+                                                    </div>
+                                                </div>
+                                                <div class="col-sm-3">
+                                                    <div class="form-group">
+                                                        <label>Retailer Rate</label>
+                                                        <b-input-group>
+                                                            <input type="number" step="any" min="0" class="form-control"
+                                                                placeholder="0" v-model="input.packet_gt_market_retailer_vikreta_rate" @input="totalRateOfGtMarketVikretaMethod(input)">
+                                                        </b-input-group>
+                                                        <b-input-group class="mt-2">
+                                                            <input type="number" step="any" min="0" class="form-control"
+                                                                placeholder="0" v-model="input.packet_total_gt_market_retailer_vikreta_rate" readonly>
+                                                        </b-input-group>
+                                                    </div>
+                                                </div>
+                                                <div class="col-sm-3">
+                                                    <div class="form-group">
+                                                        <label>E- commerce & Modern treat Rate</label>
+                                                        <b-input-group>
+                                                            <input type="number" step="any" min="0" class="form-control"
+                                                                placeholder="0" v-model="input.packet_e_commerce_rate" @input="totalRateOfECommerceMethod(input)">
+                                                        </b-input-group>
+                                                        <b-input-group class="mt-2">
+                                                            <input type="number" step="any" min="0" class="form-control"
+                                                                placeholder="0" v-model="input.packet_total_e_commerce_rate" readonly>
+                                                        </b-input-group>
+                                                    </div>
+                                                </div>
+                                                <div class="col-sm-3">
+                                                    <div class="form-group">
+                                                        <label>Horica Rate</label>
+                                                        <b-input-group>
+                                                            <input type="number" step="any" min="0" class="form-control"
+                                                                placeholder="0" v-model="input.packet_horika_cantin_rate" @input="totalRateOfHorikacantinMethod(input)">
+                                                        </b-input-group>
+                                                        <b-input-group class="mt-2">
+                                                            <input type="number" step="any" min="0" class="form-control"
+                                                                placeholder="0" v-model="input.packet_total_horika_cantin_rate" readonly>
+                                                        </b-input-group>
+                                                    </div>
+                                                </div>
+                                                <div class="col-sm-3">
+                                                    <div class="form-group">
+                                                        <label>Pick-up the franchiser point Rate</label>
+                                                        <b-input-group>
+                                                            <input type="number" step="any" min="0" class="form-control"
+                                                                placeholder="0" v-model="input.packet_pick_up_the_franchiser_point_rate" @input="totalRateOfPickUpFranchiserMethod(input)">
+                                                        </b-input-group>
+                                                        <b-input-group class="mt-2">
+                                                            <input type="number" step="any" min="0" class="form-control"
+                                                                placeholder="0" v-model="input.packet_total_pick_up_the_franchiser_point_rate" readonly>
+                                                        </b-input-group>
+                                                    </div>
+                                                </div>
+                                                <div class="col-sm-3">
+                                                    <div class="form-group">
+                                                        <label>Consumer Home Delivery Customer Rate</label>
+                                                        <b-input-group>
+                                                            <input type="number" step="any" min="0" class="form-control"
+                                                                placeholder="0" v-model="input.packet_consumer_home_delivery_customer_price" @input="totalRateOfConsumerHomeDeliveryMethod(input)">
+                                                        </b-input-group>
+                                                        <b-input-group class="mt-2">
+                                                            <input type="number" step="any" min="0" class="form-control"
+                                                                placeholder="0" v-model="input.packet_total_consumer_home_delivery_customer_price" readonly>
+                                                        </b-input-group>
+                                                    </div>
+                                                </div>
+                                                <div class="col-sm-3">
+                                                    <div class="form-group">
+                                                        <label>MRP <i class="text-danger">*</i></label>
+                                                        <b-input-group>
+                                                            <input type="number" step="any" min="0" class="form-control"
+                                                                placeholder="0" v-model="input.packet_mrp" required>
+                                                        </b-input-group>
+                                                    </div>
+                                                </div>
+
+                                                <div class="col-sm-5">
+                                                        <div class="form-group">
+                                                            <!-- <label>HSN Code <i class="text-danger">*</i></label> -->
+                                                            <label>HSN Code </label>
+                                                            <b-input-group>
+                                                                <input type="text" class="form-control"
+                                                                    placeholder="hsn code" v-model="input.packet_hsn" >
+                                                            </b-input-group>
+                                                        </div>
+                                                    </div>
+                                            </div>
+                                        </div>
+                                        <!-- <div class="col-md-4">
+                                            <div class="form-group">
+                                                <label>Discounted Price ( {{ $currency }} )</label>
+                                                <input type="number" min="0" class="form-control" placeholder="0.00"
+                                                    v-model="input.discounted_price"
+                                                    @input="validateDiscountedPrice(input)">
+                                                <span v-if="input.validationErrorDiscountedPrice" class="error">{{
+                                                    input.validationErrorDiscountedPrice }}</span>
+                                            </div>
+                                        </div> -->
                                         <div class="col-md-12 ">
                                             <div class="form-group">
-                                                <label>{{ __('variant_images') }}</label>
-                                                <input type="file" accept="image/*" :ref="'packet_variant_images_'+k " multiple class="file-input"
-                                                       v-on:change="variantImagesChanges(k)" >
-<!--                                                @drop="dropFileStoreLogo"               -->
-                                                <div class="file-input-div bg-gray-100" @click="$refs['packet_variant_images_' + k][0].click()" @dragover="$dragoverFile" @dragleave="$dragleaveFile" >
+                                                <label>Variant Images</label>
+                                                <input type="file" accept="image/*" :ref="'packet_variant_images_'+k "
+                                                    multiple class="file-input" v-on:change="variantImagesChanges(k)">
+                                                <!--                                                @drop="dropFileStoreLogo"               -->
+                                                <div class="file-input-div bg-gray-100"
+                                                    @click="$refs['packet_variant_images_' + k][0].click()"
+                                                    @dragover="$dragoverFile" @dragleave="$dragleaveFile">
                                                     <label><i class="fa fa-cloud-upload fa-2x"></i></label>
                                                     <label>{{ __('drop_files_here_or_click_to_upload') }}</label>
                                                 </div>
 
-                                                <span class="text text-primary">Please choose square image of larger than 350px*350px &amp; smaller than 550px*550px.</span>
+                                                <span class="text text-primary">Please choose square image of larger
+                                                    than 350px*350px &amp; smaller than 550px*550px.</span>
                                                 <p v-if="variantImageerror" class="error">{{ variantImageerror }}</p>
                                                 <div class="row">
-<!--                                                    <div class="col-md-4 image-container" v-if="variantImages[k].length !== 0" v-for="(image, index) in variantImages[k]">-->
-                                                    <div class="col-md-2 image-container" v-for="(image, index) in variantImages[k]">
-                                                        <img class="img-thumbnail custom-image" :src="image.url" title='Selected Variant Image' alt='Selected Variant Image'/>
+                                                    <!--                                                    <div class="col-md-4 image-container" v-if="variantImages[k].length !== 0" v-for="(image, index) in variantImages[k]">-->
+                                                    <div class="col-md-2 image-container"
+                                                        v-for="(image, index) in variantImages[k]">
+                                                        <img class="img-thumbnail custom-image" :src="image.url"
+                                                            title='Selected Variant Image'
+                                                            alt='Selected Variant Image' />
                                                     </div>
                                                 </div>
 
                                                 <div class="row">
-                                                    <div class="col-md-2 image-container" v-if="input.images.length !== 0" v-for="(image, index) in input.images">
-                                                        <img class="img-thumbnail custom-image" :src="$storageUrl + image.image" title='Variant Image' alt='Variant Image'/>
-                                                        <button type="button" @click="deleteImage(index, image.id, false, k)" class="btn btn-sm btn-danger btn-remove"> <i class="fa fa-times-circle"></i> </button>
+                                                    <div class="col-md-2 image-container"
+                                                        v-if="input.images.length !== 0"
+                                                        v-for="(image, index) in input.images">
+                                                        <img class="img-thumbnail custom-image"
+                                                            :src="$storageUrl + image.image" title='Variant Image'
+                                                            alt='Variant Image' />
+                                                        <button type="button"
+                                                            @click="deleteImage(index, image.id, false, k)"
+                                                            class="btn btn-sm btn-danger btn-remove"> <i
+                                                                class="fa fa-times-circle"></i> </button>
                                                     </div>
                                                 </div>
 
                                             </div>
                                         </div>
-
-
-
                                         <div class="col-md-2 offset-md-10 text-end" v-if="k === 0">
-                                            <a style="cursor: pointer;" class="btn btn-primary" v-b-tooltip.hover title="Add variant of product" @click="addRow">
-                                                <i class="fa fa-plus-square"></i> {{ __('add_variant') }}
+                                            <a style="cursor: pointer;" class="btn btn-primary" v-b-tooltip.hover
+                                                title="Add variant of product" @click="addRow">
+                                                <i class="fa fa-plus-square"></i> Add Variant
                                             </a>
                                         </div>
                                         <div class="col-md-2 offset-md-10 text-end" v-if="k !== 0">
-                                            <a style="cursor: pointer;" class="btn btn-danger" v-b-tooltip.hover title="Remove variant of product" @click="remove(k)">
-                                                <i class="fa fa-times"></i> {{ __('remove_variant') }}
+                                            <a style="cursor: pointer;" class="btn btn-danger" v-b-tooltip.hover
+                                                title="Remove variant of product" @click="remove(k)">
+                                                <i class="fa fa-times"></i> Remove Variant
                                             </a>
                                         </div>
 
@@ -359,43 +551,234 @@
                                 <div id="loose_div" v-if="type === 'loose'">
                                     <div class="list-group-item" v-for="(input,k) in inputs" :key="k">
                                         <div class="row">
-                                            <div class="col-md-4">
+                                            <div class="col-md-3">
                                                 <div class="form-group loose_div">
-                                                    <label>{{ __('measurement') }}</label> <i class="text-danger">*</i>
-
-<!--                                                    <input type="number" step="any" min="0" class="form-control" placeholder="0" v-model="input.loose_measurement">-->
-
+                                                    <label>{{__('weight')}}</label> <i class="text-danger">*</i>
                                                     <b-input-group class="mb-2">
-                                                        <input type="number" step="any" min="0" class="form-control" placeholder="0" v-model="input.loose_measurement">
-                                                        <!-- <input type="text" class="form-control" placeholder="Custom title" v-model="input.loose_custom_title"> -->
-                                                    </b-input-group>
-
-
-
+                                                        <input type="number" step="any" min="0" class="form-control"
+                                                            placeholder="0" v-model="input.loose_measurement">
+                                                     </b-input-group>
                                                 </div>
                                             </div>
-
-                                            <div class="col-md-4">
+                                            <div class="col-md-3">
+                                                <div class="form-group" v-if="is_unlimited_stock!=1">
+                                                    <label>Stock </label> <i class="text-danger">*</i>
+                                                    <input type="number" step="any" min="0" class="form-control"
+                                                        v-model="loose_stock"><br>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <div class="form-group">
+                                                    <label>Unit </label>
+                                                    <select class="form-control form-select" name="loose_stock_unit_id"
+                                                        v-model="loose_stock_unit_id">
+                                                        <option value="">{{ __('select_unit') }}</option>
+                                                        <option v-for="(unit,key) in units" :value="unit.id">{{ unit.short_code
+                                                            }}</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <div class="form-group">
+                                                    <label>Status </label>
+                                                    <select name="status" class="form-control form-select" v-model="status">
+                                                        <option value="">{{ __('select_status') }}</option>
+                                                        <option value="1">{{ __('available') }}</option>
+                                                        <option value="0">{{ __('sold_out') }}</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <!-- <div class="col-md-4">
                                                 <div class="form-group loose_div">
-                                                    <label>{{ __('price') }} ( {{ $currency }} ):</label> <i class="text-danger">*</i>
+                                                    <label>Price ( {{ $currency }} ):</label> <i
+                                                        class="text-danger">*</i>
                                                     <input type="number" min="0" class="form-control" placeholder="0.00"
-                                                           v-model="input.loose_price" required>
+                                                        v-model="input.loose_price" required>
                                                 </div>
                                             </div>
                                             <div class="col-md-4">
                                                 <div class="form-group loose_div">
-                                                    <label for="discounted_price">{{ __('discounted_price') }} ( {{ $currency }} ):</label>
-                                                    <input type="number" min="0" class="form-control" placeholder="0.00" id="discounted_price"
-                                                           v-model="input.loose_discounted_price" @input="validateDiscountedPriceLoose(input)">
-                                                    <span v-if="input.validationErrorDiscountedPriceLoose" class="error">{{ input.validationErrorDiscountedPriceLoose }}</span>
+                                                    <label for="discounted_price">Discounted Price ( {{
+                                                        $currency }} ):</label>
+                                                    <input type="number" min="0" class="form-control" placeholder="0.00"
+                                                        id="discounted_price" v-model="input.loose_discounted_price"
+                                                        @input="validateDiscountedPriceLoose(input)">
+                                                    <span v-if="input.validationErrorDiscountedPriceLoose"
+                                                        class="error">{{ input.validationErrorDiscountedPriceLoose
+                                                        }}</span>
+                                                </div>
+                                            </div> -->
+                                            <div class="col-md-12">
+                                                <div class="row price_calucation_row">
+                                                    <div class="col-md-3">
+                                                        <div class="form-group">
+                                                            <label>{{__('base_price')}} ( {{ $currency }} )</label> <i
+                                                                class="text-danger">*</i>
+                                                            <input type="number" min="0" class="form-control"
+                                                                placeholder="0.00" v-model="input.packet_price"  @input="totalFreezerTrpMarginMethod(input)" required>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-sm-3">
+                                                        <div class="form-group">
+                                                            <label>Freezer Cost <i class="text-danger">*</i></label>
+                                                            <b-input-group>
+                                                                <input type="number" step="any" min="0" class="form-control"
+                                                                    placeholder="0" v-model="input.packet_freezer_cost"
+                                                                    required @input="totalFreezerTrpMarginMethod(input)">
+                                                            </b-input-group>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-sm-3">
+                                                        <div class="form-group">
+                                                            <label>Secondry Trp <i class="text-danger">*</i></label>
+                                                            <b-input-group>
+                                                                <input type="number" step="any" min="0" class="form-control"
+                                                                    placeholder="0" v-model="input.packet_secondry_trp"
+                                                                    required @input="totalFreezerTrpMarginMethod(input)">
+                                                            </b-input-group>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-sm-3">
+                                                        <div class="form-group">
+                                                            <label>Company Margin <i class="text-danger">*</i></label>
+                                                            <b-input-group>
+                                                                <input type="number" step="any" min="0" class="form-control"
+                                                                    placeholder="0" v-model="input.packet_company_margin"
+                                                                    required @input="totalFreezerTrpMarginMethod(input)">
+                                                            </b-input-group>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-sm-3">
+                                                        <div class="form-group">
+                                                            <label>Total Freezer + Trp + Margin <i
+                                                                    class="text-danger">*</i></label>
+                                                            <b-input-group>
+                                                                <input type="number" step="any" min="0" class="form-control"
+                                                                    placeholder="0" v-model="input.packet_total_freezer_trp_margin" readonly>
+                                                            </b-input-group>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-sm-3">
+                                                        <div class="form-group">
+                                                            <label>Distributor & Franchise Rate</label>
+                                                            <b-input-group>
+                                                                <input type="number" step="any" min="0" class="form-control"
+                                                                    placeholder="0" v-model="input.packet_distributor_franchise_rate" @input="totalRateOfDistributorFranchiseMethod(input)">
+                                                            </b-input-group>
+                                                            <b-input-group class="mt-2">
+                                                                <input type="number" step="any" min="0" class="form-control"
+                                                                    placeholder="0" v-model="input.packet_total_distributor_franchise_rate" readonly>
+                                                            </b-input-group>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-sm-3">
+                                                        <div class="form-group">
+                                                            <label>E- commerce & Modern treat Rate</label>
+                                                            <b-input-group>
+                                                                <input type="number" step="any" min="0" class="form-control"
+                                                                    placeholder="0" v-model="input.packet_e_commerce_rate" @input="totalRateOfECommerceMethod(input)">
+                                                            </b-input-group>
+                                                            <b-input-group class="mt-2">
+                                                                <input type="number" step="any" min="0" class="form-control"
+                                                                    placeholder="0" v-model="input.packet_total_e_commerce_rate" readonly>
+                                                            </b-input-group>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-sm-3">
+                                                        <div class="form-group">
+                                                            <label>Subdistributor & Dairy Outlet Rate</label>
+                                                            <b-input-group>
+                                                                <input type="number" step="any" min="0" class="form-control"
+                                                                    placeholder="0" v-model="input.packet_subdistributor_outlet_rate" @input="totalRateOfSubDistributorOutletMethod(input)">
+                                                            </b-input-group>
+                                                            <b-input-group class="mt-2">
+                                                                <input type="number" step="any" min="0" class="form-control"
+                                                                    placeholder="0" v-model="input.packet_total_subdistributor_outlet_rate" readonly>
+                                                            </b-input-group>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-sm-3">
+                                                        <div class="form-group">
+                                                            <label>Horika & Cantin Rate</label>
+                                                            <b-input-group>
+                                                                <input type="number" step="any" min="0" class="form-control"
+                                                                    placeholder="0" v-model="input.packet_horika_cantin_rate" @input="totalRateOfHorikacantinMethod(input)">
+                                                            </b-input-group>
+                                                            <b-input-group class="mt-2">
+                                                                <input type="number" step="any" min="0" class="form-control"
+                                                                    placeholder="0" v-model="input.packet_total_horika_cantin_rate" readonly>
+                                                            </b-input-group>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-sm-3">
+                                                        <div class="form-group">
+                                                            <label>GT Market Retailer Vikreta Rate</label>
+                                                            <b-input-group>
+                                                                <input type="number" step="any" min="0" class="form-control"
+                                                                    placeholder="0" v-model="input.packet_gt_market_retailer_vikreta_rate" @input="totalRateOfGtMarketVikretaMethod(input)">
+                                                            </b-input-group>
+                                                            <b-input-group class="mt-2">
+                                                                <input type="number" step="any" min="0" class="form-control"
+                                                                    placeholder="0" v-model="input.packet_total_gt_market_retailer_vikreta_rate" readonly>
+                                                            </b-input-group>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-sm-3">
+                                                        <div class="form-group">
+                                                            <label>Pick-up the franchiser point Rate</label>
+                                                            <b-input-group>
+                                                                <input type="number" step="any" min="0" class="form-control"
+                                                                    placeholder="0" v-model="input.packet_pick_up_the_franchiser_point_rate" @input="totalRateOfPickUpFranchiserMethod(input)">
+                                                            </b-input-group>
+                                                            <b-input-group class="mt-2">
+                                                                <input type="number" step="any" min="0" class="form-control"
+                                                                    placeholder="0" v-model="input.packet_total_pick_up_the_franchiser_point_rate" readonly>
+                                                            </b-input-group>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-sm-3">
+                                                        <div class="form-group">
+                                                            <label>Consumer Home Delivery Customer Price</label>
+                                                            <b-input-group>
+                                                                <input type="number" step="any" min="0" class="form-control"
+                                                                    placeholder="0" v-model="input.packet_consumer_home_delivery_customer_price" @input="totalRateOfConsumerHomeDeliveryMethod(input)">
+                                                            </b-input-group>
+                                                            <b-input-group class="mt-2">
+                                                                <input type="number" step="any" min="0" class="form-control"
+                                                                    placeholder="0" v-model="input.packet_total_consumer_home_delivery_customer_price" readonly>
+                                                            </b-input-group>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-sm-3">
+                                                        <div class="form-group">
+                                                            <label>MRP <i class="text-danger">*</i></label>
+                                                            <b-input-group>
+                                                                <input type="number" step="any" min="0" class="form-control"
+                                                                    placeholder="0" v-model="input.packet_mrp" required>
+                                                            </b-input-group>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-sm-3">
+                                                        <div class="form-group">
+                                                            <label>HSN Code <i class="text-danger">*</i></label>
+                                                            <b-input-group>
+                                                                <input type="text" class="form-control"
+                                                                    placeholder="0" v-model="input.packet_hsn" required>
+                                                            </b-input-group>
+                                                        </div>
+                                                    </div>
                                                 </div>
                                             </div>
                                             <div class="col-md-12">
                                                 <div class="form-group loose_div">
-                                                    <label>{{ __('variant_images') }}</label>
-<!--                                                @drop="dropFileStoreLogo"               -->
-                                                    <input type="file" accept="image/*" :ref="'loose_variant_images_'+k " multiple  class="file-input" v-on:change="variantImagesChanges(k)" @dragover="$dragoverFile" @dragleave="$dragleaveFile">
-                                                    <div class="file-input-div bg-gray-100" @click="$refs['loose_variant_images_' + k][0].click()">
+                                                    <label>Variant Images</label>
+                                                    <!--                                                @drop="dropFileStoreLogo"               -->
+                                                    <input type="file" accept="image/*"
+                                                        :ref="'loose_variant_images_'+k " multiple class="file-input"
+                                                        v-on:change="variantImagesChanges(k)" @dragover="$dragoverFile"
+                                                        @dragleave="$dragleaveFile">
+                                                    <div class="file-input-div bg-gray-100"
+                                                        @click="$refs['loose_variant_images_' + k][0].click()">
                                                         <label><i class="fa fa-cloud-upload fa-2x"></i></label>
                                                         <label>{{ __('drop_files_here_or_click_to_upload') }}</label>
                                                     </div>
@@ -411,15 +794,26 @@
                                                                                                         </div>-->
 
                                                     <div class="row">
-                                                        <div class="col-md-2 image-container" v-if="input.loose_images.length !== 0" v-for="(image, index) in input.loose_images">
-                                                            <img class="img-thumbnail custom-image" :src="$storageUrl + image.image" title='Variant Image' alt='Variant Image'/>
-                                                            <button type="button" @click="deleteImage(index, image.id, false, k)" class="btn btn-sm btn-danger btn-remove"> <i class="fa fa-times-circle"></i> </button>
+                                                        <div class="col-md-2 image-container"
+                                                            v-if="input.loose_images.length !== 0"
+                                                            v-for="(image, index) in input.loose_images">
+                                                            <img class="img-thumbnail custom-image"
+                                                                :src="$storageUrl + image.image" title='Variant Image'
+                                                                alt='Variant Image' />
+                                                            <button type="button"
+                                                                @click="deleteImage(index, image.id, false, k)"
+                                                                class="btn btn-sm btn-danger btn-remove"> <i
+                                                                    class="fa fa-times-circle"></i> </button>
                                                         </div>
                                                     </div>
 
                                                     <div class="row">
-                                                        <div class="col-md-4 image-container" v-if="variantImages[k].length !== 0" v-for="(image, index) in variantImages[k]">
-                                                            <img class="img-thumbnail custom-image" :src="image.url" title='Selected Variant Image' alt='Selected Variant Image'/>
+                                                        <div class="col-md-4 image-container"
+                                                            v-if="variantImages[k].length !== 0"
+                                                            v-for="(image, index) in variantImages[k]">
+                                                            <img class="img-thumbnail custom-image" :src="image.url"
+                                                                title='Selected Variant Image'
+                                                                alt='Selected Variant Image' />
                                                         </div>
                                                     </div>
 
@@ -428,38 +822,43 @@
 
 
                                             <div class="col-md-2 offset-md-10 text-end" v-if="k === 0">
-                                                <a style="cursor: pointer;" class="btn btn-primary" v-b-tooltip.hover title="Add variant of product" @click="addRow">
-                                                    <i class="fa fa-plus-square"></i> {{ __('add_variant') }}
+                                                <a style="cursor: pointer;" class="btn btn-primary" v-b-tooltip.hover
+                                                    title="Add variant of product" @click="addRow">
+                                                    <i class="fa fa-plus-square"></i> Add Variant
                                                 </a>
                                             </div>
                                             <div class="col-md-2 offset-md-10 text-end" v-if="k !== 0">
-                                                <a style="cursor: pointer;" class="btn btn-danger" v-b-tooltip.hover title="Remove variant of product" @click="remove(k)">
-                                                    <i class="fa fa-times"></i> {{ __('remove_variant') }}
+                                                <a style="cursor: pointer;" class="btn btn-danger" v-b-tooltip.hover
+                                                    title="Remove variant of product" @click="remove(k)">
+                                                    <i class="fa fa-times"></i> Remove Variant
                                                 </a>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
 
-                                <div class="row mt-3" id="loose_stock_div" v-if="type === 'loose'">
+                                <!-- <div class="row mt-3" id="loose_stock_div" v-if="type === 'loose'">
                                     <div class="col-md-4">
                                         <div class="form-group" v-if="is_unlimited_stock!=1">
-                                            <label>{{ __('stock') }} </label> <i class="text-danger">*</i>
-                                            <input type="number" step="any" min="0" class="form-control" v-model="loose_stock"><br>
+                                            <label>Stock </label> <i class="text-danger">*</i>
+                                            <input type="number" step="any" min="0" class="form-control"
+                                                v-model="loose_stock"><br>
                                         </div>
                                     </div>
                                     <div class="col-md-4">
                                         <div class="form-group">
-                                            <label>{{ __('unit') }} </label>
-                                            <select class="form-control form-select" name="loose_stock_unit_id" v-model="loose_stock_unit_id">
+                                            <label>Unit </label>
+                                            <select class="form-control form-select" name="loose_stock_unit_id"
+                                                v-model="loose_stock_unit_id">
                                                 <option value="">{{ __('select_unit') }}</option>
-                                                <option v-for="(unit,key) in units" :value="unit.id">{{ unit.short_code }}</option>
+                                                <option v-for="(unit,key) in units" :value="unit.id">{{ unit.short_code
+                                                    }}</option>
                                             </select>
                                         </div>
                                     </div>
                                     <div class="col-md-4">
                                         <div class="form-group">
-                                            <label>{{ __('status') }} </label>
+                                            <label>Status </label>
                                             <select name="status" class="form-control form-select" v-model="status">
                                                 <option value="">{{ __('select_status') }}</option>
                                                 <option value="1">{{ __('available') }}</option>
@@ -467,14 +866,14 @@
                                             </select>
                                         </div>
                                     </div>
-                                </div>
+                                </div> -->
                             </div>
                         </div>
 
 
                         <div class="card">
                             <div class="card-header">
-                                <h4>{{__('product_settings')}}</h4>
+                                <h4>Product Settings</h4>
                             </div>
                             <div class="card-body">
                                 <div class="row">
@@ -483,10 +882,10 @@
                                             <label>{{ __('category') }} <i class="text-danger">*</i></label>
 
                                             <select class="form-control form-select" v-model="category_id"
-                                                    v-html="categoryOptions">
+                                                v-html="categoryOptions">
                                             </select>
 
-<!--                                            <select class="form-control form-select" v-model="category_id">
+                                            <!--                                            <select class="form-control form-select" v-model="category_id">
                                                 <option value="">Select Category</option>
                                                 <option v-for="category in categories" :value="category.id">{{ category.name }}</option>
                                             </select>-->
@@ -513,21 +912,20 @@
                                     <div class="col-md-6">
                                         <div class="form-group">
                                             <label>{{ __('manufacturer') }} </label>
-                                            <input type="text" class="form-control" v-model="manufacturer" :placeholder="__('enter_manufacturer')">
+                                            <input type="text" class="form-control" v-model="manufacturer"
+                                                :placeholder="__('enter_manufacturer')">
                                         </div>
                                     </div>
                                     <div class="col-md-6">
                                         <div class="form-group">
                                             <label>{{ __('made_in') }}</label>
-                                            <multiselect v-model="made_in"
-                                                         :options="countries"
-                                                         :placeholder="__('select_and_search_country_name')"
-                                                         label="name"
-                                                         track-by="name" required>
+                                            <multiselect v-model="made_in" :options="countries"
+                                                :placeholder="__('select_and_search_country_name')" label="name"
+                                                track-by="name" required>
                                                 <template slot="singleLabel" slot-scope="props">
-                                                            <span class="option__desc">
-                                                                <span class="option__title">{{ props.option.name }}</span>
-                                                            </span>
+                                                    <span class="option__desc">
+                                                        <span class="option__title">{{ props.option.name }}</span>
+                                                    </span>
                                                 </template>
                                                 <template slot="option" slot-scope="props">
                                                     <div class="option__desc">
@@ -542,7 +940,7 @@
 
                                         </div>
                                     </div>
-                                <!--                                    <hr>
+                                    <!--                                    <hr>
                                                                     <div class="row offset-col-2">
                                                                         <div class="col-md-4">
                                                                             <label>Select Shipping Type :</label>
@@ -623,31 +1021,32 @@
                                             <div class="col-md-5">
                                                 <div class="form-group">
                                                     <label for="return_day">FSSAI Lic. No.</label>
-                                                    <input type="text" class="form-control" :placeholder="__('fssai_lic_no')" v-model="fssai_lic_no" @input="validateFSSAINumber">
-                                                    <p style="color:red" v-if="validationMessage">{{ validationMessage }}</p>
-                                                    <p style="color:green" v-else-if="isValid">FSSAI License Number is valid!</p>
-                                                    
+                                                    <input type="text" class="form-control"
+                                                        :placeholder="__('fssai_lic_no')" v-model="fssai_lic_no"
+                                                        @input="validateFSSAINumber">
+                                                    <p style="color:red" v-if="validationMessage">{{ validationMessage
+                                                        }}</p>
+                                                    <p style="color:green" v-else-if="isValid">FSSAI License Number is
+                                                        valid!</p>
+
                                                 </div>
                                             </div>
                                             <div class="col-md-3">
                                                 <div class="form-group">
                                                     <label>{{ __('is_returnable') }}</label><br>
-                                                    <b-form-radio-group
-                                                        v-model="return_status"
-                                                        :options="[
+                                                    <b-form-radio-group v-model="return_status" :options="[
                                                                 { text: ' No', 'value': 0 },
                                                                 { text: ' Yes', 'value': 1 },
-                                                            ]"
-                                                        buttons
-                                                        button-variant="outline-primary"
-                                                        required
-                                                    ></b-form-radio-group>
+                                                            ]" buttons button-variant="outline-primary"
+                                                        required></b-form-radio-group>
                                                 </div>
                                             </div>
                                             <div class="col-md-3" id="return_day" v-if="return_status == 1">
                                                 <div class="form-group">
                                                     <label for="return_day">{{ __('max_return_days') }} </label>
-                                                    <input type="number" step="any" min="0" class="form-control" :placeholder="__('number_of_days_to_return')" v-model="return_days">
+                                                    <input type="number" step="any" min="0" class="form-control"
+                                                        :placeholder="__('number_of_days_to_return')"
+                                                        v-model="return_days">
                                                 </div>
                                             </div>
                                         </div>
@@ -657,28 +1056,27 @@
                                             <div class="col-md-5">
                                                 <div class="form-group">
                                                     <label>{{ __('is_cancelable') }}</label><br>
-                                                    <b-form-radio-group
-                                                        v-model="cancelable_status"
-                                                        :options="[
+                                                    <b-form-radio-group v-model="cancelable_status" :options="[
                                                                         { text: ' No', 'value': 0 },
                                                                         { text: ' Yes', 'value': 1 },
-                                                                    ]"
-                                                        buttons
-                                                        button-variant="outline-primary"
-                                                    ></b-form-radio-group>
+                                                                    ]" buttons
+                                                        button-variant="outline-primary"></b-form-radio-group>
                                                 </div>
                                             </div>
                                             <div class="col-md-7" id="till-status" v-if="cancelable_status===1">
-                                        <div class="form-group">
-                                            <label for="till_status">{{ __('till_which_status') }} </label> <i class="text-danger">*</i>
-                                            <br>
-                                            <select id="till_status" class="form-control form-select" v-model="till_status">
-                                                <option value="">{{ __('select_order_statue') }}</option>
-                                                <option v-for="status in order_status" :value="status.id">{{ status.status }}
-                                                </option>
-                                            </select>
-                                        </div>
-                                    </div>
+                                                <div class="form-group">
+                                                    <label for="till_status">{{ __('till_which_status') }} </label> <i
+                                                        class="text-danger">*</i>
+                                                    <br>
+                                                    <select id="till_status" class="form-control form-select"
+                                                        v-model="till_status">
+                                                        <option value="">{{ __('select_order_statue') }}</option>
+                                                        <option v-for="status in order_status" :value="status.id">{{
+                                                            status.status }}
+                                                        </option>
+                                                    </select>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                     <div class="col-md-6">
@@ -686,36 +1084,30 @@
                                             <div class="col-md-4">
                                                 <div class="form-group">
                                                     <label>{{__('is_cod_allowed')}}</label><br>
-                                                    <b-form-radio-group
-                                                        v-model="cod_allowed_status"
-                                                        :options="[
+                                                    <b-form-radio-group v-model="cod_allowed_status" :options="[
                                                                 { text: ' No', 'value': 0 },
                                                                 { text: ' Yes', 'value': 1 },
-                                                            ]"
-                                                        buttons
-                                                        button-variant="outline-primary"
-                                                    ></b-form-radio-group>
+                                                            ]" buttons
+                                                        button-variant="outline-primary"></b-form-radio-group>
                                                 </div>
                                             </div>
                                             <div class="col-md-4">
                                                 <div class="form-group">
                                                     <label>{{ __('tax_included_in_prices') }} </label><br>
-                                                    <b-form-radio-group
-                                                        v-model="tax_included_in_price"
-                                                        :options="[
+                                                    <b-form-radio-group v-model="tax_included_in_price" :options="[
                                                                 { text: ' No', 'value': 0 },
                                                                 { text: ' Yes', 'value': 1 },
-                                                            ]"
-                                                        buttons
-                                                        button-variant="outline-primary"
-                                                    ></b-form-radio-group>
+                                                            ]" buttons
+                                                        button-variant="outline-primary"></b-form-radio-group>
                                                 </div>
                                             </div>
                                             <div class="col-md-4">
                                                 <div class="form-group">
-                                                    <label>{{ __('total_allowed_quantity') }}  </label>
-                                                    <input type="number" min="0" class="form-control" v-model="max_allowed_quantity">
-                                                    <span class="text text-primary">{{ __('keep_blank_if_no_such_limit') }}</span>
+                                                    <label>{{ __('total_allowed_quantity') }} </label>
+                                                    <input type="number" min="0" class="form-control"
+                                                        v-model="max_allowed_quantity">
+                                                    <span class="text text-primary">{{ __('keep_blank_if_no_such_limit')
+                                                        }}</span>
                                                 </div>
                                             </div>
                                         </div>
@@ -729,11 +1121,11 @@
                                                 <label class="control-label">{{ __('product_status') }}</label><br>
                                                 <div id="status" class="btn-group">
                                                     <label class="btn btn-primary" data-toggle-class="btn-primary"
-                                                           data-toggle-passive-class="btn-default">
+                                                        data-toggle-passive-class="btn-default">
                                                         <input type="radio" v-model="is_approved" value="1"> Approved
                                                     </label>
                                                     <label class="btn btn-danger" data-toggle-class="btn-danger"
-                                                           data-toggle-passive-class="btn-default">
+                                                        data-toggle-passive-class="btn-default">
                                                         <input type="radio" v-model="is_approved" value="2">
                                                         Not-Approved
                                                     </label>
@@ -744,7 +1136,8 @@
                                 </div>
                             </div>
                             <div class="card-footer">
-                                <b-button type="submit"  @keydown.enter.native="saveRecord" variant="primary" :disabled="isLoading"> {{ __('save') }}
+                                <b-button type="submit" @keydown.enter.native="saveRecord" variant="primary"
+                                    :disabled="isLoading"> Save
                                     <b-spinner v-if="isLoading" small label="Spinning"></b-spinner>
                                 </b-button>
                                 <button type="reset" class="btn btn-danger">{{ __('clear') }}</button>
@@ -899,7 +1292,7 @@ export default {
                 this.inputs.splice(index, 1)
             }
         },
-      
+
         dropFile(event) {
             event.preventDefault();
             this.$refs.file_image.files = event.dataTransfer.files;
@@ -911,7 +1304,7 @@ export default {
 
         fileImage() {
             const file = this.$refs.file_image.files[0];
-      
+
             // Reset previous error message
             this.mainImageerror = null;
 
@@ -971,8 +1364,8 @@ export default {
                     this.images.push(image);
                 }
 
-                
-                
+
+
             }
         },
 
@@ -1150,6 +1543,85 @@ export default {
                 input.validationErrorDiscountedPriceLoose = null;
             }
         },
+        totalFreezerTrpMarginMethod(input) {
+            if(!input.packet_freezer_cost && !input.packet_secondry_trp && !input.packet_company_margin) return;
+            input.packet_total_freezer_trp_margin = parseFloat(input.packet_freezer_cost) + parseFloat(input.packet_secondry_trp) + parseFloat(input.packet_company_margin);
+            if(input.packet_total_freezer_trp_margin > 0){
+                const percent = ((input.packet_total_freezer_trp_margin/100)*input.packet_price)
+                const totalPriceWpercent = (parseFloat(percent) + parseFloat(input.packet_price));
+                input.packet_total_distributor_franchise_rate = totalPriceWpercent.toFixed(2)
+                input.packet_total_e_commerce_rate = totalPriceWpercent.toFixed(2)
+                input.packet_total_subdistributor_outlet_rate = totalPriceWpercent.toFixed(2)
+                input.packet_total_horika_cantin_rate = totalPriceWpercent.toFixed(2)
+                input.packet_total_gt_market_retailer_vikreta_rate = totalPriceWpercent.toFixed(2)
+                input.packet_total_pick_up_the_franchiser_point_rate = totalPriceWpercent.toFixed(2)
+                input.packet_total_consumer_home_delivery_customer_price = totalPriceWpercent.toFixed(2);
+                this.totalRateOfDistributorFranchiseMethod(input);
+                this.totalRateOfConsumerHomeDeliveryMethod(input);
+                this.totalRateOfPickUpFranchiserMethod(input);
+                this.totalRateOfGtMarketVikretaMethod(input);
+                this.totalRateOfHorikacantinMethod(input);
+                this.totalRateOfSubDistributorOutletMethod(input);
+                this.totalRateOfECommerceMethod(input);
+            }
+        },
+        totalRateOfConsumerHomeDeliveryMethod(input){
+            if(input.packet_total_consumer_home_delivery_customer_price > 0){
+                const percentField = ((input.packet_consumer_home_delivery_customer_price/100)*input.packet_price) || 0
+                const percentMain = ((input.packet_total_freezer_trp_margin/100)*input.packet_price)
+                const totalPriceWpercent = (parseFloat(input.packet_price) + parseFloat(percentMain) + parseFloat(percentField));
+                console.log(input, input.packet_total_freezer_trp_margin, "totalPriceWpercent TEst")
+                input.packet_total_consumer_home_delivery_customer_price = totalPriceWpercent.toFixed(2)
+            }
+        },
+        totalRateOfPickUpFranchiserMethod(input){
+            if(input.packet_total_pick_up_the_franchiser_point_rate > 0){
+                const percentField = ((input.packet_pick_up_the_franchiser_point_rate/100)*input.packet_price) || 0
+                const percentMain = ((input.packet_total_freezer_trp_margin/100)*input.packet_price)
+                const totalPriceWpercent = (parseFloat(input.packet_price) + parseFloat(percentMain) + parseFloat(percentField));
+                input.packet_total_pick_up_the_franchiser_point_rate = totalPriceWpercent.toFixed(2)
+            }
+        },
+        totalRateOfGtMarketVikretaMethod(input){
+            if(input.packet_total_gt_market_retailer_vikreta_rate > 0){
+                const percentField = ((input.packet_gt_market_retailer_vikreta_rate/100)*input.packet_price) || 0
+                const percentMain = ((input.packet_total_freezer_trp_margin/100)*input.packet_price)
+                const totalPriceWpercent = (parseFloat(input.packet_price) + parseFloat(percentMain) + parseFloat(percentField));
+                input.packet_total_gt_market_retailer_vikreta_rate = totalPriceWpercent.toFixed(2)
+            }
+        },
+        totalRateOfHorikacantinMethod(input){
+            if(input.packet_total_horika_cantin_rate > 0){
+                const percentField = ((input.packet_horika_cantin_rate/100)*input.packet_price) || 0
+                const percentMain = ((input.packet_total_freezer_trp_margin/100)*input.packet_price)
+                const totalPriceWpercent = (parseFloat(input.packet_price) + parseFloat(percentMain) + parseFloat(percentField));
+                input.packet_total_horika_cantin_rate = totalPriceWpercent.toFixed(2)
+            }
+        },
+        totalRateOfSubDistributorOutletMethod(input){
+            if(input.packet_total_subdistributor_outlet_rate > 0){
+                const percentField = ((input.packet_subdistributor_outlet_rate/100)*input.packet_price) || 0
+                const percentMain = ((input.packet_total_freezer_trp_margin/100)*input.packet_price)
+                const totalPriceWpercent = (parseFloat(input.packet_price) + parseFloat(percentMain) + parseFloat(percentField));
+                input.packet_total_subdistributor_outlet_rate = totalPriceWpercent.toFixed(2)
+            }
+        },
+        totalRateOfECommerceMethod(input){
+            if(input.packet_total_e_commerce_rate > 0){
+                const percentField = ((input.packet_e_commerce_rate/100)*input.packet_price) || 0
+                const percentMain = ((input.packet_total_freezer_trp_margin/100)*input.packet_price)
+                const totalPriceWpercent = (parseFloat(input.packet_price) + parseFloat(percentMain) + parseFloat(percentField));
+                input.packet_total_e_commerce_rate = totalPriceWpercent.toFixed(2)
+            }
+        },
+        totalRateOfDistributorFranchiseMethod(input){
+            if(input.packet_total_distributor_franchise_rate > 0){
+                const percentField = ((input.packet_distributor_franchise_rate/100)*input.packet_price) || 0
+                const percentMain = ((input.packet_total_freezer_trp_margin/100)*input.packet_price)
+                const totalPriceWpercent = (parseFloat(input.packet_price) + parseFloat(percentMain) + parseFloat(percentField));
+                input.packet_total_distributor_franchise_rate = totalPriceWpercent.toFixed(2)
+            }
+        },
         getProduct() {
             this.isLoading = true;
 
@@ -1214,11 +1686,31 @@ export default {
                                     'id': (item.id)?item.id:"",
                                     'packet_measurement': item.measurement,
                                     //'packet_measurement_unit_id': item.measurement_unit_id,
+                                    'packet_mrp': item.mrp,
+                                    'packet_hsn': item?.hsn||'',
                                     'packet_price': item.price,
+                                    'packet_secondry_trp': item.secondry_trp,
+                                    'packet_freezer_cost': item.freezer_cost,
+                                    'packet_company_margin': item.company_margin,
+                                    'packet_total_freezer_trp_margin': item.total_freezer_trp_margin,
                                     'discounted_price': item.discounted_price,
                                     'packet_stock': item.stock,
                                     'packet_stock_unit_id': item.stock_unit_id,
                                     'packet_status': item.status,
+                                    'packet_distributor_franchise_rate': item.distributor_franchise_rate,
+                                    'packet_e_commerce_rate': item.e_commerce_rate,
+                                    'packet_subdistributor_outlet_rate': item.subdistributor_outlet_rate,
+                                    'packet_horika_cantin_rate': item.horika_cantin_rate,
+                                    'packet_gt_market_retailer_vikreta_rate': item.gt_market_retailer_vikreta_rate,
+                                    'packet_pick_up_the_franchiser_point_rate': item.pick_up_the_franchiser_point_rate,
+                                    'packet_consumer_home_delivery_customer_price': item.consumer_home_delivery_customer_price,
+                                    'packet_total_distributor_franchise_rate': item.total_distributor_franchise_rate,
+                                    'packet_total_e_commerce_rate': item.total_e_commerce_rate,
+                                    'packet_total_subdistributor_outlet_rate': item.total_subdistributor_outlet_rate,
+                                    'packet_total_horika_cantin_rate': item.total_horika_cantin_rate,
+                                    'packet_total_gt_market_retailer_vikreta_rate': item.total_gt_market_retailer_vikreta_rate,
+                                    'packet_total_pick_up_the_franchiser_point_rate': item.total_pick_up_the_franchiser_point_rate,
+                                    'packet_total_consumer_home_delivery_customer_price': item.total_consumer_home_delivery_customer_price,
                                     'images': item.images,
                                 };
                                 //console.log(variantData);
@@ -1245,10 +1737,34 @@ export default {
                                     'loose_measurement': item.measurement,
                                     'loose_custom_title': item.custom_title??"",
                                     //'loose_measurement_unit_id': item.measurement_unit_id,
-                                    'loose_price': item.price,
-                                    'loose_discounted_price': item.discounted_price,
+                                   // 'loose_price': item.price,
+                                    // 'loose_discounted_price': item.discounted_price,
                                     'packet_stock': item.stock,
                                     'loose_images': item.images,
+                                    'packet_hsn': item?.hsn||'',
+                                    'packet_mrp': item.mrp,
+                                    'packet_price': item.price,
+                                    'packet_secondry_trp': item.secondry_trp,
+                                    'packet_freezer_cost': item.freezer_cost,
+                                    'packet_company_margin': item.company_margin,
+                                    'packet_total_freezer_trp_margin': item.total_freezer_trp_margin,
+                                    'discounted_price': item.discounted_price,
+                                    'packet_stock_unit_id': item.stock_unit_id,
+                                    'packet_status': item.status,
+                                    'packet_distributor_franchise_rate': item.distributor_franchise_rate,
+                                    'packet_e_commerce_rate': item.e_commerce_rate,
+                                    'packet_subdistributor_outlet_rate': item.subdistributor_outlet_rate,
+                                    'packet_horika_cantin_rate': item.horika_cantin_rate,
+                                    'packet_gt_market_retailer_vikreta_rate': item.gt_market_retailer_vikreta_rate,
+                                    'packet_pick_up_the_franchiser_point_rate': item.pick_up_the_franchiser_point_rate,
+                                    'packet_consumer_home_delivery_customer_price': item.consumer_home_delivery_customer_price,
+                                    'packet_total_distributor_franchise_rate': item.total_distributor_franchise_rate,
+                                    'packet_total_e_commerce_rate': item.total_e_commerce_rate,
+                                    'packet_total_subdistributor_outlet_rate': item.total_subdistributor_outlet_rate,
+                                    'packet_total_horika_cantin_rate': item.total_horika_cantin_rate,
+                                    'packet_total_gt_market_retailer_vikreta_rate': item.total_gt_market_retailer_vikreta_rate,
+                                    'packet_total_pick_up_the_franchiser_point_rate': item.total_pick_up_the_franchiser_point_rate,
+                                    'packet_total_consumer_home_delivery_customer_price': item.total_consumer_home_delivery_customer_price,
                                 };
                                 //console.log(variantData);
                                 vm.inputs.push(variantData);
@@ -1260,6 +1776,7 @@ export default {
                             this.loose_stock_unit_id = loose_stock_unit_id;
                             this.status = status;
                         }
+                        console.log(vm.inputs)
                     } else {
                         this.showError(data.message);
                         setTimeout(() => {
@@ -1279,6 +1796,7 @@ export default {
         },
 
         saveRecord: function () {
+            console.log("Post API calling")
             this.isLoading = true;
             let vm = this;
             let formData = new FormData();
@@ -1297,6 +1815,7 @@ export default {
             formData.append('is_unlimited_stock', this.is_unlimited_stock);
             formData.append('fssai_lic_no', this.fssai_lic_no);
 
+            console.log(this.inputs)
             /*packet*/
             if (this.type === 'packet') {
                 for (let i = 0; i < this.inputs.length; i++) {
@@ -1306,6 +1825,29 @@ export default {
 
                     formData.append('packet_price[]', (this.inputs[i].packet_price != undefined) ? this.inputs[i].packet_price : 0);
                     formData.append('discounted_price[]', (this.inputs[i].discounted_price != undefined) ? this.inputs[i].discounted_price : 0);
+
+                    formData.append('packet_freezer_cost[]', (this.inputs[i].packet_freezer_cost != undefined) ? this.inputs[i].packet_freezer_cost : 0);
+                    formData.append('packet_secondry_trp[]', (this.inputs[i].packet_secondry_trp != undefined) ? this.inputs[i].packet_secondry_trp : 0);
+                    formData.append('packet_company_margin[]', (this.inputs[i].packet_company_margin != undefined) ? this.inputs[i].packet_company_margin : 0);
+                    formData.append('packet_total_freezer_trp_margin[]', (this.inputs[i].packet_total_freezer_trp_margin != undefined) ? this.inputs[i].packet_total_freezer_trp_margin : 0);
+                    formData.append('packet_distributor_franchise_rate[]', (this.inputs[i].packet_distributor_franchise_rate != undefined) ? this.inputs[i].packet_distributor_franchise_rate : 0);
+                    formData.append('packet_e_commerce_rate[]', (this.inputs[i].packet_e_commerce_rate != undefined) ? this.inputs[i].packet_e_commerce_rate : 0);
+                    formData.append('packet_subdistributor_outlet_rate[]', (this.inputs[i].packet_subdistributor_outlet_rate != undefined) ? this.inputs[i].packet_subdistributor_outlet_rate : 0);
+                    formData.append('packet_horika_cantin_rate[]', (this.inputs[i].packet_horika_cantin_rate != undefined) ? this.inputs[i].packet_horika_cantin_rate : 0);
+                    formData.append('packet_gt_market_retailer_vikreta_rate[]', (this.inputs[i].packet_gt_market_retailer_vikreta_rate != undefined) ? this.inputs[i].packet_gt_market_retailer_vikreta_rate : 0);
+                    formData.append('packet_pick_up_the_franchiser_point_rate[]', (this.inputs[i].packet_pick_up_the_franchiser_point_rate != undefined) ? this.inputs[i].packet_pick_up_the_franchiser_point_rate : 0);
+                    formData.append('packet_consumer_home_delivery_customer_price[]', (this.inputs[i].packet_consumer_home_delivery_customer_price != undefined) ? this.inputs[i].packet_consumer_home_delivery_customer_price : 0);
+
+                    formData.append('packet_total_distributor_franchise_rate[]', (this.inputs[i].packet_total_distributor_franchise_rate != undefined) ? this.inputs[i].packet_total_distributor_franchise_rate : 0);
+                    formData.append('packet_total_e_commerce_rate[]', (this.inputs[i].packet_total_e_commerce_rate != undefined) ? this.inputs[i].packet_total_e_commerce_rate : 0);
+                    formData.append('packet_total_subdistributor_outlet_rate[]', (this.inputs[i].packet_total_subdistributor_outlet_rate != undefined) ? this.inputs[i].packet_total_subdistributor_outlet_rate : 0);
+                    formData.append('packet_total_horika_cantin_rate[]', (this.inputs[i].packet_total_horika_cantin_rate != undefined) ? this.inputs[i].packet_total_horika_cantin_rate : 0);
+                    formData.append('packet_total_gt_market_retailer_vikreta_rate[]', (this.inputs[i].packet_total_gt_market_retailer_vikreta_rate != undefined) ? this.inputs[i].packet_total_gt_market_retailer_vikreta_rate : 0);
+                    formData.append('packet_total_pick_up_the_franchiser_point_rate[]', (this.inputs[i].packet_total_pick_up_the_franchiser_point_rate != undefined) ? this.inputs[i].packet_total_pick_up_the_franchiser_point_rate : 0);
+                    formData.append('packet_total_consumer_home_delivery_customer_price[]', (this.inputs[i].packet_total_consumer_home_delivery_customer_price != undefined) ? this.inputs[i].packet_total_consumer_home_delivery_customer_price : 0);
+                    formData.append('packet_mrp[]', (this.inputs[i].packet_mrp != undefined) ? this.inputs[i].packet_mrp : 0);
+                    formData.append('packet_hsn[]', (this.inputs[i].packet_hsn != undefined) ? this.inputs[i].packet_hsn : 0);
+
                     formData.append('packet_stock[]', (this.inputs[i].packet_stock != undefined) ? this.inputs[i].packet_stock : 0);
                     formData.append('packet_stock_unit_id[]', (this.inputs[i].packet_stock_unit_id != undefined) ? this.inputs[i].packet_stock_unit_id : 0);
                     formData.append('packet_status[]', (this.inputs[i].packet_status != undefined) ? this.inputs[i].packet_status : 0);
@@ -1326,8 +1868,34 @@ export default {
                     formData.append('loose_measurement[]', this.inputs[i].loose_measurement);
                     formData.append('loose_custom_title[]', this.inputs[i].loose_custom_title);
 
-                    formData.append('loose_price[]', (this.inputs[i].loose_price != undefined) ? this.inputs[i].loose_price : 0);
-                    formData.append('loose_discounted_price[]', (this.inputs[i].loose_discounted_price != undefined) ? this.inputs[i].loose_discounted_price : 0);
+                    // formData.append('loose_price[]', (this.inputs[i].loose_price != undefined) ? this.inputs[i].loose_price : 0);
+                    // formData.append('loose_discounted_price[]', (this.inputs[i].loose_discounted_price != undefined) ? this.inputs[i].loose_discounted_price : 0);
+                    formData.append('loose_price[]', (this.inputs[i].packet_price != undefined) ? this.inputs[i].packet_price : 0);
+                    formData.append('discounted_price[]', (this.inputs[i].discounted_price != undefined) ? this.inputs[i].discounted_price : 0);
+
+                    formData.append('loose_freezer_cost[]', (this.inputs[i].packet_freezer_cost != undefined) ? this.inputs[i].packet_freezer_cost : 0);
+                    formData.append('loose_secondry_trp[]', (this.inputs[i].packet_secondry_trp != undefined) ? this.inputs[i].packet_secondry_trp : 0);
+                    formData.append('loose_company_margin[]', (this.inputs[i].packet_company_margin != undefined) ? this.inputs[i].packet_company_margin : 0);
+                    formData.append('loose_total_freezer_trp_margin[]', (this.inputs[i].packet_total_freezer_trp_margin != undefined) ? this.inputs[i].packet_total_freezer_trp_margin : 0);
+                    formData.append('loose_distributor_franchise_rate[]', (this.inputs[i].packet_distributor_franchise_rate != undefined) ? this.inputs[i].packet_distributor_franchise_rate : 0);
+                    formData.append('loose_e_commerce_rate[]', (this.inputs[i].packet_e_commerce_rate != undefined) ? this.inputs[i].packet_e_commerce_rate : 0);
+                    formData.append('loose_subdistributor_outlet_rate[]', (this.inputs[i].packet_subdistributor_outlet_rate != undefined) ? this.inputs[i].packet_subdistributor_outlet_rate : 0);
+                    formData.append('loose_horika_cantin_rate[]', (this.inputs[i].packet_horika_cantin_rate != undefined) ? this.inputs[i].packet_horika_cantin_rate : 0);
+                    formData.append('loose_gt_market_retailer_vikreta_rate[]', (this.inputs[i].packet_gt_market_retailer_vikreta_rate != undefined) ? this.inputs[i].packet_gt_market_retailer_vikreta_rate : 0);
+                    formData.append('loose_pick_up_the_franchiser_point_rate[]', (this.inputs[i].packet_pick_up_the_franchiser_point_rate != undefined) ? this.inputs[i].packet_pick_up_the_franchiser_point_rate : 0);
+                    formData.append('loose_consumer_home_delivery_customer_price[]', (this.inputs[i].packet_consumer_home_delivery_customer_price != undefined) ? this.inputs[i].packet_consumer_home_delivery_customer_price : 0);
+
+                    formData.append('loose_total_distributor_franchise_rate[]', (this.inputs[i].packet_total_distributor_franchise_rate != undefined) ? this.inputs[i].packet_total_distributor_franchise_rate : 0);
+                    formData.append('loose_total_e_commerce_rate[]', (this.inputs[i].packet_total_e_commerce_rate != undefined) ? this.inputs[i].packet_total_e_commerce_rate : 0);
+                    formData.append('loose_total_subdistributor_outlet_rate[]', (this.inputs[i].packet_total_subdistributor_outlet_rate != undefined) ? this.inputs[i].packet_total_subdistributor_outlet_rate : 0);
+                    formData.append('loose_total_horika_cantin_rate[]', (this.inputs[i].packet_total_horika_cantin_rate != undefined) ? this.inputs[i].packet_total_horika_cantin_rate : 0);
+                    formData.append('loose_total_gt_market_retailer_vikreta_rate[]', (this.inputs[i].packet_total_gt_market_retailer_vikreta_rate != undefined) ? this.inputs[i].packet_total_gt_market_retailer_vikreta_rate : 0);
+                    formData.append('loose_total_pick_up_the_franchiser_point_rate[]', (this.inputs[i].packet_total_pick_up_the_franchiser_point_rate != undefined) ? this.inputs[i].packet_total_pick_up_the_franchiser_point_rate : 0);
+                    formData.append('loose_total_consumer_home_delivery_customer_price[]', (this.inputs[i].packet_total_consumer_home_delivery_customer_price != undefined) ? this.inputs[i].packet_total_consumer_home_delivery_customer_price : 0);
+                    formData.append('loose_mrp[]', (this.inputs[i].loose_mrp != undefined) ? this.inputs[i].loose_mrp: (this.inputs[i].packet_mrp != undefined) ? this.inputs[i].packet_mrp : 0);
+                    formData.append('loose_hsn[]',  (this.inputs[i].packet_hsn != undefined)?this.inputs[i].packet_hsn:  0);
+
+
                     formData.append('packet_stock[]', (this.inputs[i].packet_stock != undefined) ? this.inputs[i].packet_stock : 0);
 
                     for (var j = 0; j < this.$refs['loose_variant_images_' + i][0].files.length; j++) {
@@ -1375,6 +1943,7 @@ export default {
             if (this.id) {
                 url = this.$apiUrl + '/products/update';
             }
+            console.log(formData)
 
             axios.post(url, formData, {
                 headers: {

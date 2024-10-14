@@ -39,7 +39,7 @@
                                     </a>
                                     <ul class="submenu" :class="{ 'active' : subIsActive(item) } ">
                                         <template v-for="sub in item.submenu">
-                                            <li class="submenu-item" :class="{ 'active' : isActive(sub.url) } " :key="sub.key">
+                                            <li class="submenu-item" :class="{ 'active' : isActive(sub.url) } " >
                                                 <router-link :to="sub.url" @click="closeSideBarMenu()">
                                                     {{ sub.name }}
                                                 </router-link>
@@ -148,7 +148,7 @@ export default {
 
     },
     data: function() {
-        return {
+        let data=  {
             lang: 'en',
             search: '',
             sidebarItems :[
@@ -200,6 +200,11 @@ export default {
                             name: __('manage_products'),
                             icon : 'grid-fill',
                             url:'/manage_products'
+                        },
+                        {
+                            name: __('new_product_request'),
+                            icon : 'grid-fill',
+                            url:'/product_request'
                         },
                         {
                             name: __('units'),
@@ -596,6 +601,12 @@ export default {
                             permission:'customer_list',
                         },
                         {
+                            name: __('b2bcustomers'),
+                            icon : 'grid-fill',
+                            url:'/b2bcustomers',
+                            permission:'b2bcustomers',
+                        },
+                        {
                             name: __('wishlists'),
                             icon : 'grid-fill',
                             url:'/wishlists',
@@ -668,6 +679,8 @@ export default {
             ]
 
         }
+        console.log(data)
+        return data
     },
     computed: {
         filteredSidebarItems() {

@@ -15,7 +15,7 @@ use Illuminate\Database\Eloquent\Model;
  * @property string $city
  * @property string $pincode
  * @property string $state
- * @property string $prefered_devivery_time
+ * @property string $preferred_delivery_time
  * @property string $pan_number
  * @property string $pan_card_image
  * @property string $gst_certificate_image
@@ -29,5 +29,18 @@ class B2BDetail extends Model
 
     protected $table = 'b2b_details';
     protected $fillable = [];
-    protected $gurded = [];
+    protected $guarded = [];
+
+    public function getFssaiCertificateImageAttribute($value)
+    {
+        return asset($value);
+    }
+    public function getPanCardImageAttribute($value)
+    {
+        return asset($value);
+    }
+    public function getGstCertificateImageAttribute($value)
+    {
+        return asset($value);
+    }
 }

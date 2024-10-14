@@ -1,0 +1,128 @@
+<template>
+    <div class="card">
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-12">
+                    <table class="table table-bordered">
+                        <tbody>
+                            <tr v-if="b2bCustomerInfoByID.name">
+                                <th class="th-width">Name</th>
+                                <td>{{ b2bCustomerInfoByID.name }}</td>
+                            </tr>
+                            <tr v-if="b2bCustomerInfoByID.email">
+                                <th class="th-width">Email</th>
+                                <td>{{ b2bCustomerInfoByID.email }}</td>
+                            </tr>
+                            <tr v-if="b2bCustomerInfoByID.mobile">
+                                <th class="th-width">Mobile</th>
+                                <td>
+                                    <template v-if="b2bCustomerInfoByID.country_code">+{{ b2bCustomerInfoByID.country_code }}</template>
+                                    {{ b2bCustomerInfoByID.mobile }}
+                                </td>
+                            </tr>
+                            <tr v-if="b2bCustomerInfoByID.referral_code">
+                                <th class="th-width">Referral Code</th>
+                                <td>{{ b2bCustomerInfoByID.referral_code }}</td>
+                            </tr>
+                            <tr v-if="b2bCustomerInfoByID.stripe_id">
+                                <th class="th-width">Stripe Id</th>
+                                <td>{{ b2bCustomerInfoByID.stripe_id }}</td>
+                            </tr>
+                            <tr v-if="b2bCustomerInfoByID.created_at">
+                                <th class="th-width">Created Date</th>
+                                <td>{{ new Date(b2bCustomerInfoByID.created_at).toLocaleString() }}</td>
+                            </tr>
+                            <template v-if="b2bCustomerInfoByID.b2b_details">
+                                <tr>
+                                    <th class="th-width" colspan="2" style="font-size: 20px;color: #000000;">
+                                        B2B Store Info
+                                    </th>
+                                </tr>
+                                <tr v-if="b2bCustomerInfoByID.name">
+                                    <th class="th-width">Customer Segment</th>
+                                    <td>{{ (b2bCustomerInfoByID && b2bCustomerInfoByID.sales_channel) ? b2bCustomerInfoByID.sales_channel.name : '' }}</td>
+                                </tr>
+                                <tr>
+                                    <th class="th-width">Outlet Name</th>
+                                    <td>{{ b2bCustomerInfoByID.b2b_details.outlet_name }}</td>
+                                </tr>
+                                <tr>
+                                    <th class="th-width">Legal Name</th>
+                                    <td>{{ b2bCustomerInfoByID.b2b_details.legal_name }}</td>
+                                </tr>
+                                <tr>
+                                    <th class="th-width">Business Person Name</th>
+                                    <td>{{ b2bCustomerInfoByID.b2b_details.business_person_name }}</td>
+                                </tr>
+                                <tr>
+                                    <th class="th-width">Delivery Address</th>
+                                    <td>{{ b2bCustomerInfoByID.b2b_details.delivery_address }}</td>
+                                </tr>
+                                <tr>
+                                    <th class="th-width">City</th>
+                                    <td>{{ b2bCustomerInfoByID.b2b_details.city }}</td>
+                                </tr>
+                                <tr>
+                                    <th class="th-width">Pincode</th>
+                                    <td>{{ b2bCustomerInfoByID.b2b_details.pincode }}</td>
+                                </tr>
+                                <tr>
+                                    <th class="th-width">State</th>
+                                    <td>{{ b2bCustomerInfoByID.b2b_details.state }}</td>
+                                </tr>
+                                <tr>
+                                    <th class="th-width">Pancard Number</th>
+                                    <td>{{ b2bCustomerInfoByID.b2b_details.pan_number }}</td>
+                                </tr>
+                                <tr>
+                                    <td colspan="2">
+                                        <table class="table table-bordered">
+                                            <tr>
+                                                <th>Pancard</th>
+                                                <th>Certificate</th>
+                                                <th>Fssai</th>
+                                            </tr>
+                                            <tr>
+                                                <td style="vertical-align: top;">
+                                                    <img :src="b2bCustomerInfoByID.b2b_details.pan_card_image" class="img-fluid" width="300" />
+                                                </td>
+                                                <td style="vertical-align: top;">
+                                                    <img :src="b2bCustomerInfoByID.b2b_details.gst_certificate_image" class="img-fluid" width="300" />
+                                                </td>
+                                                <td style="vertical-align: top;">
+                                                    <img :src="b2bCustomerInfoByID.b2b_details.fssai_certificate_image" class="img-fluid" width="300" />
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th class="th-width">Fssai Number</th>
+                                    <td>{{ b2bCustomerInfoByID.b2b_details.fssai_number }}</td>
+                                </tr>
+                                <tr>
+                                    <th class="th-width">Monthly Turnover</th>
+                                    <td>{{ b2bCustomerInfoByID.b2b_details.monthly_turnover }}</td>
+                                </tr>
+                                <tr>
+                                    <th class="th-width">Created Date</th>
+                                    <td>{{ new Date(b2bCustomerInfoByID.b2b_details.created_at).toLocaleString() }}</td>
+                                </tr>
+                            </template>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</template>
+
+<script>
+export default {
+    props: ['b2bCustomerInfoByID', 'b2bCustomerID'],
+    mounted() {
+    },
+    methods: {
+    }
+}
+</script>

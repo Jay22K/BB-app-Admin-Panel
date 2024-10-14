@@ -18,7 +18,8 @@ use Illuminate\Support\Facades\Validator;
 
 class SectionsApiController extends Controller
 {
-    public function getSections(Request $request){
+    public function getSections(Request $request)
+    {
         /*$request->city_id = 1;
         $request->latitude = 23.2419997;
         $request->longitude = 69.6669324;*/
@@ -26,7 +27,7 @@ class SectionsApiController extends Controller
         $validator = Validator::make($request->all(), [
             'latitude' => 'required',
             'longitude' => 'required',
-        ],[
+        ], [
             'latitude.required' => 'The latitude field is required.',
             'longitude.required' => 'The longitude field is required.'
         ]);
@@ -36,18 +37,18 @@ class SectionsApiController extends Controller
 
         $user_id = $request->user('api-customers') ? $request->user('api-customers')->id : '';
 
-         // this is use on post method.
-         /*$limit = $request->get('limit',12);
+        // this is use on post method.
+        /*$limit = $request->get('limit',12);
          $offset = $request->get('offset',0);*/
 
-        $limit = ($request->limit)??12;
-        $offset = ($request->offset)??0;
-        $sort1 = $request->get('sort','row_order');
+        $limit = ($request->limit) ?? 12;
+        $offset = ($request->offset) ?? 0;
+        $sort1 = $request->get('sort', 'row_order');
         $sort = '';
         $order = '';
 
-        $section_id = ($request->section_id)??'';
-        $pincode_id = ($request->pincode_id)??'';
+        $section_id = ($request->section_id) ?? '';
+        $pincode_id = ($request->pincode_id) ?? '';
 
         $where = "";
         $price = 'MIN(price)';
@@ -78,7 +79,7 @@ class SectionsApiController extends Controller
         if ($sort == 'row_order') {
             $order = 'ASC';
         } else {
-            $order = ($request->order)??'DESC';
+            $order = ($request->order) ?? 'DESC';
         }
 
         if (isset($request->search) && $request->search != '') {
@@ -87,7 +88,7 @@ class SectionsApiController extends Controller
         }
 
         if (isset($request->product_id) && !empty($request->product_id) && is_numeric($request->product_id)) {
-            $product_id = ($request->product_id)??'';
+            $product_id = ($request->product_id) ?? '';
             $where .= "AND p.`id` = " . $product_id;
         }
 
@@ -123,7 +124,7 @@ class SectionsApiController extends Controller
         if (isset($request->section_id) && $request->section_id != "") {
             $section_id = $request->section_id;
             //$sql = "select * from `sections` where id = " . $section_id;
-            $section = Section::select("*")->where("id","=",$section_id)->first();
+            $section = Section::select("*")->where("id", "=", $section_id)->first();
             //dd($section);
 
             $cate_ids = $section->category_ids;
@@ -131,21 +132,21 @@ class SectionsApiController extends Controller
 
             if ($section->product_type == 'all_products') {
                 if (empty($section->category_ids)) {
-                    $sql = Product::select("id as product_id")->where("status", "=", 1)->orderBy("product_id","DESC");
+                    $sql = Product::select("id as product_id")->where("status", "=", 1)->orderBy("product_id", "DESC");
                     $sort .= " p.created_at ";
                     $order = " DESC ";
                 } else {
-                    $sql = Product::select("id as product_id")->whereIn("category_id", "=", [$cate_ids])->orderBy("product_id","DESC");
+                    $sql = Product::select("id as product_id")->whereIn("category_id", "=", [$cate_ids])->orderBy("product_id", "DESC");
                     $sort .= " p.created_at ";
                     $order = " DESC ";
                 }
             } elseif ($section->product_type == 'new_added_products') {
                 if (empty($section->category_ids)) {
-                    $sql = Product::select("id as product_id")->where("status", "=", 1)->orderBy("created_at","DESC");
+                    $sql = Product::select("id as product_id")->where("status", "=", 1)->orderBy("created_at", "DESC");
                     $sort .= " p.id ";
                     $order = " DESC ";
                 } else {
-                    $sql = Product::select("id as product_id")->where("status", "=", 1)->whereIn("category_id", "=", [$cate_ids])->orderBy("id","DESC");
+                    $sql = Product::select("id as product_id")->where("status", "=", 1)->whereIn("category_id", "=", [$cate_ids])->orderBy("id", "DESC");
                     $sort .= "p.date_added";
                     $order = " DESC ";
                 }
@@ -159,7 +160,7 @@ class SectionsApiController extends Controller
                         ->where("p.status", "=", 1)
                         ->where("pv.discounted_price", ">", 0)
                         ->where("pv.price", "=", "pv.discounted_price")
-                        ->orderBy("p.id","DESC");
+                        ->orderBy("p.id", "DESC");
                     $sort .= " p.id ";
                     $order = " DESC ";
                 } else {
@@ -174,7 +175,7 @@ class SectionsApiController extends Controller
                         ->whereIn("category_id", "=", [$cate_ids])
                         ->where("pv.discounted_price", ">", 0)
                         ->where("pv.price", "=", "pv.discounted_price")
-                        ->orderBy("p.id","DESC");
+                        ->orderBy("p.id", "DESC");
                     $sort .= " p.id ";
                     $order = " DESC ";
                 }
@@ -193,7 +194,7 @@ class SectionsApiController extends Controller
                         ->where("oi.product_variant_id", "!=", 0)
                         ->where("p.id", "!=", "")
                         ->groupBy(['pv.id', 'p.id'])
-                        ->orderBy("total","DESC");
+                        ->orderBy("total", "DESC");
                     $sort .= " p.id ";
                     $order = " DESC";
                 } else {
@@ -203,9 +204,11 @@ class SectionsApiController extends Controller
                                 LEFT JOIN products p ON pv.product_id = p.id
                             WHERE oi.product_variant_id != 0 AND p.id != '' AND p.category_id IN ($cate_ids)
                             GROUP BY pv.id,p.id ORDER BY total DESC";*/
-                    $sql = OrderItem::select("p.id as product_id",
-                                "oi.product_variant_id",
-                                DB::raw("COUNT(oi.product_variant_id) AS total"))
+                    $sql = OrderItem::select(
+                        "p.id as product_id",
+                        "oi.product_variant_id",
+                        DB::raw("COUNT(oi.product_variant_id) AS total")
+                    )
                         ->from("order_items as oi")
                         ->leftJoin("product_variants as pv", "oi.product_variant_id", "=", "pv.id")
                         ->leftJoin("products as p", "pv.product_id", "=", "p.id")
@@ -213,7 +216,7 @@ class SectionsApiController extends Controller
                         ->where("p.id", "!=", "")
                         ->whereIn("category_id", "=", [$cate_ids])
                         ->groupBy(['pv.id', 'p.id'])
-                        ->orderBy("total","DESC");
+                        ->orderBy("total", "DESC");
                     $sort .= " p.id ";
                     $order = " DESC";
                 }
@@ -248,14 +251,14 @@ class SectionsApiController extends Controller
         $db->sql($sql);
         $total = $db->getResult();*/
 
-        $sql = Product::select( DB::raw("count(p.id) as total"))->from("products as p")
+        $sql = Product::select(DB::raw("count(p.id) as total"))->from("products as p")
             ->leftJoin('sellers as s', 'p.seller_id', '=', 's.id')
             ->where("p.is_approved", "=", 1)
             ->where("p.status", "=", 1)
             ->where("s.status", "=", 1);
-            if($where != ""){
-                $sql = $sql->whereRaw(substr($where,4));
-            }
+        if ($where != "") {
+            $sql = $sql->whereRaw(substr($where, 4));
+        }
         $total = $sql->first();
 
         /*if (empty($section_id) && $section_id == "") {
@@ -308,30 +311,37 @@ class SectionsApiController extends Controller
             }
         }*/
 
-        $sql = Product::with(['variants'])->with(['variants' => function($query){
-                $query->select('*',
-                    DB::raw("(SELECT short_code FROM units as u WHERE u.id = stock_unit_id) as stock_unit_name")
-                )->orderBy('status','DESC');
-            } ])
-            ->select( "p.*","p.type as d_type", "s.store_name as seller_name","s.slug as seller_slug","s.status as seller_status",
-                DB::raw("(SELECT " . $price . " FROM product_variants as pv WHERE pv.product_id = p.id) as price"))
+        $sql = Product::with(['variants'])->with(['variants' => function ($query) {
+            $query->select(
+                '*',
+                DB::raw("(SELECT short_code FROM units as u WHERE u.id = stock_unit_id) as stock_unit_name")
+            )->orderBy('status', 'DESC');
+        }])
+            ->select(
+                "p.*",
+                "p.type as d_type",
+                "s.store_name as seller_name",
+                "s.slug as seller_slug",
+                "s.status as seller_status",
+                DB::raw("(SELECT " . $price . " FROM product_variants as pv WHERE pv.product_id = p.id) as price")
+            )
             ->from("products as p")
             ->leftJoin('sellers as s', 'p.seller_id', '=', 's.id')
             ->where("p.is_approved", "=", 1)
             ->where("p.status", "=", 1)
             ->where("s.status", "=", 1);
-            if($where != ""){
-                $sql = $sql->whereRaw(substr($where,4));
-            }
+        if ($where != "") {
+            $sql = $sql->whereRaw(substr($where, 4));
+        }
 
-            if(isset($request->section_id) && $request->section_id != ""){
-                $sql = $sql->orderByRaw($sort.$order);
-            }else{
-                $sql = $sql->orderByRaw($price_sort);
-            }
-            $res = $sql->skip($offset)->limit($limit)->get();
-            $res->makeHidden(['image','other_images']);
-            //$res = $sql->paginate(2);
+        if (isset($request->section_id) && $request->section_id != "") {
+            $sql = $sql->orderByRaw($sort . $order);
+        } else {
+            $sql = $sql->orderByRaw($price_sort);
+        }
+        $res = $sql->skip($offset)->limit($limit)->get();
+        $res->makeHidden(['image', 'other_images']);
+        //$res = $sql->paginate(2);
 
         $product = array();
         if (!empty($res)) {
@@ -390,9 +400,9 @@ class SectionsApiController extends Controller
                 $row->seller_id = (isset($row->seller_id) == null)  ? "" : $row->seller_id;
                 $row->pickup_location = (isset($row->pickup_location) == null)  ? "" : $row->pickup_location;
                 $row->pickup_postcode = (isset($row->pickup_postcode) == null)  ? "" : $row->pickup_postcode;
-                $row->till_status = $row->till_status??'';
-                $row->tags = $row->tags??'';
-                $row->images = CommonHelper::getImages($row['id'],0);
+                $row->till_status = $row->till_status ?? '';
+                $row->tags = $row->tags ?? '';
+                $row->images = CommonHelper::getImages($row['id'], 0);
 
                 /*$row['other_images'] = json_decode($row['other_images'], 1);
                 $row['other_images'] = (empty($row['other_images'])) ? array() : $row['other_images'];
@@ -416,7 +426,7 @@ class SectionsApiController extends Controller
                         $row['tax_percentage'] =  (!empty($tax1['percentage'])) ? $tax1['percentage'] : "0";
                     }*/
 
-                    $tax1 = Tax::select("*")->where("id","=",$t_id)->first();
+                    $tax1 = Tax::select("*")->where("id", "=", $t_id)->first();
                     $row->tax_title = (!empty($tax1['title'])) ? $tax1['title'] : "";
                     $row->tax_percentage = (!empty($tax1['percentage'])) ? $tax1['percentage'] : "0";
                 }
@@ -430,7 +440,7 @@ class SectionsApiController extends Controller
                     } else {
                         $row['is_favorite'] = false;
                     }*/
-                    $favorite = Favorite::select("id")->where('product_id','=',$row->id)->where('user_id','=',$user_id)->first();
+                    $favorite = Favorite::select("id")->where('product_id', '=', $row->id)->where('user_id', '=', $user_id)->first();
                     if (!empty($favorite)) {
                         $row->is_favorite = true;
                     } else {
@@ -478,7 +488,7 @@ class SectionsApiController extends Controller
                         /*$sql = "SELECT qty as cart_count FROM cart where product_variant_id= " . $variants[$k]['id'] . " AND user_id=" . $user_id;
                         $db->sql($sql);
                         $categories = $db->getResult();*/
-                        $cart = Cart::select("qty as cart_count")->where('product_variant_id','=',$variant->id)->where('user_id','=',$user_id)->first();
+                        $cart = Cart::select("qty as cart_count")->where('product_variant_id', '=', $variant->id)->where('user_id', '=', $user_id)->first();
                         if (!empty($cart)) {
                             $variants[$subkey]->cart_count = $cart->cart_count;
                         } else {
@@ -488,8 +498,8 @@ class SectionsApiController extends Controller
                         $variants[$subkey]->cart_count = "0";
                     }
 
-                    $variants[$subkey]->stock_unit_name = $variants[$subkey]->stock_unit_name??'';
-                    $variants[$subkey]->images = CommonHelper::getImages($row['id'],$variants[$subkey]->product_variant_id);;
+                    $variants[$subkey]->stock_unit_name = $variants[$subkey]->stock_unit_name ?? '';
+                    $variants[$subkey]->images = CommonHelper::getImages($row['id'], $variants[$subkey]->id);
                 }
                 //$product[$i]['variants'] = $variants;
                 $row->variants = $variants;
@@ -503,21 +513,23 @@ class SectionsApiController extends Controller
         }
     }
 
-    public function removeSection($id){
+    public function removeSection($id)
+    {
         $section = Section::find($id);
-        if($section){
+        if ($section) {
             $section->delete();
             return CommonHelper::responseSuccess("Section Deleted Successfully!");
-        }else{
+        } else {
             return CommonHelper::responseSuccess("Section Not Found!");
         }
     }
 
-    public function getDeliveryBoyNotifications(Request $request){
-        $limit = ($request->limit)??10;
-        $offset = ($request->offset)??0;
-        $sort = ($request->sort)??'id';
-        $order = ($request->sort)??'DESC';
+    public function getDeliveryBoyNotifications(Request $request)
+    {
+        $limit = ($request->limit) ?? 10;
+        $offset = ($request->offset) ?? 0;
+        $sort = ($request->sort) ?? 'id';
+        $order = ($request->sort) ?? 'DESC';
         $where = '';
         if (isset($request->search) && $request->search != '') {
             $search = $request->search;
@@ -525,7 +537,7 @@ class SectionsApiController extends Controller
         }
 
         $totalSql = DeliveryBoyNotification::select(DB::raw(" COUNT(`id`) as total"));
-        if ($where != ""){
+        if ($where != "") {
             $totalSql = $totalSql->whereRaw($where);
         }
         $totalSql = $totalSql->first();
@@ -533,12 +545,12 @@ class SectionsApiController extends Controller
         //echo $total;
 
         $sql = DeliveryBoyNotification::select("*");
-        if ($where != ""){
+        if ($where != "") {
             $sql = $sql->whereRaw($where);
         }
-        $notifications = $sql->orderBy($sort,$order)->skip($offset)->take($limit)->get();
+        $notifications = $sql->orderBy($sort, $order)->skip($offset)->take($limit)->get();
         //dd($notifications);
-        if(!empty($notifications)){
+        if (!empty($notifications)) {
             $response = array();
             $response['status'] = 1;
             $response['total'] = $total;
@@ -560,5 +572,4 @@ class SectionsApiController extends Controller
         }
         return CommonHelper::responseWithData($response);
     }
-
 }

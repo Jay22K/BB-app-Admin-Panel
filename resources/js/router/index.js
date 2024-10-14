@@ -124,6 +124,7 @@ const SocialMedia = () => import("../views/WebSetings/SocialMedia/SocialMedia");
 
 //Customers
 const Customers = () => import("../views/Customers/Customers");
+const B2bCustomers = () => import("../views/Customers/B2bCustomer");
 
 //Customers Wallet Transactions
 const WalletTransactions = () => import("../views/Customers/WalletTransactions/WalletTransactions");
@@ -226,12 +227,12 @@ const DeliveryProfile = () => import("../views/DeliveryBoys/EditDeliveryBoy");
 const DeliveryBoyInvoiceOrder = () => import("../views/Orders/InvoiceOrder");
 
 const DeliveryBoyViewProduct = () => import("../views/Product/ViewProduct");
-
+const ProductRequest = () => import('../views/Product/ProductRequest')
 
 let router = new Router({
     //mode: "hash", // https://router.vuejs.org/api/#mode
     mode: "history",
-    scrollBehavior: () => ({y: 0}),
+    scrollBehavior: () => ({ y: 0 }),
     routes: configRoutes(),
     //linkActiveClass: 'active',
 });
@@ -244,7 +245,7 @@ var appName = window.appName;
 
 router.beforeEach((to, from, next) => {
     //if (to.matched.some(record => record.meta.requiresAuth) ) {
-    if(isInstalled) {
+    if (isInstalled) {
         var title = to.meta && to.meta.title ? to.meta.title : 'Dashboard';
         window.document.title = title + ' - ' + appName;
 
@@ -300,12 +301,12 @@ router.beforeEach((to, from, next) => {
                 }
 
             } else {
-                router.push('/login').catch(()=>{});
+                router.push('/login').catch(() => { });
             }
         } else {
             next();
         }
-    }else{
+    } else {
         next();
     }
 
@@ -319,7 +320,7 @@ function configRoutes() {
     var roleDeliveryBoy = "Delivery Boy";
     var roleName = "Super Admin";
 
-    var adminRoles = [roleSuperAdmin,roleAdmin];
+    var adminRoles = [roleSuperAdmin, roleAdmin];
     var sellerRoles = [roleSeller];
     var deliveryBoyRoles = [roleDeliveryBoy];
 
@@ -329,7 +330,7 @@ function configRoutes() {
             name: "install",
             component: Install,
             meta: {
-                title:'Install'
+                title: 'Install'
             },
         },
         {
@@ -345,7 +346,7 @@ function configRoutes() {
                     meta: {
                         requiresAuth: true,
                         role: adminRoles,
-                        title:'Dashboard'
+                        title: 'Dashboard'
                     },
                 },
                 {
@@ -355,7 +356,7 @@ function configRoutes() {
                     meta: {
                         permission: 'order_list',
                         role: adminRoles,
-                        title:'Orders'
+                        title: 'Orders'
                     },
                 },
                 {
@@ -365,7 +366,7 @@ function configRoutes() {
                     meta: {
                         permission: 'order_list',
                         role: adminRoles,
-                        title:'Order View'
+                        title: 'Order View'
 
                     },
                 },
@@ -376,10 +377,10 @@ function configRoutes() {
                     meta: {
                         permission: 'order_list',
                         role: adminRoles,
-                        title:'Invoice Order'
+                        title: 'Invoice Order'
                     },
                 },
-                
+
                 {
                     path: "notification_panel",
                     name: "NotificationPanel",
@@ -387,7 +388,7 @@ function configRoutes() {
                     meta: {
                         permission: 'order_list',
                         role: adminRoles,
-                        title:'Notification'
+                        title: 'Notification'
                     },
                 },
                 {
@@ -397,7 +398,7 @@ function configRoutes() {
                     meta: {
                         permission: 'order_list',
                         role: adminRoles,
-                        title:'Categories'
+                        title: 'Categories'
 
                     },
                 },
@@ -408,7 +409,7 @@ function configRoutes() {
                     meta: {
                         permission: 'order_list',
                         role: adminRoles,
-                        title:'Categories'
+                        title: 'Categories'
 
                     },
                 },
@@ -419,7 +420,7 @@ function configRoutes() {
                     meta: {
                         permission: 'order_list',
                         role: adminRoles,
-                        title:'Categories Order'
+                        title: 'Categories Order'
 
                     },
                 },
@@ -430,7 +431,7 @@ function configRoutes() {
                     meta: {
                         permission: 'order_list',
                         role: adminRoles,
-                        title:'SubCategories'
+                        title: 'SubCategories'
 
                     },
                 },
@@ -451,7 +452,7 @@ function configRoutes() {
                     meta: {
                         permission: 'order_list',
                         role: adminRoles,
-                        title:'Manage Products'
+                        title: 'Manage Products'
 
                     },
                 },
@@ -462,8 +463,7 @@ function configRoutes() {
                     meta: {
                         permission: 'order_list',
                         role: adminRoles,
-                        title:'Create Product'
-
+                        title: 'Create Product'
                     },
                 },
                 {
@@ -474,7 +474,7 @@ function configRoutes() {
                     meta: {
                         permission: 'order_list',
                         role: adminRoles,
-                        title:'Edit Product'
+                        title: 'Edit Product'
 
                     },
                 },
@@ -486,7 +486,18 @@ function configRoutes() {
                     meta: {
                         permission: 'order_list',
                         role: adminRoles,
-                        title:'Product View'
+                        title: 'Product View'
+
+                    },
+                },
+                {
+                    path: "product_request",
+                    name: "product_request",
+                    component: ProductRequest,
+                    meta: {
+                        permission: 'order_list',
+                        role: adminRoles,
+                        title: 'Product Request'
 
                     },
                 },
@@ -498,7 +509,7 @@ function configRoutes() {
                     meta: {
                         permission: 'order_list',
                         role: adminRoles,
-                        title:'Bulk Upload'
+                        title: 'Bulk Upload'
 
                     },
                 },
@@ -509,7 +520,7 @@ function configRoutes() {
                     meta: {
                         permission: 'order_list',
                         role: adminRoles,
-                        title:'Taxes'
+                        title: 'Taxes'
 
                     },
                 },
@@ -520,7 +531,7 @@ function configRoutes() {
                     meta: {
                         permission: 'order_list',
                         role: adminRoles,
-                        title:'Brands'
+                        title: 'Brands'
 
                     },
                 },
@@ -531,7 +542,7 @@ function configRoutes() {
                     meta: {
                         permission: 'order_list',
                         role: adminRoles,
-                        title:'Seller Requests'
+                        title: 'Seller Requests'
                     },
                 },
                 {
@@ -541,7 +552,7 @@ function configRoutes() {
                     meta: {
                         permission: 'order_list',
                         role: adminRoles,
-                        title:'Sellers'
+                        title: 'Sellers'
 
                     },
                 },
@@ -552,7 +563,7 @@ function configRoutes() {
                     meta: {
                         permission: 'order_list',
                         role: adminRoles,
-                        title:'Create Sellers'
+                        title: 'Create Sellers'
 
                     },
                 },
@@ -564,7 +575,7 @@ function configRoutes() {
                     meta: {
                         permission: 'order_list',
                         role: adminRoles,
-                        title:'Edit Seller'
+                        title: 'Edit Seller'
 
                     },
                 },
@@ -575,7 +586,7 @@ function configRoutes() {
                     meta: {
                         permission: 'order_list',
                         role: adminRoles,
-                        title:'Seller Commissions'
+                        title: 'Seller Commissions'
 
                     },
                 },
@@ -586,7 +597,7 @@ function configRoutes() {
                     meta: {
                         permission: 'order_list',
                         role: adminRoles,
-                        title:'Seller Wallet Transactions'
+                        title: 'Seller Wallet Transactions'
 
                     },
                 },
@@ -597,7 +608,7 @@ function configRoutes() {
                     meta: {
                         permission: 'order_list',
                         role: adminRoles,
-                        title:'Home Sliders Create'
+                        title: 'Home Sliders Create'
 
                     },
                 },
@@ -608,7 +619,7 @@ function configRoutes() {
                     meta: {
                         permission: 'order_list',
                         role: adminRoles,
-                        title:'Home Sliders'
+                        title: 'Home Sliders'
 
                     },
                 },
@@ -619,7 +630,7 @@ function configRoutes() {
                     meta: {
                         permission: 'order_list',
                         role: adminRoles,
-                        title:'Promo Code Create'
+                        title: 'Promo Code Create'
                     },
                 },
                 {
@@ -629,7 +640,7 @@ function configRoutes() {
                     meta: {
                         permission: 'order_list',
                         role: adminRoles,
-                        title:'Promo Code'
+                        title: 'Promo Code'
                     },
                 },
                 {
@@ -639,7 +650,7 @@ function configRoutes() {
                     meta: {
                         permission: 'order_list',
                         role: adminRoles,
-                        title:'Time Slot'
+                        title: 'Time Slot'
 
                     },
                 },
@@ -650,7 +661,7 @@ function configRoutes() {
                     meta: {
                         permission: 'order_list',
                         role: adminRoles,
-                        title:'Store Settings'
+                        title: 'Store Settings'
 
                     },
                 },
@@ -661,7 +672,7 @@ function configRoutes() {
                     meta: {
                         permission: 'order_list',
                         role: adminRoles,
-                        title:'Units'
+                        title: 'Units'
 
                     },
                 },
@@ -672,7 +683,7 @@ function configRoutes() {
                     meta: {
                         permission: 'order_list',
                         role: adminRoles,
-                        title:'Payment Methods'
+                        title: 'Payment Methods'
 
                     },
                 },
@@ -683,7 +694,7 @@ function configRoutes() {
                     meta: {
                         permission: 'order_list',
                         role: adminRoles,
-                        title:'Contact Us'
+                        title: 'Contact Us'
 
                     },
                 },
@@ -694,7 +705,7 @@ function configRoutes() {
                     meta: {
                         permission: 'order_list',
                         role: adminRoles,
-                        title:'About Us'
+                        title: 'About Us'
 
                     },
                 },
@@ -705,7 +716,7 @@ function configRoutes() {
                     meta: {
                         permission: 'order_list',
                         role: adminRoles,
-                        title:'Privacy Policy'
+                        title: 'Privacy Policy'
 
                     },
                 },
@@ -716,7 +727,7 @@ function configRoutes() {
                     meta: {
                         permission: 'order_list',
                         role: adminRoles,
-                        title:'Privacy Policy Delivery Boy'
+                        title: 'Privacy Policy Delivery Boy'
 
                     },
                 },
@@ -727,7 +738,7 @@ function configRoutes() {
                     meta: {
                         permission: 'order_list',
                         role: adminRoles,
-                        title:'Privacy Policy Manager App'
+                        title: 'Privacy Policy Manager App'
 
                     },
                 },
@@ -738,7 +749,7 @@ function configRoutes() {
                     meta: {
                         permission: 'order_list',
                         role: adminRoles,
-                        title:'Privacy Policy Seller'
+                        title: 'Privacy Policy Seller'
                     },
                 },
                 {
@@ -748,7 +759,7 @@ function configRoutes() {
                     meta: {
                         permission: 'order_list',
                         role: adminRoles,
-                        title:'Secret Key'
+                        title: 'Secret Key'
 
                     },
                 },
@@ -759,7 +770,7 @@ function configRoutes() {
                     meta: {
                         permission: 'order_list',
                         role: adminRoles,
-                        title:'Firebase Setup'
+                        title: 'Firebase Setup'
                     },
                 },
                 {
@@ -769,7 +780,7 @@ function configRoutes() {
                     meta: {
                         permission: 'order_list',
                         role: adminRoles,
-                        title:'Secret Key'
+                        title: 'Secret Key'
 
                     },
                 },
@@ -780,7 +791,7 @@ function configRoutes() {
                     meta: {
                         permission: 'order_list',
                         role: adminRoles,
-                        title:'Send Notifications'
+                        title: 'Send Notifications'
 
                     },
                 },
@@ -791,7 +802,7 @@ function configRoutes() {
                     meta: {
                         permission: 'order_list',
                         role: adminRoles,
-                        title:'Notifications Settings'
+                        title: 'Notifications Settings'
 
                     },
                 },
@@ -803,7 +814,7 @@ function configRoutes() {
                     meta: {
                         permission: 'order_list',
                         role: adminRoles,
-                        title:'Section'
+                        title: 'Section'
                     },
                 },
                 {
@@ -813,7 +824,7 @@ function configRoutes() {
                     meta: {
                         permission: 'order_list',
                         role: adminRoles,
-                        title:'Featured Sections'
+                        title: 'Featured Sections'
                     },
                 },
                 {
@@ -823,7 +834,7 @@ function configRoutes() {
                     meta: {
                         permission: 'order_list',
                         role: adminRoles,
-                        title:'Secctions Order'
+                        title: 'Secctions Order'
 
                     },
                 },
@@ -835,7 +846,7 @@ function configRoutes() {
                     meta: {
                         permission: 'order_list',
                         role: adminRoles,
-                        title:'Offer Create'
+                        title: 'Offer Create'
                     },
                 },
                 {
@@ -845,7 +856,7 @@ function configRoutes() {
                     meta: {
                         permission: 'order_list',
                         role: adminRoles,
-                        title:'Offers'
+                        title: 'Offers'
 
                     },
                 },
@@ -856,7 +867,7 @@ function configRoutes() {
                     meta: {
                         permission: 'popup_offer',
                         role: adminRoles,
-                        title:'Popup Offer'
+                        title: 'Popup Offer'
                     },
                 },
                 {
@@ -866,7 +877,7 @@ function configRoutes() {
                     meta: {
                         permission: 'order_list',
                         role: adminRoles,
-                        title:'New Offers Image'
+                        title: 'New Offers Image'
 
                     },
                 },
@@ -888,7 +899,7 @@ function configRoutes() {
                     meta: {
                         permission: 'order_list',
                         role: adminRoles,
-                        title:'Create Delivery Boy'
+                        title: 'Create Delivery Boy'
 
                     },
                 },
@@ -900,7 +911,7 @@ function configRoutes() {
                     meta: {
                         permission: 'order_list',
                         role: adminRoles,
-                        title:'Edit Delivery Boy'
+                        title: 'Edit Delivery Boy'
 
                     },
                 },
@@ -911,7 +922,7 @@ function configRoutes() {
                     meta: {
                         permission: 'order_list',
                         role: adminRoles,
-                        title:'Delivery Boys'
+                        title: 'Delivery Boys'
 
                     },
                 },
@@ -922,7 +933,7 @@ function configRoutes() {
                     meta: {
                         permission: 'order_list',
                         role: adminRoles,
-                        title:'Delivery Boys'
+                        title: 'Delivery Boys'
 
                     },
                 },
@@ -933,7 +944,7 @@ function configRoutes() {
                     meta: {
                         permission: 'order_list',
                         role: adminRoles,
-                        title:'Fund Transfers'
+                        title: 'Fund Transfers'
 
                     },
                 },
@@ -944,7 +955,7 @@ function configRoutes() {
                     meta: {
                         permission: 'order_list',
                         role: adminRoles,
-                        title:'Delivery boy cash'
+                        title: 'Delivery boy cash'
 
                     },
                 },
@@ -955,7 +966,7 @@ function configRoutes() {
                     meta: {
                         permission: 'order_list',
                         role: adminRoles,
-                        title:'General Web Settings'
+                        title: 'General Web Settings'
 
                     },
                 },
@@ -966,7 +977,7 @@ function configRoutes() {
                     meta: {
                         permission: 'order_list',
                         role: adminRoles,
-                        title:'Policies'
+                        title: 'Policies'
 
                     },
                 },
@@ -977,7 +988,7 @@ function configRoutes() {
                     meta: {
                         permission: 'order_list',
                         role: adminRoles,
-                        title:'About'
+                        title: 'About'
 
                     },
                 },
@@ -988,7 +999,7 @@ function configRoutes() {
                     meta: {
                         permission: 'order_list',
                         role: adminRoles,
-                        title:'Social Media'
+                        title: 'Social Media'
 
                     },
                 },
@@ -999,9 +1010,19 @@ function configRoutes() {
                     meta: {
                         permission: 'order_list',
                         role: adminRoles,
-                        title:'Customers'
+                        title: 'Customers'
 
                     },
+                },
+                {
+                    path: 'b2bcustomers',
+                    name: 'B2BCustomers',
+                    component: B2bCustomers,
+                    meta: {
+                        permission: 'order_list',
+                        role: adminRoles,
+                        title: 'B2B Customers'
+                    }
                 },
                 {
                     path: "wishlists",
@@ -1010,7 +1031,7 @@ function configRoutes() {
                     meta: {
                         permission: 'order_list',
                         role: adminRoles,
-                        title:'Wishlists'
+                        title: 'Wishlists'
 
                     },
                 },
@@ -1021,7 +1042,7 @@ function configRoutes() {
                     meta: {
                         permission: 'order_list',
                         role: adminRoles,
-                        title:'Transactions'
+                        title: 'Transactions'
 
                     },
                 },
@@ -1032,7 +1053,7 @@ function configRoutes() {
                     meta: {
                         permission: 'order_list',
                         role: adminRoles,
-                        title:'Manage Customer Wallet'
+                        title: 'Manage Customer Wallet'
 
                     },
                 },
@@ -1043,7 +1064,7 @@ function configRoutes() {
                     meta: {
                         permission: 'order_list',
                         role: adminRoles,
-                        title:'Withdrawal Requests'
+                        title: 'Withdrawal Requests'
 
                     },
                 },
@@ -1054,7 +1075,7 @@ function configRoutes() {
                     meta: {
                         permission: 'order_list',
                         role: adminRoles,
-                        title:'Return Requests'
+                        title: 'Return Requests'
 
                     },
                 },
@@ -1065,7 +1086,7 @@ function configRoutes() {
                     meta: {
                         permission: 'order_list',
                         role: adminRoles,
-                        title:'Product Sales Reports'
+                        title: 'Product Sales Reports'
 
                     },
                 },
@@ -1076,7 +1097,7 @@ function configRoutes() {
                     meta: {
                         permission: 'order_list',
                         role: adminRoles,
-                        title:'Sales Reports'
+                        title: 'Sales Reports'
 
                     },
                 },
@@ -1087,7 +1108,7 @@ function configRoutes() {
                     meta: {
                         permission: 'order_list',
                         role: adminRoles,
-                        title:'System Users'
+                        title: 'System Users'
 
                     },
                 },
@@ -1098,7 +1119,7 @@ function configRoutes() {
                     meta: {
                         permission: 'order_list',
                         role: adminRoles,
-                        title:'Role'
+                        title: 'Role'
 
                     },
                 },
@@ -1109,7 +1130,7 @@ function configRoutes() {
                     meta: {
                         permission: 'order_list',
                         role: adminRoles,
-                        title:'Media'
+                        title: 'Media'
 
                     },
                 },
@@ -1121,7 +1142,7 @@ function configRoutes() {
                     meta: {
                         permission: 'order_list',
                         role: adminRoles,
-                        title:'Settings'
+                        title: 'Settings'
 
                     },
                 },
@@ -1132,7 +1153,7 @@ function configRoutes() {
                     meta: {
                         permission: 'order_list',
                         role: adminRoles,
-                        title:'Product Order'
+                        title: 'Product Order'
 
                     },
                 },
@@ -1143,7 +1164,7 @@ function configRoutes() {
                     meta: {
                         permission: 'order_list',
                         role: adminRoles,
-                        title:'System Registration'
+                        title: 'System Registration'
 
                     },
                 },
@@ -1154,7 +1175,7 @@ function configRoutes() {
                     meta: {
                         permission: 'order_list',
                         role: adminRoles,
-                        title:'System Updater'
+                        title: 'System Updater'
 
                     },
                 },
@@ -1165,7 +1186,7 @@ function configRoutes() {
                     meta: {
                         permission: 'order_list',
                         role: adminRoles,
-                        title:'Shipping Methods'
+                        title: 'Shipping Methods'
 
                     },
                 },
@@ -1176,7 +1197,7 @@ function configRoutes() {
                     meta: {
                         permission: 'order_list',
                         role: adminRoles,
-                        title:'Newsletter'
+                        title: 'Newsletter'
 
                     },
                 },
@@ -1187,7 +1208,7 @@ function configRoutes() {
                     meta: {
                         permission: 'order_list',
                         role: adminRoles,
-                        title:'City'
+                        title: 'City'
 
                     },
                 },
@@ -1198,7 +1219,7 @@ function configRoutes() {
                     meta: {
                         permission: 'order_list',
                         role: adminRoles,
-                        title:'City Create'
+                        title: 'City Create'
 
                     },
                 },
@@ -1209,7 +1230,7 @@ function configRoutes() {
                     meta: {
                         permission: 'order_list',
                         role: adminRoles,
-                        title:'City Edit'
+                        title: 'City Edit'
                     },
                 },
                 {
@@ -1219,7 +1240,7 @@ function configRoutes() {
                     meta: {
                         permission: 'order_list',
                         role: adminRoles,
-                        title:'Deliverable Area'
+                        title: 'Deliverable Area'
 
                     },
                 },
@@ -1230,7 +1251,7 @@ function configRoutes() {
                     meta: {
                         permission: 'order_list',
                         role: adminRoles,
-                        title:'FAQs'
+                        title: 'FAQs'
 
                     },
                 },
@@ -1241,7 +1262,7 @@ function configRoutes() {
                     meta: {
                         permission: 'order_list',
                         role: adminRoles,
-                        title:'Product Info'
+                        title: 'Product Info'
 
                     },
                 },
@@ -1252,7 +1273,7 @@ function configRoutes() {
                     meta: {
                         permission: 'order_list',
                         role: adminRoles,
-                        title:'Languages'
+                        title: 'Languages'
 
                     },
                 },
@@ -1263,7 +1284,7 @@ function configRoutes() {
                     meta: {
                         permission: 'order_list',
                         role: adminRoles,
-                        title:'Languages'
+                        title: 'Languages'
                     },
                 },
             ],
@@ -1273,7 +1294,7 @@ function configRoutes() {
             name: "seller_login",
             component: SellerLogin,
             meta: {
-                title:'Seller Login'
+                title: 'Seller Login'
             },
         },
         {
@@ -1281,7 +1302,7 @@ function configRoutes() {
             name: "seller_register",
             component: SellerRegister,
             meta: {
-                title:'Seller Register'
+                title: 'Seller Register'
             },
         },
         {
@@ -1290,7 +1311,7 @@ function configRoutes() {
             component: SellerDetails,
             meta: {
                 role: sellerRoles,
-                title:'Seller Details'
+                title: 'Seller Details'
             }
         },
         {
@@ -1310,7 +1331,7 @@ function configRoutes() {
                     meta: {
                         requiresAuth: true,
                         role: sellerRoles,
-                        title:'Dashboard'
+                        title: 'Dashboard'
                     },
                 },
                 {
@@ -1320,7 +1341,7 @@ function configRoutes() {
                     meta: {
                         requiresAuth: true,
                         role: sellerRoles,
-                        title:'Dashboard'
+                        title: 'Dashboard'
                     },
                 },
                 {
@@ -1330,7 +1351,7 @@ function configRoutes() {
                     meta: {
                         permission: 'order_list',
                         role: sellerRoles,
-                        title:'Orders'
+                        title: 'Orders'
                     },
                 },
                 {
@@ -1340,7 +1361,7 @@ function configRoutes() {
                     meta: {
                         permission: 'order_list',
                         role: sellerRoles,
-                        title:'Order View'
+                        title: 'Order View'
                     },
                 },
                 {
@@ -1350,7 +1371,7 @@ function configRoutes() {
                     meta: {
                         permission: 'order_list',
                         role: sellerRoles,
-                        title:'Order Invoice'
+                        title: 'Order Invoice'
                     },
                 },
                 {
@@ -1360,7 +1381,7 @@ function configRoutes() {
                     meta: {
                         permission: 'order_list',
                         role: sellerRoles,
-                        title:'Product Info'
+                        title: 'Product Info'
 
                     },
                 },
@@ -1371,7 +1392,7 @@ function configRoutes() {
                     meta: {
                         permission: 'order_list',
                         role: sellerRoles,
-                        title:'Categories'
+                        title: 'Categories'
                     },
                 },
 
@@ -1382,7 +1403,7 @@ function configRoutes() {
                     meta: {
                         permission: 'order_list',
                         role: sellerRoles,
-                        title:'Products'
+                        title: 'Products'
                     },
                 },
 
@@ -1393,7 +1414,7 @@ function configRoutes() {
                     meta: {
                         permission: 'order_list',
                         role: sellerRoles,
-                        title:'Product Create'
+                        title: 'Product Create'
                     },
 
                 },
@@ -1405,7 +1426,7 @@ function configRoutes() {
                     meta: {
                         permission: 'order_list',
                         role: sellerRoles,
-                        title:'Product Edit'
+                        title: 'Product Edit'
                     },
                 },
                 {
@@ -1416,7 +1437,7 @@ function configRoutes() {
                     meta: {
                         permission: 'order_list',
                         role: sellerRoles,
-                        title:'Product View'
+                        title: 'Product View'
                     },
                 },
                 {
@@ -1426,7 +1447,7 @@ function configRoutes() {
                     meta: {
                         permission: 'order_list',
                         role: sellerRoles,
-                        title:'Units'
+                        title: 'Units'
                     },
                 },
                 {
@@ -1436,7 +1457,7 @@ function configRoutes() {
                     meta: {
                         permission: 'order_list',
                         role: sellerRoles,
-                        title:'Media'
+                        title: 'Media'
                     },
                 },
                 {
@@ -1446,7 +1467,7 @@ function configRoutes() {
                     meta: {
                         permission: 'order_list',
                         role: sellerRoles,
-                        title:'Taxes'
+                        title: 'Taxes'
                     },
                 },
                 {
@@ -1456,7 +1477,7 @@ function configRoutes() {
                     meta: {
                         permission: 'order_list',
                         role: sellerRoles,
-                        title:'Brands'
+                        title: 'Brands'
                     },
                 },
                 {
@@ -1467,7 +1488,7 @@ function configRoutes() {
                     meta: {
                         permission: 'order_list',
                         role: sellerRoles,
-                        title:'Bulk Upload'
+                        title: 'Bulk Upload'
                     },
                 },
                 {
@@ -1477,7 +1498,7 @@ function configRoutes() {
                     meta: {
                         permission: 'order_list',
                         role: sellerRoles,
-                        title:'Product Sales Reports'
+                        title: 'Product Sales Reports'
                     }
                 },
                 {
@@ -1487,7 +1508,7 @@ function configRoutes() {
                     meta: {
                         permission: 'order_list',
                         role: sellerRoles,
-                        title:'Sales Reports'
+                        title: 'Sales Reports'
                     }
                 },
                 {
@@ -1497,7 +1518,7 @@ function configRoutes() {
                     meta: {
                         permission: 'order_list',
                         role: sellerRoles,
-                        title:'Settings'
+                        title: 'Settings'
 
                     },
                 },
@@ -1509,7 +1530,7 @@ function configRoutes() {
                     meta: {
                         permission: 'order_list',
                         role: sellerRoles,
-                        title:'My Profile'
+                        title: 'My Profile'
                     },
                 },
 
@@ -1521,7 +1542,7 @@ function configRoutes() {
             name: "delivery_boy_login",
             component: DeliveryBoyLogin,
             meta: {
-                title:'Delivery Boy Login'
+                title: 'Delivery Boy Login'
             },
         },
         {
@@ -1529,7 +1550,7 @@ function configRoutes() {
             name: "delivery_boy_register",
             component: DeliveryBoyRegister,
             meta: {
-                title:'Delivery Boy Register'
+                title: 'Delivery Boy Register'
             }
         },
         {
@@ -1538,11 +1559,11 @@ function configRoutes() {
             component: DeliveryBoyDetails,
             meta: {
                 role: deliveryBoyRoles,
-                title:'Delivery Boy Details'
+                title: 'Delivery Boy Details'
             }
         },
-        
-        
+
+
         {
             /* Here the name of the route is not usable. if you enable the name of this route then display the warning in the console.
             * [vue-router] Named Route 'delivery_boy' has a default child route. When navigating to this named route (:to="{name: 'delivery_boy'"),
@@ -1556,11 +1577,11 @@ function configRoutes() {
                 {
                     path: "/",
                     name: "DeliveryBoyDashboard",
-                    component:  DeliveryBoyDashboard,
+                    component: DeliveryBoyDashboard,
                     meta: {
                         requiresAuth: true,
                         role: deliveryBoyRoles,
-                        title:'Dashboard'
+                        title: 'Dashboard'
                     },
                 },
                 {
@@ -1570,10 +1591,10 @@ function configRoutes() {
                     meta: {
                         requiresAuth: true,
                         role: deliveryBoyRoles,
-                        title:'Dashboard'
+                        title: 'Dashboard'
                     },
                 },
-               
+
                 {
                     path: "orders",
                     name: "DeliveryBoyOrders",
@@ -1581,7 +1602,7 @@ function configRoutes() {
                     meta: {
                         permission: 'order_list',
                         role: deliveryBoyRoles,
-                        title:'Orders'
+                        title: 'Orders'
                     },
                 },
                 {
@@ -1591,7 +1612,7 @@ function configRoutes() {
                     meta: {
                         permission: 'order_list',
                         role: deliveryBoyRoles,
-                        title:'View Orders'
+                        title: 'View Orders'
                     },
                 },
                 {
@@ -1601,7 +1622,7 @@ function configRoutes() {
                     meta: {
                         permission: 'order_list',
                         role: deliveryBoyRoles,
-                        title:'Delivery Boy Invoice Order'
+                        title: 'Delivery Boy Invoice Order'
                     },
                 },
                 {
@@ -1611,7 +1632,7 @@ function configRoutes() {
                     meta: {
                         permission: 'order_list',
                         role: deliveryBoyRoles,
-                        title:'Fund Transfers'
+                        title: 'Fund Transfers'
                     },
                 },
                 {
@@ -1621,7 +1642,7 @@ function configRoutes() {
                     meta: {
                         permission: 'order_list',
                         role: deliveryBoyRoles,
-                        title:'Delivery boy cash'
+                        title: 'Delivery boy cash'
                     },
                 },
 
@@ -1632,7 +1653,7 @@ function configRoutes() {
                     meta: {
                         permission: 'order_list',
                         role: deliveryBoyRoles,
-                        title:'Product Sales Report'
+                        title: 'Product Sales Report'
                     }
                 },
                 {
@@ -1642,7 +1663,7 @@ function configRoutes() {
                     meta: {
                         permission: 'order_list',
                         role: deliveryBoyRoles,
-                        title:'Sales Report'
+                        title: 'Sales Report'
                     }
                 },
 
@@ -1684,7 +1705,7 @@ function configRoutes() {
                     meta: {
                         permission: 'order_list',
                         role: deliveryBoyRoles,
-                        title:'Settings'
+                        title: 'Settings'
 
                     },
                 },
@@ -1695,7 +1716,7 @@ function configRoutes() {
                     meta: {
                         permission: 'order_list',
                         role: deliveryBoyRoles,
-                        title:'My Profile'
+                        title: 'My Profile'
                     },
                 },
                 {
@@ -1706,7 +1727,7 @@ function configRoutes() {
                     meta: {
                         permission: 'order_list',
                         role: deliveryBoyRoles,
-                        title:'Product View'
+                        title: 'Product View'
                     },
                 },
             ],
@@ -1717,7 +1738,7 @@ function configRoutes() {
             name: "login",
             component: Login,
             meta: {
-                title:'Login'
+                title: 'Login'
             },
         },
         {
@@ -1725,7 +1746,7 @@ function configRoutes() {
             name: "forgot_password",
             component: ForgotPassword,
             meta: {
-                title:'Forgot Password'
+                title: 'Forgot Password'
             },
         },
         {
@@ -1733,14 +1754,14 @@ function configRoutes() {
             name: "reset_password",
             component: ResetPassword,
             meta: {
-                title:'Reset Password'
+                title: 'Reset Password'
             },
         },
 
         /*Other Pages*/
-        { path: "/unauthorized", component: Unauthorized, meta: { title:'Unauthorized' } },
-        { path: "/error_500", component: ServerError, meta: { title:'Server Error' } },
-        { path: "*", component: PageNotFound, meta: { title:'404 Page Not Found' } }
+        { path: "/unauthorized", component: Unauthorized, meta: { title: 'Unauthorized' } },
+        { path: "/error_500", component: ServerError, meta: { title: 'Server Error' } },
+        { path: "*", component: PageNotFound, meta: { title: '404 Page Not Found' } }
 
     ];
 }

@@ -213,7 +213,7 @@ __webpack_require__.r(__webpack_exports__);
     }
   },
   data: function data() {
-    return {
+    var data = {
       lang: 'en',
       search: '',
       sidebarItems: [{
@@ -255,6 +255,10 @@ __webpack_require__.r(__webpack_exports__);
           name: __('manage_products'),
           icon: 'grid-fill',
           url: '/manage_products'
+        }, {
+          name: __('new_product_request'),
+          icon: 'grid-fill',
+          url: '/product_request'
         }, {
           name: __('units'),
           icon: 'grid-fill',
@@ -570,6 +574,11 @@ __webpack_require__.r(__webpack_exports__);
           url: '/users',
           permission: 'customer_list'
         }, {
+          name: __('b2bcustomers'),
+          icon: 'grid-fill',
+          url: '/b2bcustomers',
+          permission: 'b2bcustomers'
+        }, {
           name: __('wishlists'),
           icon: 'grid-fill',
           url: '/wishlists',
@@ -631,6 +640,8 @@ __webpack_require__.r(__webpack_exports__);
         permission: 'faq_list'
       }]
     };
+    console.log(data);
+    return data;
   },
   computed: {
     filteredSidebarItems: function filteredSidebarItems() {
@@ -935,7 +946,9 @@ __webpack_require__.r(__webpack_exports__);
     var self = this;
     console.log(this.$apiAdress);
     axios__WEBPACK_IMPORTED_MODULE_0___default().get(this.$apiAdress + '/api/menu?token=' + localStorage.getItem("api_token")).then(function (response) {
+      console.log(response);
       self.nav = self.rebuildData(response.data);
+      console.log(self.nav);
     })["catch"](function (error) {
       console.log(error);
       self.$router.push({
@@ -1917,7 +1930,6 @@ var render = function () {
                                           _c(
                                             "li",
                                             {
-                                              key: sub.key,
                                               staticClass: "submenu-item",
                                               class: {
                                                 active: _vm.isActive(sub.url),

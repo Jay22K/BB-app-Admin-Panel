@@ -18,7 +18,7 @@ class User extends Authenticatable
 
     protected $fillable = ['email', 'name', 'password', 'mobile'];
 
-    protected $hidden = ['password', 'friends_code', 'auth_uid'];
+    protected $hidden = ['password', 'friends_code'];
 
 
     public static $deactive = 0;
@@ -58,8 +58,18 @@ class User extends Authenticatable
         return asset('storage/' . $value);
     }
 
-    public function details()
+    public function salesChannel()
     {
-        return $this->hasOne($this->customer_type ? B2CDetail::class : B2BDetail::class, 'user_id');
+        return $this->belongsTo(SalesChannel::class, 'sales_channel', 'id');
+    }
+
+    public function b2c_details()
+    {
+        return $this->hasOne(B2CDetail::class, 'user_id', 'id');
+    }
+
+    public function b2b_details()
+    {
+        return $this->hasOne(B2BDetail::class, 'user_id', 'id');
     }
 }

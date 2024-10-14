@@ -1,5 +1,8 @@
 <?php
 
+use App\Http\Controllers\API\Customer\ProductApiController as CustomerProductApiController;
+use App\Http\Controllers\API\ProductApiController;
+use App\Http\Controllers\API\UserController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -10,10 +13,7 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 
 
 Route::group(['prefix' => 'install'], function () {
-
     Route::get('check-composer-updates', [\App\Http\Controllers\InstallController::class, 'checkUpdates'])->name('checkComposerUpdates');
-
-
     Route::get('requirements', [\App\Http\Controllers\InstallController::class, 'getRequirements']);
     Route::post('database', [\App\Http\Controllers\InstallController::class, 'setDatabase']);
     Route::post('purchase_code', [\App\Http\Controllers\InstallController::class, 'checkPurchaseCode']);
@@ -371,7 +371,6 @@ Route::group(['middleware' => ['auth:api']], function () {
     Route::group(['prefix' => 'seller_wallet_transactions'], function () {
         Route::get('/', [\App\Http\Controllers\API\SellerWalletTransactionsApiController::class, 'index']);
         Route::post('save', [\App\Http\Controllers\API\SellerWalletTransactionsApiController::class, 'save'])->name('seller_wallet_transactions.save');
-
     });
 
     Route::group(['prefix' => 'shipping_methods'], function () {
@@ -458,9 +457,7 @@ Route::group(['middleware' => ['auth:api']], function () {
             Route::get('/', [\App\Http\Controllers\API\MailSettingsApiController::class, 'index']);
             Route::post('save', [\App\Http\Controllers\API\MailSettingsApiController::class, 'save'])->name('seller.mail_settings.save');
         });
-
     });
-
 
     /*delivery_boy*/
     /***********************************************************************************************/
@@ -487,4 +484,13 @@ Route::group(['middleware' => ['auth:api']], function () {
         });
     });
 
+    Route::get('requested-products', [ProductApiController::class, 'requestedProducts']);
+    Route::prefix('b2b-users')->group(function () {
+        Route::get('/', [UserController::class, 'pendingUsers']);
+        Route::post('{id}/verify', [UserController::class, 'verifyUser']);
+    });
+});
+
+Route::group(['middleware' => ['auth:api-customers']], function () {
+    Route::post('customer_product_request', [CustomerProductApiController::class, 'requestProduct']);
 });

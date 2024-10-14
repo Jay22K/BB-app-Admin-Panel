@@ -22,9 +22,12 @@ use App\Models\Transaction;
 use App\Models\Unit;
 use App\Models\User;
 use App\Models\PromoCode;
+use App\Models\SalesChannel;
+use App\Models\Tax;
 use App\Notifications\OrderNotification;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
@@ -60,7 +63,7 @@ class OrderApiController extends Controller
         $address_id = $request->address_id;
         $user_address = CommonHelper::getUserAddress($request->address_id);
         if (!empty($user_address)) {
-            $address = $user_address->address.' '.$user_address->landmark.' '.$user_address->area.' '.$user_address->city.' '.$user_address->state.' '.$user_address->country.'-'.$user_address->pincode.' '.$user_address->name.' '.$user_address->mobile.'/'.$user_address->alternate_mobile;
+            $address = $user_address->address . ' ' . $user_address->landmark . ' ' . $user_address->area . ' ' . $user_address->city . ' ' . $user_address->state . ' ' . $user_address->country . '-' . $user_address->pincode . ' ' . $user_address->name . ' ' . $user_address->mobile . '/' . $user_address->alternate_mobile;
             $mobile = $user_address->mobile;
             $latitude = $user_address->latitude;
             $longitude = $user_address->longitude;
@@ -91,7 +94,7 @@ class OrderApiController extends Controller
                 return CommonHelper::responseError("Promo code not found!");
             }
             $promo = CommonHelper::validatePromoCode($user_id, $code->promo_code, $total);
-           
+
             if ($promo['is_applicable'] == 0) {
                 return CommonHelper::responseError($promo['message']);
             }
@@ -127,11 +130,14 @@ class OrderApiController extends Controller
 
         $item_details = CommonHelper::getProductByVariantId($item_arr);
 
-
-        $totalTax = CommonHelper::calculateOrderTotalTax($item_details, $quantity_arr);
-        $order_total_tax_amt = $totalTax['order_total_tax_amt'];
-        $order_total_tax_per = $totalTax['order_total_tax_per'];
-
+        if ($tax = Tax::where('status', 1)->first()) {
+            $totalTax = CommonHelper::calculateOrderTotalTax($item_details, $quantity_arr);
+            $order_total_tax_amt = $totalTax['order_total_tax_amt'];
+            $order_total_tax_per = $totalTax['order_total_tax_per'];
+        } else {
+            $order_total_tax_amt = 0;
+            $order_total_tax_per = 0;
+        }
         /*$order_total_tax_amt = 0;
         $order_total_tax_per = 0;
         foreach ($item_details as $key => $item) {
@@ -238,17 +244,25 @@ class OrderApiController extends Controller
                 CommonHelper::updateUserWalletBalance($new_balance, $user_id);
                 CommonHelper::addWalletTransaction($order_id, 0, $user_id, 'debit', $wallet_balance, 'Used against Order Placement');
             }
-
+            $user = Auth::guard('api')->user();
+            $salesChannelKey = '';
+            if ($user->customer_type == 1) {
+                $b2bChannel = SalesChannel::where('id', $user->sales_channel)->first();
+                $salesChannelKey = $b2bChannel->slug ?? 'total_pick_up_the_franchiser_point_rate';
+            } else {
+                $salesChannelKey = 'total_pick_up_the_franchiser_point_rate';
+            }
             /* process each product in order from variants of products */
             foreach ($item_details as $key => $item) {
+                $taxed = ProductHelper::getTaxableAmount($item->id, $salesChannelKey);
                 $product_id = $item->product_id;
                 $product_name = $item->name;
                 $measurement = $item->measurement;
                 $variant_name = $measurement . $item->stock_unit_name;
                 $product_variant_id = $item->id;
                 $stock_unit_id = $item->stock_unit_id;
-                $price = $item->price;
-                $discounted_price = (empty($item->discounted_price) || $item->discounted_price == "") ? 0 : $item->discounted_price;
+                $price = $taxed->price;
+                $discounted_price = $taxed->discounted_price;
                 $is_unlimited_stock = $item->is_unlimited_stock;
                 $type = $item->product_type;
 
@@ -314,7 +328,6 @@ class OrderApiController extends Controller
                             $product_variant->status = 0; // here status 0 => "Sold Out" & 1 => "Available"
                             $product_variant->save();
                         }
-
                     } elseif ($type == 'loose') {
                         /*if ($measurement_unit_id == $stock_unit_id) {
                             $stock = $quantity * $measurement;
@@ -363,7 +376,6 @@ class OrderApiController extends Controller
                 $admin->notify(new OrderNotification($order->id, 'new'));
             }
         } catch (\Exception $e) {
-
         }
 
         if ($payment_method == Transaction::$paymentTypeCod) {
@@ -372,7 +384,6 @@ class OrderApiController extends Controller
         } else {
             return CommonHelper::responseWithData(['order_id' => $order->id]);
         }
-
     }
 
     public function deletePaymentPendingOrder(Request $request)
@@ -405,8 +416,7 @@ class OrderApiController extends Controller
         } catch (\Exception $e) {
             DB::rollBack();
             Log::info("Error : " . $e->getMessage());
-            throw $e;
-            return CommonHelper::responseError("Something Went Wrong!");
+            return CommonHelper::responseError("Something Went Wrong!", $e);
         }
         return CommonHelper::responseSuccess("Order deleted successfully");
     }
@@ -443,7 +453,7 @@ class OrderApiController extends Controller
 
         if ($request->payment_method == "Razorpay") {
 
-            \Log::error("payment_method = " . $request->payment_method);
+            Log::error("payment_method = " . $request->payment_method);
 
             $transaction_id = TransactionHelper::createOrderonRazorpay($order->id);
             if ($transaction_id == "") {
@@ -459,14 +469,13 @@ class OrderApiController extends Controller
             if (!empty($order)) {
                 $out['paypal_redirect_url'] = url('customer/paypal_payment_url?user_id=' . $user_id . '&order_id=' . $order_id);
             }
-
         } else if ($request->payment_method == "Stripe") {
 
-            \Log::error("payment_method = " . $request->payment_method);
+            Log::error("payment_method = " . $request->payment_method);
 
 
             $response = TransactionHelper::createOrderOnStripe($order);
-            \Log::error("order->final_total  = " . $order->final_total);
+            Log::error("order->final_total  = " . $order->final_total);
 
             if ($response == "") {
                 return CommonHelper::responseError("Error while communicating with Stripe server");
@@ -539,7 +548,6 @@ class OrderApiController extends Controller
             // Render paypal form
             $paypal->paypal_auto_form();
         }
-
     }
 
     public function paypalRedirect(Request $request)
@@ -695,7 +703,6 @@ class OrderApiController extends Controller
                         CommonHelper::setOrderStatus($order_status);*/
 
                         CommonHelper::addSellerWiseOrder($order->id);
-
                     } else if (
                         $paypalInfo["payment_status"] == 'Expired' || $paypalInfo["payment_status"] == 'Failed'
                         || $paypalInfo["payment_status"] == 'Refunded' || $paypalInfo["payment_status"] == 'Reversed'
@@ -797,7 +804,6 @@ class OrderApiController extends Controller
                 if (!$signatureIsVaid) {
                     $status = Transaction::$statusSuccess;
                 }
-
             } else if ($request->payment_method == Transaction::$paymentTypePaystack) {
 
                 $paystack = new Paystack();
@@ -828,7 +834,6 @@ class OrderApiController extends Controller
                     if ($paymentIntent->status === "succeeded") {
                         $status = Transaction::$statusSuccess;
                     }
-
                 } catch (\Exception $e) {
                     Log::error("Stripe Error : ", [$e]);
                     return CommonHelper::responseError($e->getMessage());
@@ -853,8 +858,6 @@ class OrderApiController extends Controller
                 } else {
                     $status = Transaction::$statusFailed;
                 }
-
-
             } else if ($request->payment_method == Transaction::$paymentTypePaypal) {
 
                 $transaction_id = $request->transaction_id;
@@ -862,8 +865,8 @@ class OrderApiController extends Controller
                 $paypalClient = new PaypalClient();
                 $server_output = $paypalClient->getPayment($transaction_id);
                 $result = json_decode($server_output, 1);
-                \Log::info('-------------Paypal start---------------');
-                \Log::info('paypal result : ', [$result]);
+                Log::info('-------------Paypal start---------------');
+                Log::info('paypal result : ', [$result]);
 
                 $status = Transaction::$statusFailed;
 
@@ -1046,7 +1049,6 @@ class OrderApiController extends Controller
                 }
 
                 return CommonHelper::responseSuccessWithData("Order " . OrderStatusList::$orderCancelled . " Successfully", $order);
-
             } else {
 
                 /*$order->active_status = $postStatus;
@@ -1072,7 +1074,14 @@ class OrderApiController extends Controller
         $order_id = $request->order_id;
         $user_id = auth()->user()->id;
 
-
+        $user = Auth::guard('api')->user();
+        $salesChannelKey = '';
+        if ($user->customer_type == 1) {
+            $b2bChannel = SalesChannel::where('id', $user->sales_channel)->first();
+            $salesChannelKey = $b2bChannel->slug ?? 'total_pick_up_the_franchiser_point_rate';
+        } else {
+            $salesChannelKey = 'total_pick_up_the_franchiser_point_rate';
+        }
         //$where = !empty($order_id) ? " o.id = " . $order_id : "";
         //$sql = "select count(o.id) as total from orders o where user_id=" . $user_id . $where;
 
@@ -1106,7 +1115,8 @@ class OrderApiController extends Controller
 
         $sql = Order::select(
             "orders.*",
-            'orders.address as order_address','orders.mobile as order_mobile',
+            'orders.address as order_address',
+            'orders.mobile as order_mobile',
             'orders.id as order_id',
             "obt.message as bank_transfer_message",
             "obt.status as bank_transfer_status",
@@ -1175,7 +1185,7 @@ class OrderApiController extends Controller
             $res[$i]['bank_transfer_message'] = !empty($res[$i]['bank_transfer_message']) ? $res[$i]['bank_transfer_message'] : "";
             $res[$i]['bank_transfer_status'] = !empty($res[$i]['bank_transfer_status']) ? $res[$i]['bank_transfer_status'] : 0;
 
-            $orderStatus = orderStatus::where('order_id', $row['id'])->get();
+            $orderStatus = OrderStatus::where('order_id', $row['id'])->get();
             $data = array();
             foreach ($orderStatus as $status) {
                 $subData = array();
@@ -1197,7 +1207,8 @@ class OrderApiController extends Controller
                 'p.return_days',
                 'p.cancelable_status',
                 'p.till_status',
-                'v.measurement', DB::raw('(select short_code from units as u where u.id = v.stock_unit_id) as unit'),
+                'v.measurement',
+                DB::raw('(select short_code from units as u where u.id = v.stock_unit_id) as unit'),
                 'co.name as country_made_in',
                 's.name as seller_name',
                 's.formatted_address as seller_address',
@@ -1217,11 +1228,11 @@ class OrderApiController extends Controller
 
             foreach ($items as $subkey => $item) {
                 //dd($item);
-                $taxed = ProductHelper::getTaxableAmount($item->product_variant_id);
+                // $taxed = ProductHelper::getTaxableAmount($item->product_variant_id, $salesChannelKey);
 
                 $items[$subkey]->made_in = $item->country_made_in ?? "";
                 $items[$subkey]->created_at = Carbon::createFromFormat('Y-m-d', date('Y-m-d', strtotime($item->created_at)))->format('Y-m-d');
-                $items[$subkey]->price = CommonHelper::doubleNumber($taxed->taxable_amount ?? $item->price);
+                $items[$subkey]->price = CommonHelper::doubleNumber($item->price);
                 $cancelableStatusList = array(OrderStatusList::$received, OrderStatusList::$processed, OrderStatusList::$shipped, OrderStatusList::$outForDelivery);
 
                 /*if( intval($item->active_status) <= intval($item->till_status) && in_array($item->active_status, $cancelableStatusList)){}*/
@@ -1240,7 +1251,6 @@ class OrderApiController extends Controller
                 } else {
                     $items[$subkey]->return_status = 0;
                 }
-
             }
             $items = $items->makeHidden(['image', 'images', 'updated_at', 'deleted_at', 'status', 'current_status', 'country_made_in']);
             /*for ($j = 0; $j < $items->count(); $j++) {
@@ -1447,7 +1457,8 @@ class OrderApiController extends Controller
             'p.return_days',
             'p.cancelable_status',
             'p.till_status',
-            'v.measurement', DB::raw('(select short_code from units as u where u.id = v.stock_unit_id) as unit'),
+            'v.measurement',
+            DB::raw('(select short_code from units as u where u.id = v.stock_unit_id) as unit'),
             'os.status as current_status',
             'os.id as order_status_id',
             'co.name as country_made_in',
@@ -1566,11 +1577,9 @@ class OrderApiController extends Controller
             $response['data'] = $paytm_params;
             $response['signature'] = $paytm_checksum;
             return CommonHelper::responseSuccessWithData('Checksum created successfully', $response);
-
         } else {
             return CommonHelper::responseError('Data not found!');
         }
-
     }
 
     public function generatePaytmTxnToken(Request $request)
@@ -1662,7 +1671,6 @@ class OrderApiController extends Controller
                 $response['paytm_response'] = $paytm_response;
 
                 return CommonHelper::responseSuccessWithData('Transaction token generated successfully', $response);
-
             } else {
                 $response['message'] = $paytm_response['body']['resultInfo']['resultMsg'];
                 $response['txn_token'] = "";
@@ -1679,5 +1687,4 @@ class OrderApiController extends Controller
         }
     }
     /*Paytm*/
-
 }

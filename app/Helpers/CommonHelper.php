@@ -13,7 +13,8 @@ use App\Models\DeliveryBoy;
 use App\Models\Favorite;
 use App\Models\FundTransfer;
 use App\Models\MailSetting;
-use App\Models\Notification;use App\Models\Order;
+use App\Models\Notification;
+use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\OrderStatus;
 use App\Models\OrderStatusList;
@@ -21,16 +22,18 @@ use App\Models\Product;
 use App\Models\ProductImages;
 use App\Models\ProductVariant;
 use App\Models\PromoCode;
+use App\Models\SalesChannel;
 use App\Models\Section;
 use App\Models\Seller;
 use App\Models\Setting;
 use App\Models\Unit;
 use App\Models\User;
 use App\Models\UserAddress;
-use App\Models\UserToken;use App\Models\WalletTransaction;
+use App\Models\UserToken;
+use App\Models\WalletTransaction;
 use DateTime;
 use DateTimeZone;
-use DB;
+use Illuminate\Support\Facades\DB;
 use Faker\Provider\Address;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
@@ -39,38 +42,48 @@ use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use Mpdf\Mpdf;
 use Mpdf\Output\Destination;
-use Response;
+use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Config;
 
 class CommonHelper
 {
 
-    public static function responseError($message)
+    public static function responseError($message, $err = null)
     {
-        return Response::json(array('status' => 0, 'message' => $message));
+        if ($err) {
+            Log::channel('api_error')->error($err);
+        }
+        return response()->json(array('status' => 0, 'message' => $message));
     }
-    public static function responseErrorWithData($message, $data)
+    public static function responseErrorWithData($message, $data, $err = null)
     {
-        return Response::json(array('status' => 0, 'message' => $message, 'data' => $data));
+        if ($err) {
+            Log::channel('api_error')->error($err);
+        }
+        return response()->json(array('status' => 0, 'message' => $message, 'data' => $data));
     }
 
     public static function responseSuccess($message)
     {
-        return Response::json(array('status' => 1, 'message' => $message));
+        return response()->json(array('status' => 1, 'message' => $message));
     }
 
-    public static function responseWithData($data,$total = 1)
+    public static function responseWithData($data, $total = 1)
     {
-        return Response::json(array('status' => 1, 'message' => 'success','total'=> $total, 'data' => $data));
+        return response()->json(array('status' => 1, 'message' => 'success', 'total' => $total, 'data' => $data));
     }
 
     public static function responseSuccessWithData($message, $data)
     {
-        return Response::json(array('status' => 1, 'message' => $message, 'data' => $data));
+        return response()->json(array('status' => 1, 'message' => $message, 'data' => $data));
     }
 
-    public static function getColumnComment($tableName, $columnName){
-        $databaseName = \DB::connection()->getDatabaseName();
-        $comments = \DB::select("SELECT COLUMN_COMMENT FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = '$databaseName' AND TABLE_NAME = '$tableName' AND COLUMN_NAME = '$columnName'");
+    public static function getColumnComment($tableName, $columnName)
+    {
+        $databaseName = DB::connection()->getDatabaseName();
+        $comments = DB::select("SELECT COLUMN_COMMENT FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = '$databaseName' AND TABLE_NAME = '$tableName' AND COLUMN_NAME = '$columnName'");
         return $comments[0]->COLUMN_COMMENT;
     }
 
@@ -98,7 +111,7 @@ class CommonHelper
         if (empty($slug)) {
             return 'n-a';
         }
-        $total = \DB::select(\DB::raw("SELECT COUNT(id) AS total_slugs FROM $table WHERE $field  LIKE '$slug%'"));
+        $total = DB::select(DB::raw("SELECT COUNT(id) AS total_slugs FROM $table WHERE $field  LIKE '$slug%'"));
 
         return ($total[0]->total_slugs > 0) ? ($slug . '-' . $total[0]->total_slugs) : $slug;
     }
@@ -119,7 +132,7 @@ class CommonHelper
                     in_array($zone['timezone_id'], $idents)
                 ) {
                     $z = new DateTimeZone($zone['timezone_id']);
-                    $c = new DateTime(null, $z);
+                    $c = new DateTime('now', $z);
                     $zone['time'] = $c->format('H:i a');
                     $offset[] = $zone['offset'] = $z->getOffset($c);
                     $data[] = $zone;
@@ -155,26 +168,28 @@ class CommonHelper
 
     public static function convertSettingsInArray($settings): array
     {
-        $imageArray = array("play_store_logo","ios_store_logo","favicon","web_logo","loading","logo","popup_image");
+        $imageArray = array("play_store_logo", "ios_store_logo", "favicon", "web_logo", "loading", "logo", "popup_image");
         $data = array();
-        foreach ($settings as $setting){
-            if(in_array($setting->variable,$imageArray)){
+        foreach ($settings as $setting) {
+            if (in_array($setting->variable, $imageArray)) {
                 $data[$setting->variable] = self::getImage($setting->value);
-            }else{
+            } else {
                 $data[$setting->variable] = $setting->value;
             }
         }
         return $data;
     }
 
-    public static function getSettings($variables){
-        $settings = Setting::whereIn('variable',$variables )->get();
+    public static function getSettings($variables)
+    {
+        $settings = Setting::whereIn('variable', $variables)->get();
         return self::convertSettingsInArray($settings);
     }
 
-    public static function getDefaultCity(){
+    public static function getDefaultCity()
+    {
         $default_city_id = Setting::get_value('default_city_id');
-        return City::select('id','name','state','formatted_address','latitude','longitude')->where('id', $default_city_id)->first();
+        return City::select('id', 'name', 'state', 'formatted_address', 'latitude', 'longitude')->where('id', $default_city_id)->first();
     }
 
     public static function getDeliveryBoyBonusSettings(): array
@@ -193,16 +208,17 @@ class CommonHelper
 
 
 
-    public static function getMainCategories(){
-        return Category::orderBy('id','DESC')->where(['parent_id' => 0, 'status' => 1])->get();
+    public static function getMainCategories()
+    {
+        return Category::orderBy('id', 'DESC')->where(['parent_id' => 0, 'status' => 1])->get();
     }
 
     public static function categoryTree($parent_id = 0, $sub_mark = '', $default = NULL, $dont_include = array(), $only_last_selecatble = false, $multiple_default = array(), $seller_id = 0)
     {
-        if($seller_id != 0) {
-            $seller = Seller::where('id',$seller_id)->first();
+        if ($seller_id != 0) {
+            $seller = Seller::where('id', $seller_id)->first();
             $categories = Category::with('parent')->where('parent_id', $parent_id)->whereIn('id', explode(",", $seller->categories));
-        }else{
+        } else {
             $categories = Category::with('parent')->where('parent_id', $parent_id);
         }
 
@@ -244,13 +260,12 @@ class CommonHelper
                 }
             }
         }
-
     }
 
-    public static function uploadProductImages($images, $product_id, $variant_id = 0) 
+    public static function uploadProductImages($images, $product_id, $variant_id = 0)
     {
         foreach ($images as $file) {
-            $fileName = time().'_'.rand(1111,99999).'.'.$file->getClientOriginalExtension();
+            $fileName = time() . '_' . rand(1111, 99999) . '.' . $file->getClientOriginalExtension();
             $allowedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
             $extension = $file->getClientOriginalExtension();
             if (in_array(strtolower($extension), $allowedExtensions)) {
@@ -353,7 +368,8 @@ class CommonHelper
         return $response;
     }
 
-    public static function getValidatedPromoCode($promocode_id, $total, $user_id){
+    public static function getValidatedPromoCode($promocode_id, $total, $user_id)
+    {
         $code = PromoCode::find($promocode_id);
         /*if (empty($code)) {
             return CommonHelper::responseError("Promo code not found!");
@@ -364,10 +380,11 @@ class CommonHelper
         }
     }
 
-    public static function getDeliverableCity($latitude, $longitude){
+    public static function getDeliverableCity($latitude, $longitude)
+    {
         $city = city::select('cities.*', DB::raw("6371 * acos(cos(radians(" . $latitude . "))
                                 * cos(radians(sellers.latitude)) * cos(radians(sellers.longitude) - radians(" . $longitude . "))
-                                + sin(radians(" .$latitude. ")) * sin(radians(sellers.latitude))) AS distance"), 'cities.max_deliverable_distance')
+                                + sin(radians(" . $latitude . ")) * sin(radians(sellers.latitude))) AS distance"), 'cities.max_deliverable_distance')
             ->leftJoin("sellers", "sellers.city_id", "cities.id")
             ->havingRaw("distance < cities.max_deliverable_distance")
             ->first();
@@ -375,7 +392,8 @@ class CommonHelper
     }
 
 
-    public static function getSellerIds($latitude, $longitude){
+    public static function getSellerIds($latitude, $longitude)
+    {
 
         /*To convert to miles, multiply by 3961.
         To convert to kilometers, multiply by 6373 or.
@@ -386,17 +404,18 @@ class CommonHelper
         //DB::enableQueryLog();
         $sellers = Seller::select('sellers.id', 'sellers.name', DB::raw("6371 * acos(cos(radians(" . $latitude . "))
                                 * cos(radians(sellers.latitude)) * cos(radians(sellers.longitude) - radians(" . $longitude . "))
-                                + sin(radians(" .$latitude. ")) * sin(radians(sellers.latitude))) AS distance"), 'cities.max_deliverable_distance')
-                        ->leftJoin("cities", "sellers.city_id", "cities.id")
-                        ->havingRaw("distance < cities.max_deliverable_distance")
-                        ->get();
+                                + sin(radians(" . $latitude . ")) * sin(radians(sellers.latitude))) AS distance"), 'cities.max_deliverable_distance')
+            ->leftJoin("cities", "sellers.city_id", "cities.id")
+            ->havingRaw("distance < cities.max_deliverable_distance")
+            ->get();
         /*$quries = DB::getQueryLog(); dd($quries);*/
-        $sellers = $sellers->makeHidden(['national_identity_card_url','address_proof_url','logo_url']);
+        $sellers = $sellers->makeHidden(['national_identity_card_url', 'address_proof_url', 'logo_url']);
         $seller_ids = array_values(array_column($sellers->toarray(), 'id'));
         return $seller_ids;
     }
 
-    public static function getProductByVariantId($arr){
+    public static function getProductByVariantId($arr)
+    {
         if (!empty($arr)) {
             //$arr = json_decode($arr, 1);
             /*foreach ($arr as $key => $id) {
@@ -423,7 +442,12 @@ class CommonHelper
                 return $res;
             }
             */
-            $variants = ProductVariant::select("*","pv.id","pv.type as product_type","p.seller_id","p.is_unlimited_stock",
+            $variants = ProductVariant::select(
+                "*",
+                "pv.id",
+                "pv.type as product_type",
+                "p.seller_id",
+                "p.is_unlimited_stock",
                 DB::raw("(SELECT t.title FROM taxes t WHERE t.id=p.tax_id) as tax_title"),
                 DB::raw("(SELECT t.percentage FROM taxes t WHERE t.id=p.tax_id) as tax_percentage"),
                 DB::raw("(SELECT short_code FROM units as u WHERE u.id=pv.stock_unit_id) as stock_unit_name")
@@ -438,19 +462,22 @@ class CommonHelper
         }
     }
 
-    public static function getUserAddress($id) {
-        $address = UserAddress::where("id",$id)->first();
+    public static function getUserAddress($id)
+    {
+        $address = UserAddress::where("id", $id)->first();
         return $address;
     }
-    public static function updateUserWalletBalance($new_balance, $id){
-        $user = User::where("id",$id)->first();
+    public static function updateUserWalletBalance($new_balance, $id)
+    {
+        $user = User::where("id", $id)->first();
         $user->balance = $new_balance;
         $user->save();
     }
-    public static function addWalletTransaction($order_id, $order_item_id, $user_id, $type, $wallet_balance, $mesage, $status = 1){
+    public static function addWalletTransaction($order_id, $order_item_id, $user_id, $type, $wallet_balance, $mesage, $status = 1)
+    {
         $transaction = new WalletTransaction();
         $transaction->order_id = $order_id;
-        $transaction->order_item_id	 = $order_item_id;
+        $transaction->order_item_id     = $order_item_id;
         $transaction->user_id = $user_id;
         $transaction->type = $type;
         $transaction->amount = $wallet_balance;
@@ -469,7 +496,8 @@ class CommonHelper
         }
     }
 
-    public static function isInPolygon($points_polygon, $vertices_x, $vertices_y, $longitude_x, $latitude_y){
+    public static function isInPolygon($points_polygon, $vertices_x, $vertices_y, $longitude_x, $latitude_y)
+    {
 
         /* $i = $j = $c = 0;
         $i = $j = $c = 0;
@@ -482,16 +510,17 @@ class CommonHelper
         return $c; */
 
         $i = $j = $c = 0;
-        for ($i = 0, $j = $points_polygon-1 ; $i < $points_polygon; $j = $i++) {
+        for ($i = 0, $j = $points_polygon - 1; $i < $points_polygon; $j = $i++) {
             //echo "<br>i".$i ."-  j". $j;
-            if ( (($vertices_y[$i] > $latitude_y != ($vertices_y[$j] > $latitude_y)) &&
-                ($longitude_x < ($vertices_x[$j] - $vertices_x[$i]) * ($latitude_y - $vertices_y[$i]) / ($vertices_y[$j] - $vertices_y[$i]) + $vertices_x[$i]) ) )
+            if ((($vertices_y[$i] > $latitude_y != ($vertices_y[$j] > $latitude_y)) &&
+                ($longitude_x < ($vertices_x[$j] - $vertices_x[$i]) * ($latitude_y - $vertices_y[$i]) / ($vertices_y[$j] - $vertices_y[$i]) + $vertices_x[$i])))
                 $c = !$c;
         }
         return $c;
     }
 
-    public static function isDeliverable($max_deliverable_distance, $latitudeFrom, $longitudeFrom, $latitudeTo, $longitudeTo, $unit = 'K'){
+    public static function isDeliverable($max_deliverable_distance, $latitudeFrom, $longitudeFrom, $latitudeTo, $longitudeTo, $unit = 'K')
+    {
         $theta = $longitudeFrom - $longitudeTo;
         $dist = sin(deg2rad($latitudeFrom)) * sin(deg2rad($latitudeTo)) +  cos(deg2rad($latitudeFrom)) * cos(deg2rad($latitudeTo)) * cos(deg2rad($theta));
         $dist = acos($dist);
@@ -507,33 +536,34 @@ class CommonHelper
             $distance = $miles;
         }
         $result = 0;
-        if($distance <= $max_deliverable_distance){
+        if ($distance <= $max_deliverable_distance) {
             $result = !$result;
         }
         return $result;
     }
 
-    public static function isDeliverableOrder($address_id, $latitude, $longitude, $seller_id){
+    public static function isDeliverableOrder($address_id, $latitude, $longitude, $seller_id)
+    {
         if (!empty($seller_id) || $seller_id != "") {
 
             // get seller points
-            $seller = Seller::select("latitude","longitude")->where("id","=",$seller_id)->first();
+            $seller = Seller::select("latitude", "longitude")->where("id", "=", $seller_id)->first();
 
             /*$address =  UserAddress::select("latitude","longitude",
                 DB::raw("ST_Distance_Sphere(POINT(latitude,longitude), ST_GeomFromText('POINT(". $seller->latitude." ".$seller->longitude.")'))/1000 as distance")
             )->where("id","=",$address_id)->first();*/
 
-            $address =  UserAddress::select("latitude","longitude", DB::raw("6371 * acos(cos(radians(" . $seller->latitude . "))
+            $address =  UserAddress::select("latitude", "longitude", DB::raw("6371 * acos(cos(radians(" . $seller->latitude . "))
                                 * cos(radians(latitude)) * cos(radians(longitude) - radians(" . $seller->longitude . "))
-                                + sin(radians(" .$seller->latitude. ")) * sin(radians(latitude))) AS distance"))
-                ->where("id","=",$address_id)->first();
+                                + sin(radians(" . $seller->latitude . ")) * sin(radians(latitude))) AS distance"))
+                ->where("id", "=", $address_id)->first();
 
             $city = self::getDeliverableCity($latitude, $longitude);
 
-            if(!empty($city)){
-                if($address->distance <= $city->max_deliverable_distance)
-                return true;
-            }else{
+            if (!empty($city)) {
+                if ($address->distance <= $city->max_deliverable_distance)
+                    return true;
+            } else {
                 return false;
             }
         } else {
@@ -541,17 +571,21 @@ class CommonHelper
         }
     }
 
-    public static function isOrderDeliverable($address_id, $latitude, $longitude, $seller_id, $type = "address"){
+    public static function isOrderDeliverable($address_id, $latitude, $longitude, $seller_id, $type = "address")
+    {
         if (!empty($seller_id) || $seller_id != "") {
 
             // get seller points
-            $seller_data = Seller::select("latitude","longitude")->where("id","=",$seller_id)->first();
+            $seller_data = Seller::select("latitude", "longitude")->where("id", "=", $seller_id)->first();
 
             //$where = "ST_Distance_Sphere(POINT(latitude,longitude), ST_GeomFromText('POINT(". $seller_data->latitude." ".$seller_data->longitude.")') ) as distance";
             //$data = fetch_details(['id' => $partner_id], "users", "latitude,longitude,$where");
 
-            $data =  UserAddress::select("latitude","longitude", DB::raw("ST_Distance_Sphere(POINT(latitude,longitude), ST_GeomFromText('POINT(". $seller_data->latitude." ".$seller_data->longitude.")'))/1000 as distance")
-            )->where("id","=",$address_id)->first();
+            $data =  UserAddress::select(
+                "latitude",
+                "longitude",
+                DB::raw("ST_Distance_Sphere(POINT(latitude,longitude), ST_GeomFromText('POINT(" . $seller_data->latitude . " " . $seller_data->longitude . ")'))/1000 as distance")
+            )->where("id", "=", $address_id)->first();
 
             //echo($data->distance);
 
@@ -561,19 +595,19 @@ class CommonHelper
                 $partner = fetch_details(['a.id' => $address_id], 'addresses a', 'a.city_id,c.geolocation_type,c.radius,c.boundary_points,c.max_deliverable_distance', null, null, null, "DESC", "", '', "cities c", "a.city_id=c.id");
             }*/
 
-            $seller = Seller::select("s.city_id","c.geolocation_type","c.radius","c.boundary_points","c.max_deliverable_distance")
+            $seller = Seller::select("s.city_id", "c.geolocation_type", "c.radius", "c.boundary_points", "c.max_deliverable_distance")
                 ->from("sellers as s")
                 ->leftJoin("cities as c", "s.city_id", "=", "c.id")
-                ->where("s.id","=",$seller_id)
+                ->where("s.id", "=", $seller_id)
                 ->first();
             $city_distance = $seller->max_deliverable_distance;
             /*if (isset($seller) && !empty($seller) && isset($seller->geolocation_type) && $seller->geolocation_type == "polygon") {*/
-            if (isset($seller) && !empty($seller) ) {
+            if (isset($seller) && !empty($seller)) {
                 $vertices_x = $seller->boundary_points ? array_column(json_decode($seller->boundary_points, true), "lng") : [];    // lng x-coordinates of the vertices of the polygon
                 $vertices_y = $seller->boundary_points ? array_column(json_decode($seller->boundary_points, true), "lat") : [];    // lat y-coordinates of the vertices of the polygonn
                 $points_polygon = count($vertices_x);  // number vertices - zero-based array
 
-                if (self::isInPolygon($points_polygon, $vertices_x, $vertices_y, $longitude,$latitude)) {
+                if (self::isInPolygon($points_polygon, $vertices_x, $vertices_y, $longitude, $latitude)) {
 
                     // check for distance
                     $distance = $data->distance;
@@ -582,7 +616,6 @@ class CommonHelper
                     } else {
                         return false;    // not in distance
                     }
-
                 } else {
                     return false;    // not in polygon
                 }
@@ -597,15 +630,14 @@ class CommonHelper
             } else {
                 return false;
             }
-
-
         } else {
             return false;
         }
     }
 
-    public static function convertToParent($measurement, $measurement_unit_id){
-        $unit = Unit::where("id","=",$measurement_unit_id)->first();
+    public static function convertToParent($measurement, $measurement_unit_id)
+    {
+        $unit = Unit::where("id", "=", $measurement_unit_id)->first();
         if (!empty($unit->parent_id)) {
             $stock = $measurement / $unit->conversion;
         } else {
@@ -614,7 +646,8 @@ class CommonHelper
         return $stock;
     }
 
-    public static function isOrderItemCancelled($order_item_id){
+    public static function isOrderItemCancelled($order_item_id)
+    {
         /*$sql = "SELECT COUNT(id) as cancelled FROM `order_items` WHERE id=" . $order_item_id . " &&
         (active_status LIKE '%cancelled%' OR active_status LIKE '%returned%')";
         $this->db->sql($sql);
@@ -659,27 +692,29 @@ class CommonHelper
             return '';
         }
     }
-    public static function getImages($product_id,$variant_id=0){
-        $productImages = ProductImages::where('product_id',$product_id)
-            ->where('product_variant_id',$variant_id)
+    public static function getImages($product_id, $variant_id = 0)
+    {
+        $productImages = ProductImages::where('product_id', $product_id)
+            ->where('product_variant_id', $variant_id)
             ->get()->pluck('image_url')->toArray();
         return $productImages;
     }
 
-    public static function getProductIdsSection($section){
-        $cate_ids = $section->category_ids ? explode(",",$section->category_ids) : [];
+    public static function getProductIdsSection($section)
+    {
+        $cate_ids = $section->category_ids ? explode(",", $section->category_ids) : [];
         $product_ids = $section->product_ids;
         if ($section->product_type == 'all_products') {
             if (empty($section->category_ids)) {
-                $sql = Product::select("id as product_id")->where("status", "=", 1)->orderBy("product_id","DESC");
+                $sql = Product::select("id as product_id")->where("status", "=", 1)->orderBy("product_id", "DESC");
             } else {
-                $sql = Product::select("id as product_id")->whereIn("category_id", $cate_ids)->orderBy("product_id","DESC");
+                $sql = Product::select("id as product_id")->whereIn("category_id", $cate_ids)->orderBy("product_id", "DESC");
             }
         } elseif ($section->product_type == 'new_added_products') {
             if (empty($section->category_ids)) {
-                $sql = Product::select("id as product_id")->where("status", "=", 1)->orderBy("created_at","DESC");
+                $sql = Product::select("id as product_id")->where("status", "=", 1)->orderBy("created_at", "DESC");
             } else {
-                $sql = Product::select("id as product_id")->where("status", "=", 1)->whereIn("category_id", $cate_ids)->orderBy("id","DESC");
+                $sql = Product::select("id as product_id")->where("status", "=", 1)->whereIn("category_id", $cate_ids)->orderBy("id", "DESC");
             }
         } elseif ($section->product_type == 'products_on_sale') {
             if (empty($section->category_ids)) {
@@ -688,7 +723,7 @@ class CommonHelper
                     ->where("p.status", "=", 1)
                     ->where("pv.discounted_price", ">", 0)
                     ->where("pv.price", "=", "pv.discounted_price")
-                    ->orderBy("p.id","DESC");
+                    ->orderBy("p.id", "DESC");
             } else {
                 $sql = Product::select("p.id as product_id")->from("products as p")
                     ->leftJoin('product_variants as pv', 'pv.product_id', '=', 'p.id')
@@ -696,22 +731,24 @@ class CommonHelper
                     ->whereIn("category_id", $cate_ids)
                     ->where("pv.discounted_price", ">", 0)
                     ->where("pv.price", "=", "pv.discounted_price")
-                    ->orderBy("p.id","DESC");
+                    ->orderBy("p.id", "DESC");
             }
         } elseif ($section->product_type == 'most_selling_products') {
             if (empty($section->category_ids)) {
-                $sql = OrderItem::select("p.id as product_id", \Illuminate\Support\Facades\DB::raw("COUNT(oi.product_variant_id) AS total"))
+                $sql = OrderItem::select("p.id as product_id", DB::raw("COUNT(oi.product_variant_id) AS total"))
                     ->from("order_items as oi")
                     ->leftJoin("product_variants as pv", "oi.product_variant_id", "=", "pv.id")
                     ->leftJoin("products as p", "pv.product_id", "=", "p.id")
                     ->where("oi.product_variant_id", "!=", 0)
                     ->where("p.id", "!=", "")
                     ->groupBy(['pv.id', 'p.id'])
-                    ->orderBy("total","DESC");
+                    ->orderBy("total", "DESC");
             } else {
-                $sql = OrderItem::select("p.id as product_id",
+                $sql = OrderItem::select(
+                    "p.id as product_id",
                     "oi.product_variant_id",
-                    DB::raw("COUNT(oi.product_variant_id) AS total"))
+                    DB::raw("COUNT(oi.product_variant_id) AS total")
+                )
                     ->from("order_items as oi")
                     ->leftJoin("product_variants as pv", "oi.product_variant_id", "=", "pv.id")
                     ->leftJoin("products as p", "pv.product_id", "=", "p.id")
@@ -719,7 +756,7 @@ class CommonHelper
                     ->where("p.id", "!=", "")
                     ->whereIn("category_id", $cate_ids)
                     ->groupBy(['pv.id', 'p.id'])
-                    ->orderBy("total","DESC");
+                    ->orderBy("total", "DESC");
             }
         } else {
             $product_ids = $section->product_ids;
@@ -738,42 +775,65 @@ class CommonHelper
         return $product_ids;
     }
 
-    public static function getSectionWithProduct($seller_ids,$user_id = 0){
-        $limit =7;
+    public static function getSectionWithProduct($seller_ids, $user_id = 0)
+    {
+        $limit = 7;
         $offset =  0;
-        $sections = Section::orderBy('row_order','ASC')->get();
+        $sections = Section::orderBy('row_order', 'ASC')->get();
 
-        $sections = $sections->makeHidden(['created_at','updated_at']);
-        foreach ($sections as $key => $section){
-            $product_ids = self::getProductIdsSection($section)??"";
-            $products = Product::select('p.*','p.type as d_type', 's.store_name as seller_name','s.slug as seller_slug','s.status as seller_status')
+        $sections = $sections->makeHidden(['created_at', 'updated_at']);
+        foreach ($sections as $key => $section) {
+            $product_ids = self::getProductIdsSection($section) ?? "";
+            $products = Product::select('p.*', 'p.type as d_type', 's.store_name as seller_name', 's.slug as seller_slug', 's.status as seller_status')
                 ->from('products as p')
                 ->leftJoin('sellers as s', 'p.seller_id', '=', 's.id')
                 ->leftJoin('categories as c', 'p.category_id', '=', 'c.id')
-                ->where('p.is_approved',1)
-                ->where('p.status',1)
-                ->where('c.status',1)
+                ->where('p.is_approved', 1)
+                ->where('p.status', 1)
+                ->where('c.status', 1)
                 /*->where('s.categories', 'like', DB::raw('CONCAT("%", p.category_id ,"%")'))*/
-                ->where('s.status',1)
-                ->whereIn('p.seller_id',$seller_ids)
-                ->whereIn('p.id',explode(",",$product_ids))
+                ->where('s.status', 1)
+                ->whereIn('p.seller_id', $seller_ids)
+                ->whereIn('p.id', explode(",", $product_ids))
                 ->groupBy("p.id")->skip($offset)->take($limit)->get();
 
-            $products = $products->makeHidden(['seller_id','row_order','return_status',
-                'cancelable_status','till_status','description','status','is_approved','return_days','pincodes',
-                'cod_allowed','pickup_location','tags','d_type','seller_name','seller_slug','seller_status',
-                'created_at', 'updated_at','deleted_at','image','other_images']);
+            $products = $products->makeHidden([
+                'seller_id',
+                'row_order',
+                'return_status',
+                'cancelable_status',
+                'till_status',
+                'description',
+                'status',
+                'is_approved',
+                'return_days',
+                'pincodes',
+                'cod_allowed',
+                'pickup_location',
+                'tags',
+                'd_type',
+                'seller_name',
+                'seller_slug',
+                'seller_status',
+                'created_at',
+                'updated_at',
+                'deleted_at',
+                'image',
+                'other_images'
+            ]);
 
             $i = 0;
-            foreach ($products as $row){
+            foreach ($products as $row) {
 
-                $sql = ProductVariant::select('*',
-                    DB::raw("(SELECT short_code FROM units u WHERE u.id=pv.stock_unit_id) as stock_unit_name"))
+                $sql = ProductVariant::select(
+                    '*',
+                    DB::raw("(SELECT short_code FROM units u WHERE u.id=pv.stock_unit_id) as stock_unit_name")
+                )
                     ->from('product_variants as pv')
-                    ->where('pv.product_id','=',$row['id'])
-                    ->orderBy('pv.status','ASC');
+                    ->where('pv.product_id', '=', $row['id'])
+                    ->orderBy('pv.status', 'ASC');
                 $variants = $sql->get();
-                $variants = $variants->makeHidden(['product_id','status','measurement_unit_id','stock_unit_id','deleted_at']);
+                $variants = $variants->makeHidden(['product_id', 'status', 'measurement_unit_id', 'stock_unit_id', 'deleted_at']);
                 if (empty($variants)) {
                     continue;
                 }
@@ -812,57 +872,92 @@ class CommonHelper
                 }
                 $products[$i]['variants'] = $variants;*/
 
-                $products[$i] = self::getProductDetails($row['id'],$user_id,false);
+                $products[$i] = self::getProductDetails($row['id'], $user_id, false);
                 $variantArray = array();
                 for ($k = 0; $k < count($variants); $k++) {
-                    array_push($variantArray,self::getProductVariant($variants[$k]['id'],$user_id));
+                    array_push($variantArray, self::getProductVariant($variants[$k]['id'], $user_id));
                 }
                 $products[$i]['variants'] = $variantArray;
                 $i++;
             }
             $sections[$key]["products"] = $products;
         }
-        $sections =  array_map("array_filter",$sections->toArray());
+        $sections =  array_map("array_filter", $sections->toArray());
         $sections = array_filter($sections);
         return $sections;
     }
 
-    public static function getBrandsHavingProducts(){
-        $brands = Brand::orderBy('id','ASC')->where('status',1)->whereExists(function($query) {
+    public static function getBrandsHavingProducts()
+    {
+        $brands = Brand::orderBy('id', 'ASC')->where('status', 1)->whereExists(function ($query) {
             $query->select(DB::raw(1))
                 ->from('products')
                 ->whereColumn('products.brand_id', 'brands.id');
         })->get();
-        $brands = $brands->makeHidden(['created_at','updated_at','image','status']);
+        $brands = $brands->makeHidden(['created_at', 'updated_at', 'image', 'status']);
         return $brands;
     }
 
-    public static function getProductVariantsSize(){
-        $variants = ProductVariant::select('measurement as size','short_code','stock_unit_id as unit_id')
+    public static function getProductVariantsSize()
+    {
+        $variants = ProductVariant::select('measurement as size', 'short_code', 'stock_unit_id as unit_id')
             ->from('product_variants as pv')->distinct()->leftJoin('units as u', 'pv.stock_unit_id', '=', 'u.id')->get();
         return $variants;
     }
 
-    public static function doubleNumber($number){
+    public static function doubleNumber($number)
+    {
         $formattedNumber = number_format($number, 2);
         $floatNumber = (float) str_replace(',', '', $formattedNumber);
         //$floatNumber = (float) preg_replace('/[^0-9.-]/', '', $formattedNumber);
         return $floatNumber;
     }
 
-    public static function getProductDetails($product_id,$user_id=null,$is_variants=true,$request=null){
-        $product = Product::select('products.*', 'sellers.longitude', 'sellers.latitude', 'cities.max_deliverable_distance',
-            'cities.boundary_points','co.name as country_made_in')
-                ->leftJoin("countries as co", "products.made_in", "=", "co.id")
-                ->leftJoin('sellers', 'products.seller_id', '=', 'sellers.id')
-                ->leftJoin('cities', 'sellers.city_id', '=', 'cities.id')
-                ->where('products.id',$product_id)->first();
+    public static function getProductDetails($product_id, $user_id = null, $is_variants = true, $request = null)
+    {
+        $product = Product::select(
+            'products.*',
+            'sellers.longitude',
+            'sellers.latitude',
+            'cities.max_deliverable_distance',
+            'cities.boundary_points',
+            'co.name as country_made_in'
+        )
+            ->leftJoin("countries as co", "products.made_in", "=", "co.id")
+            ->leftJoin('sellers', 'products.seller_id', '=', 'sellers.id')
+            ->leftJoin('cities', 'sellers.city_id', '=', 'cities.id')
+            ->where('products.id', $product_id)->first();
         // \Log::info('products1 : ',[$product]);
-        if($product) {
-            $product = $product->makeHidden(['seller_id','row_order','return_status',
-                'cancelable_status','till_status','description','is_approved','return_days','pincodes',
-                           'cod_allowed','pickup_location','tags','d_type','seller_name','seller_slug','seller_status',
-                'created_at', 'updated_at','deleted_at','image','other_images', 'cal_discount_percentage','min_price','max_price','type','boundary_points','country_made_in']);
+        if ($product) {
+            $product = $product->makeHidden([
+                'seller_id',
+                'row_order',
+                'return_status',
+                'cancelable_status',
+                'till_status',
+                'description',
+                'is_approved',
+                'return_days',
+                'pincodes',
+                'cod_allowed',
+                'pickup_location',
+                'tags',
+                'd_type',
+                'seller_name',
+                'seller_slug',
+                'seller_status',
+                'created_at',
+                'updated_at',
+                'deleted_at',
+                'image',
+                'other_images',
+                'cal_discount_percentage',
+                'min_price',
+                'max_price',
+                'type',
+                'boundary_points',
+                'country_made_in'
+            ]);
 
             $product['is_deliverable'] = true;
             $product['made_in'] = $product['country_made_in'] ?? "";
@@ -883,50 +978,58 @@ class CommonHelper
                 $row['is_deliverable'] = false;
             }*/
 
-            if(isset($product->max_deliverable_distance) && $product->max_deliverable_distance != 0 && $product->max_deliverable_distance != ""){
-                if(isset($request->longitude) && CommonHelper::isDeliverable($product->max_deliverable_distance, $product->longitude, $product->latitude, $request->longitude, $request->latitude)){
+            if (isset($product->max_deliverable_distance) && $product->max_deliverable_distance != 0 && $product->max_deliverable_distance != "") {
+                if (isset($request->longitude) && CommonHelper::isDeliverable($product->max_deliverable_distance, $product->longitude, $product->latitude, $request->longitude, $request->latitude)) {
                     $product['is_deliverable'] = true;
-                }else{
+                } else {
                     $product['is_deliverable'] = false;
                 }
 
                 $product['is_deliverable'] = true;
-
-            }else{
+            } else {
                 $product['is_deliverable'] = false;
             }
 
-        if ($user_id) {
-            $fav = Favorite::where('product_id', $product['id'])->where('user_id', $user_id)->first();
-            $product['is_favorite'] = !is_null($fav) ? true : false;
-        } else {
-            $product['is_favorite'] = false;
-        }
-
-        if($is_variants){
-            $variants = ProductVariant::where('product_id',$product->id)->get();
-            $variantsArray = array();
-            foreach ($variants as $variant){
-                $product_variant = CommonHelper::getProductVariant($variant->id,$user_id);
-                array_push($variantsArray,$product_variant);
+            if ($user_id) {
+                $fav = Favorite::where('product_id', $product['id'])->where('user_id', $user_id)->first();
+                $product['is_favorite'] = !is_null($fav) ? true : false;
+            } else {
+                $product['is_favorite'] = false;
             }
-            $product->variants = $variantsArray;
-        }
-        return $product;
+
+            if ($is_variants) {
+                $variants = ProductVariant::where('product_id', $product->id)->get();
+                $variantsArray = array();
+                foreach ($variants as $variant) {
+                    $product_variant = CommonHelper::getProductVariant($variant->id, $user_id);
+                    array_push($variantsArray, $product_variant);
+                }
+                $product->variants = $variantsArray;
+            }
+            return $product;
         }
     }
 
-    public static function getProductVariant($variant_id,$user_id=null){
-
+    public static function getProductVariant($variant_id, $user_id = null)
+    {
+        $user = Auth::guard('api')->user();
+        $salesChannelKey = '';
+        if ($user && $user->customer_type == 1) {
+            $b2bChannel = SalesChannel::where('id', $user->sales_channel)->first();
+            $salesChannelKey = $b2bChannel->slug ?? 'total_pick_up_the_franchiser_point_rate';
+        } else {
+            $salesChannelKey = 'total_pick_up_the_franchiser_point_rate';
+        }
         //$variant = ProductVariant::where('id',$variant_id)->first();
-        $variant = ProductVariant::select('*',
-            \Illuminate\Support\Facades\DB::raw("(SELECT short_code FROM units as u WHERE u.id = pv.stock_unit_id) as stock_unit_name"),
+        $variant = ProductVariant::select(
+            '*',
+            DB::raw("(SELECT short_code FROM units as u WHERE u.id = pv.stock_unit_id) as stock_unit_name"),
             DB::raw("ceil(((pv.price - pv.discounted_price)/pv.price)*100) as cal_discount_percentage"),
             DB::raw("(SELECT is_unlimited_stock FROM products as p WHERE p.id = pv.product_id) as is_unlimited_stock")
-        )->from('product_variants as pv')->where('id',$variant_id)->first();
+        )->from('product_variants as pv')->where('id', $variant_id)->first();
 
         // \Log::info('variant : ',[$variant]);
-        if($variant){
+        if ($variant) {
             $variant = $variant->makeHidden(['product_id', 'measurement_unit_id', 'stock_unit_id', 'deleted_at', 'cal_discount_percentage', 'order_counter']);
 
             if ($variant['stock'] <= 0 && $variant['is_unlimited_stock'] == 0) {
@@ -947,14 +1050,12 @@ class CommonHelper
                 $variant['cart_count'] = 0;
             }
 
-            $taxed = ProductHelper::getTaxableAmount($variant['id']);
-
+            $taxed = ProductHelper::getTaxableAmount($variant['id'], $salesChannelKey);
             $variant['discounted_price'] = CommonHelper::doubleNumber($taxed->taxable_discounted_price ?? $variant['discounted_price']);
-            $variant['price'] = CommonHelper::doubleNumber($taxed->taxable_price ?? $variant['price']);
+            $variant['price'] = CommonHelper::doubleNumber($taxed->price ?? $variant['price']);
             $variant['taxable_amount'] = CommonHelper::doubleNumber($taxed->taxable_amount);
-
             $variant['stock_unit_name'] = $variant['stock_unit_name'] ?? '';
-
+            // $variant['images'] = self::getImages($variant->product_id, $variant->id);
             return $variant;
         }
     }
@@ -966,53 +1067,65 @@ class CommonHelper
         OrderStatus::create($order_status);
     }
 
-    public static function getCartCount($user_id){
+    public static function getCartCount($user_id)
+    {
+        $user = User::find($user_id);
+
+        $salesChannelKey = '';
+        if ($user->customer_type == 1) {
+            $b2bChannel = SalesChannel::where('id', $user->sales_channel)->first();
+            $salesChannelKey = $b2bChannel->slug ?? 'total_pick_up_the_franchiser_point_rate';
+        } else {
+            $salesChannelKey = 'total_pick_up_the_franchiser_point_rate';
+        }
         $total = Cart::select(DB::raw('COUNT(carts.id) AS cart_items_count'), DB::raw('sum(carts.qty) AS cart_total_qty'))
             ->Join('products', 'carts.product_id', '=', 'products.id')
             ->Join('product_variants', 'carts.product_variant_id', '=', 'product_variants.id')
-            ->where('carts.save_for_later','=',0)
-            ->where('user_id',$user_id)->first();
+            ->where('carts.save_for_later', '=', 0)
+            ->where('user_id', $user_id)->first();
         $total->cart_items_count = intval($total->cart_items_count);
         $total->cart_total_qty = intval($total->cart_total_qty);
 
-        $carts = Cart::select('carts.qty','carts.product_variant_id')
+        $carts = Cart::select('carts.qty', 'carts.product_variant_id')
             ->Join('products', 'carts.product_id', '=', 'products.id')
             ->Join('product_variants', 'carts.product_variant_id', '=', 'product_variants.id')
-            ->where('carts.save_for_later','=',0)
-            ->where('user_id','=',$user_id)
+            ->where('carts.save_for_later', '=', 0)
+            ->where('user_id', '=', $user_id)
             ->get();
 
-        $variant_ids = array_column($carts->toArray(),'product_variant_id');
-        $quantityArray = array_column($carts->toArray(),'qty');
+        $variant_ids = array_column($carts->toArray(), 'product_variant_id');
+        $quantityArray = array_column($carts->toArray(), 'qty');
 
-        $totalAmt = CommonHelper::calculateTotalAmount($variant_ids,$quantityArray);
+        $totalAmt = CommonHelper::calculateTotalAmount($variant_ids, $quantityArray, $salesChannelKey);
 
         $total->save_price = $totalAmt['save_price'];
         $total->total_amount = $totalAmt['total_amount'];
 
         $total->product_variant_id = implode(',', $variant_ids);
-        $total->quantity = implode(',',$quantityArray);
+        $total->quantity = implode(',', $quantityArray);
 
         return $total;
     }
 
-    public static function generateOrderId(){
-        return intval(round(microtime(true) * rand(1000,9999)));
+    public static function generateOrderId()
+    {
+        return intval(round(microtime(true) * rand(1000, 9999)));
     }
 
-    public static function calculateTotalAmount($variant_ids,$quantityArray){
+    public static function calculateTotalAmount($variant_ids, $quantityArray, $salesChannelKey = 'discounted_price')
+    {
         $save_price = 0;
         $total_amount = 0;
-        if(count($variant_ids) === count($quantityArray)){
-            foreach ($variant_ids as $key => $variant_id){
+        if (count($variant_ids) === count($quantityArray)) {
+            foreach ($variant_ids as $key => $variant_id) {
 
-                $taxed_amount = ProductHelper::getTaxableAmount($variant_id);
+                $taxed_amount = ProductHelper::getTaxableAmount($variant_id, $salesChannelKey);
 
-                $variant = ProductVariant::select('price', 'discounted_price')->where('id',$variant_id)->first();
-                
-                if($variant->discounted_price != 0 && $variant->discounted_price != ""){
+                $variant = ProductVariant::select('price', $salesChannelKey . ' as discounted_price')->where('id', $variant_id)->first();
+
+                if ($variant->discounted_price != 0 && $variant->discounted_price != "") {
                     $mainPrice = $variant->discounted_price;
-                }else{
+                } else {
                     $mainPrice = $variant->price;
                 }
 
@@ -1025,10 +1138,11 @@ class CommonHelper
                 $save_price += floatval($taxed_amount->price) * intval($quantityArray[$key]);
             }
         }
-        return array('save_price' => $save_price,'total_amount' => $total_amount);
+        return array('save_price' => $save_price, 'total_amount' => $total_amount);
     }
 
-    public static function calculateOrderTotalTax($item_details, $quantityArray){
+    public static function calculateOrderTotalTax($item_details, $quantityArray)
+    {
         $order_total_tax_amt = 0;
         $order_total_tax_per = 0;
         foreach ($item_details as $key => $item) {
@@ -1041,20 +1155,27 @@ class CommonHelper
             $order_total_tax_amt += $tax_count;
             $order_total_tax_per += $tax_percentage;
         }
-        return array('order_total_tax_amt' => $order_total_tax_amt,'order_total_tax_per' => $order_total_tax_per);
+        return array('order_total_tax_amt' => $order_total_tax_amt, 'order_total_tax_per' => $order_total_tax_per);
     }
 
 
-    public static function addSellerWiseOrder($order_id){
+    public static function addSellerWiseOrder($order_id)
+    {
         $orders_id = CommonHelper::generateOrderId();
-        $order = Order::with('items')->where("id",$order_id)->first();
+        $order = Order::with('items')->where("id", $order_id)->first();
         $items = $order->items;
-        $seller_ids = array_values(array_unique( array_column($items->toArray(),'seller_id')));
+        $seller_ids = array_values(array_unique(array_column($items->toArray(), 'seller_id')));
 
-        if(count($seller_ids)>1) {
+        if (count($seller_ids) > 1) {
             $i = 1;
-
-
+            $user = Auth::user();
+            $salesChannelKey = '';
+            if ($user->customer_type == 1) {
+                $b2bChannel = SalesChannel::where('id', $user->sales_channel)->first();
+                $salesChannelKey = $b2bChannel->slug ?? 'total_pick_up_the_franchiser_point_rate';
+            } else {
+                $salesChannelKey = 'total_pick_up_the_franchiser_point_rate';
+            }
 
             foreach ($seller_ids as $key => $seller_id) {
                 $items = OrderItem::where('order_id', $order_id)->where('seller_id', $seller_id)->get();
@@ -1064,17 +1185,17 @@ class CommonHelper
                 $quantity_arr = array_column($items->toArray(), 'quantity');
 
 
-                $totalAmt = CommonHelper::calculateTotalAmount($item_arr, $quantity_arr);
+                $totalAmt = CommonHelper::calculateTotalAmount($item_arr, $quantity_arr, $salesChannelKey);
                 $total = $totalAmt["total_amount"]; // sub_total of cart
 
-                $sellerPromoPer = (floatval($total)/floatval($order->total))*100;
-                $promo_discount = (floatval($order->promo_discount)*$sellerPromoPer)/100;
+                $sellerPromoPer = (floatval($total) / floatval($order->total)) * 100;
+                $promo_discount = (floatval($order->promo_discount) * $sellerPromoPer) / 100;
 
-                $delivery_charge = floatval( $order->delivery_charge)/count($seller_ids);
+                $delivery_charge = floatval($order->delivery_charge) / count($seller_ids);
                 $final_total = ($totalAmt["total_amount"] - $promo_discount) + $delivery_charge;
 
 
-                $totalTax = CommonHelper:: calculateOrderTotalTax($item_details, $quantity_arr);
+                $totalTax = CommonHelper::calculateOrderTotalTax($item_details, $quantity_arr);
                 $order_total_tax_amt = $totalTax['order_total_tax_amt'];
                 $order_total_tax_per = $totalTax['order_total_tax_per'];
 
@@ -1087,9 +1208,9 @@ class CommonHelper
                 }
 
 
-                if($i === 1){
-                    $newOrder = Order::where('id',$order_id)->first();
-                }else{
+                if ($i === 1) {
+                    $newOrder = Order::where('id', $order_id)->first();
+                } else {
                     $newOrder = new Order();
                 }
                 $newOrder->user_id = $order->user_id;
@@ -1108,7 +1229,7 @@ class CommonHelper
                 $newOrder->tax_amount = $order_total_tax_amt;
                 $newOrder->tax_percentage = $order_total_tax_per;
 
-                $newOrder->wallet_balance = $order->walletvalue??0;
+                $newOrder->wallet_balance = $order->walletvalue ?? 0;
 
                 $newOrder->promo_code = $order->promo_code;
                 $newOrder->promo_discount = $promo_discount;
@@ -1120,11 +1241,11 @@ class CommonHelper
                 $newOrder->latitude = $order->latitude;
                 $newOrder->longitude = $order->longitude;
                 $newOrder->delivery_time = $order->delivery_time;
-                $newOrder->status = $order->order_status??0;
+                $newOrder->status = $order->order_status ?? 0;
                 $newOrder->active_status = $order->active_status;
                 $newOrder->order_from = $order->order_from;
                 $newOrder->pincode_id = $order->pincode_id;
-                $newOrder->area_id = $order->area_id??0;
+                $newOrder->area_id = $order->area_id ?? 0;
                 $newOrder->address_id = $order->address_id;
                 $newOrder->save();
 
@@ -1139,24 +1260,23 @@ class CommonHelper
                 $order_status['user_type'] = OrderStatus::$userTypeUser;
                 CommonHelper::setOrderStatus($order_status);
 
-                $newOrder = Order::with('items')->where("id",$newOrder->id)->first();
+                $newOrder = Order::with('items')->where("id", $newOrder->id)->first();
 
-                if(!empty($newOrder)){
+                if (!empty($newOrder)) {
 
                     try {
                         //self::sendMailOrderStatus($order);
                         dispatch(new SendEmailJob($newOrder));
-                    }catch ( \Exception $e){
-                        Log::error("Place order Send mail error :",[$e->getMessage()] );
+                    } catch (\Exception $e) {
+                        Log::error("Place order Send mail error :", [$e->getMessage()]);
                     }
-
                 }
 
                 $i++;
             }
             sleep(1);
             return "Updated";
-        }else{
+        } else {
 
             $order_status = array();
             $order_status['order_id'] = $order->id;
@@ -1165,12 +1285,12 @@ class CommonHelper
             $order_status['created_by'] =  $order->user_id;
             $order_status['user_type'] = OrderStatus::$userTypeUser;
             CommonHelper::setOrderStatus($order_status);
-            if(!empty($order)){
+            if (!empty($order)) {
                 try {
                     //self::sendMailOrderStatus($order);
                     dispatch(new SendEmailJob($order));
-                }catch ( \Exception $e){
-                    Log::error("Place order Send mail error : ",[$e->getMessage()] );
+                } catch (\Exception $e) {
+                    Log::error("Place order Send mail error : ", [$e->getMessage()]);
                 }
             }
             return "notUpdated";
@@ -1223,15 +1343,17 @@ class CommonHelper
         }
     }*/
 
-    public static function findGoogleMapDistance($latitudeFrom, $longitudeFrom, $latitudeTo, $longitudeTo){
+    public static function findGoogleMapDistance($latitudeFrom, $longitudeFrom, $latitudeTo, $longitudeTo)
+    {
         $origins = implode(",", [$latitudeFrom, $longitudeFrom]);
         $destinations = implode(",", [$latitudeTo, $longitudeTo]);
         $result = (new GoogleMaps)->findGoogleMapDistance($origins, $destinations);
         return $result;
     }
 
-    public static function findGoogleMapDistanceLocal($latitudeFrom, $longitudeFrom, $latitudeTo, $longitudeTo){
-        $url = "http://egrocer.netsofters.net/customer/distance_test?latitudeFrom=".$latitudeFrom."&longitudeFrom=".$longitudeFrom."&latitudeTo=".$latitudeTo."&longitudeTo=".$longitudeTo;
+    public static function findGoogleMapDistanceLocal($latitudeFrom, $longitudeFrom, $latitudeTo, $longitudeTo)
+    {
+        $url = "http://egrocer.netsofters.net/customer/distance_test?latitudeFrom=" . $latitudeFrom . "&longitudeFrom=" . $longitudeFrom . "&latitudeTo=" . $latitudeTo . "&longitudeTo=" . $longitudeTo;
         //$url = "http://egrocer.local/customer/distance_test?latitudeFrom=".$latitudeFrom."&longitudeFrom=".$longitudeFrom."&latitudeTo=".$latitudeTo."&longitudeTo=".$longitudeTo;
 
         $context = stream_context_create([
@@ -1251,127 +1373,90 @@ class CommonHelper
 
     public static function getDeliveryCharge($latitudeFrom, $longitudeFrom, $latitudeTo, $longitudeTo, $city_id, $sub_total)
     {
-            //$city_id = fetch_details(['id' => $address_id], 'addresses', 'city_id,latitude,longitude'); // getting user address points
-            $city = City::where('id',$city_id)->first();
-            $charge = 0;
-            $charge_method = $city['delivery_charge_method'];
-            $min_amount_for_free_delivery = $city['min_amount_for_free_delivery'];
+        //$city_id = fetch_details(['id' => $address_id], 'addresses', 'city_id,latitude,longitude'); // getting user address points
+        $city = City::where('id', $city_id)->first();
+        $charge = 0;
+        $charge_method = $city['delivery_charge_method'];
+        $min_amount_for_free_delivery = $city['min_amount_for_free_delivery'];
 
-            /* find distnce with google API */
-            // if(isDevMode()){
-            //     $result = CommonHelper::findGoogleMapDistanceLocal($latitudeFrom, $longitudeFrom, $latitudeTo, $longitudeTo);
-            // }else{
-                $result = CommonHelper::findGoogleMapDistance($latitudeFrom, $longitudeFrom, $latitudeTo, $longitudeTo);
-           // }
+        /* find distnce with google API */
+        // if(isDevMode()){
+        //     $result = CommonHelper::findGoogleMapDistanceLocal($latitudeFrom, $longitudeFrom, $latitudeTo, $longitudeTo);
+        // }else{
+        $result = CommonHelper::findGoogleMapDistance($latitudeFrom, $longitudeFrom, $latitudeTo, $longitudeTo);
+        // }
 
-            if (isset($result['http_code']) && $result['http_code'] != "200") {
+        // Log::info("GM Place " . $result['body']);
+        // Log::info("\n req data:" . json_encode(['latitudeFrom' => $latitudeFrom, 'longitudeFrom' => $longitudeFrom, 'latitudeTo' => $latitudeTo, 'longitudeTo' => $longitudeTo, 'city_id' => $city_id, 'sub_total' => $sub_total]));
+        // Log::info("\n City :" . json_encode($city));
+        if (isset($result['http_code']) && $result['http_code'] != "200") {
+            $response['error'] = true;
+            //$response['message'] = 'The provided API key is invalid.';
+            $response['message'] = $result['body']['error_message'] ?? "";
+            $response['charge'] = "0";
+            $response['distance'] = "0";
+            $response['duration'] = "0";
+            return $response;
+        }
+
+        if (isset($result['body']) && !empty($result['body'])) {
+
+            if (is_string($result["body"])) {
+                $result["body"] =  json_decode($result["body"], true);
+            }
+            //dd($result["body"]);
+
+            if (isset($result['body']['status']) && $result['body']['status'] == "REQUEST_DENIED") {
+                /* The request is missing an API key */
                 $response['error'] = true;
+
                 //$response['message'] = 'The provided API key is invalid.';
-                $response['message'] = $result['body']['error_message']??"";
+                $response['message'] = $result['body']['error_message'];
+
                 $response['charge'] = "0";
                 $response['distance'] = "0";
                 $response['duration'] = "0";
                 return $response;
-            }
+            } else if (isset($result['body']['status']) && $result['body']['status'] == "OK") {
+                // indicating the API request was successful
+                // echo "ttttt ".$result['body']['rows'][0]['elements'][0]['status'];
+                // print_r($result);
+                if (isset($result['body']['rows'][0]['elements'][0]['status']) && $result['body']['rows'][0]['elements'][0]['status'] == "OK") {
 
-            if (isset($result['body']) && !empty($result['body'])) {
+                    $distance_text = $result['body']['rows'][0]['elements'][0]['distance']['text'];
+                    $distance_in_meter = $result['body']['rows'][0]['elements'][0]['distance']['value'];
+                    $distance = round(($distance_in_meter / 1000), 1);
+                    $time = $result['body']['rows'][0]['elements'][0]['duration']['text'];
 
-                if(is_string($result["body"])){
-                    $result["body"] =  json_decode($result["body"], true);
-                }
-                //dd($result["body"]);
-
-                if (isset($result['body']['status']) && $result['body']['status'] == "REQUEST_DENIED") {
-                    /* The request is missing an API key */
-                    $response['error'] = true;
-
-                    //$response['message'] = 'The provided API key is invalid.';
-                    $response['message'] = $result['body']['error_message'];
-
-                    $response['charge'] = "0";
-                    $response['distance'] = "0";
-                    $response['duration'] = "0";
-                    return $response;
-                } else if (isset($result['body']['status']) && $result['body']['status'] == "OK") {
-                    // indicating the API request was successful
-                    // echo "ttttt ".$result['body']['rows'][0]['elements'][0]['status'];
-                    // print_r($result);
-                    if (isset($result['body']['rows'][0]['elements'][0]['status']) && $result['body']['rows'][0]['elements'][0]['status'] == "OK") {
-
-                        $distance_text = $result['body']['rows'][0]['elements'][0]['distance']['text'];
-                        $distance_in_meter = $result['body']['rows'][0]['elements'][0]['distance']['value'];
-                        $distance = round(($distance_in_meter / 1000), 1);
-                        $time = $result['body']['rows'][0]['elements'][0]['duration']['text'];
-
-                        if ($charge_method == "fixed_charge") {
-                            $charge = $city['fixed_charge'];
-                        }
-                        if ($charge_method == "per_km_charge") {
-                            $charge = (intval($city['per_km_charge']) * intval($distance));
-                        }
-                        if ($charge_method == "range_wise_charges") {
-                            $ranges = json_decode($city['range_wise_charges'], true);
-                            $distance = round($distance);
-                            foreach ($ranges as $range) {
-                                if ($distance >= $range['from_range'] && $distance <= $range['to_range']) {
-                                    $charge = (intval($range['price']));
-                                }
+                    if ($charge_method == "fixed_charge") {
+                        $charge = $city['fixed_charge'];
+                    }
+                    if ($charge_method == "per_km_charge") {
+                        $charge = (intval($city['per_km_charge']) * intval($distance));
+                    }
+                    if ($charge_method == "range_wise_charges") {
+                        $ranges = json_decode($city['range_wise_charges'], true);
+                        $distance = round($distance);
+                        foreach ($ranges as $range) {
+                            if ($distance >= $range['from_range'] && $distance <= $range['to_range']) {
+                                $charge = (intval($range['price']));
                             }
                         }
-                        if($min_amount_for_free_delivery >= $sub_total){
-                            $charge = 0;
-                        }
-
-                        $response['error'] = false;
-                        $response['message'] = 'Data fetched successfully.';
-                        $response['charge'] = $charge;
-                        $response['distance'] = $distance_text;
-                        $response['duration'] = $time;
-                        return $response;
-                    } else if (isset($result['body']['rows'][0]['elements'][0]['status']) && $result['body']['rows'][0]['elements'][0]['status'] == "ZERO_RESULTS") {
-                        $response['error'] = false;
-                        $response['message'] = 'Data not found or invalid.Please check!';
-                        $response['charge'] = "0";
-                        $response['distance'] = "0";
-                        $response['duration'] = "0";
-                        return $response;
-                    } else {
-                        $response['error'] = true;
-                        $response['message'] = 'Something went wrong...';
-                        $response['charge'] = "0";
-                        $response['distance'] = "0";
-                        $response['duration'] = "0";
-                        return $response;
                     }
-
-
-                } else if (isset($result['body']['status']) && $result['body']['status'] == "OVER_QUERY_LIMIT") {
-                    // You have exceeded the QPS limits. Billing has not been enabled on your account
-                    $response['error'] = true;
-                    $response['message'] = 'You have exceeded the QPS limits or billing not enabled may be.';
-                    $response['charge'] = "0";
-                    $response['distance'] = "0";
-                    $response['duration'] = "0";
+                    // echo "[$min_amount_for_free_delivery, $charge]";
+                    if ($sub_total >= $min_amount_for_free_delivery) {
+                        $charge = 0;
+                    }
+                    // echo "[$min_amount_for_free_delivery, $charge]";
+                    $response['error'] = false;
+                    $response['message'] = 'Data fetched successfully.';
+                    $response['charge'] = $charge;
+                    $response['distance'] = $distance_text;
+                    $response['duration'] = $time;
+                    // Log::info("GM result", $response);
                     return $response;
-                } else if (isset($result['body']['status']) && $result['body']['status'] == "INVALID_REQUEST") {
-                    // indicating the API request was malformed, generally due to the missing input parameter
-                    $response['error'] = true;
-                    $response['message'] = 'Indicating the API request was malformed.';
-                    $response['charge'] = "0";
-                    $response['distance'] = "0";
-                    $response['duration'] = "0";
-                    return $response;
-                } else if (isset($result['body']['status']) && $result['body']['status'] == "UNKNOWN_ERROR") {
-                    // indicating an unknown error
-                    $response['error'] = true;
-                    $response['message'] = 'An unknown error occure.';
-                    $response['charge'] = "0";
-                    $response['distance'] = "0";
-                    $response['duration'] = "0";
-                    return $response;
-                } else if (isset($result['body']['status']) && $result['body']['status'] == "ZERO_RESULTS") {
-                    // indicating that the search was successful but returned no results. This may occur if the search was passed a bounds in a remote location.
-                    $response['error'] = true;
+                } else if (isset($result['body']['rows'][0]['elements'][0]['status']) && $result['body']['rows'][0]['elements'][0]['status'] == "ZERO_RESULTS") {
+                    $response['error'] = false;
                     $response['message'] = 'Data not found or invalid.Please check!';
                     $response['charge'] = "0";
                     $response['distance'] = "0";
@@ -1379,13 +1464,53 @@ class CommonHelper
                     return $response;
                 } else {
                     $response['error'] = true;
-                    $response['message'] = 'Something went wrong.';
+                    $response['message'] = 'Something went wrong...';
                     $response['charge'] = "0";
                     $response['distance'] = "0";
                     $response['duration'] = "0";
                     return $response;
                 }
+            } else if (isset($result['body']['status']) && $result['body']['status'] == "OVER_QUERY_LIMIT") {
+                // You have exceeded the QPS limits. Billing has not been enabled on your account
+                $response['error'] = true;
+                $response['message'] = 'You have exceeded the QPS limits or billing not enabled may be.';
+                $response['charge'] = "0";
+                $response['distance'] = "0";
+                $response['duration'] = "0";
+                return $response;
+            } else if (isset($result['body']['status']) && $result['body']['status'] == "INVALID_REQUEST") {
+                // indicating the API request was malformed, generally due to the missing input parameter
+                $response['error'] = true;
+                $response['message'] = 'Indicating the API request was malformed.';
+                $response['charge'] = "0";
+                $response['distance'] = "0";
+                $response['duration'] = "0";
+                return $response;
+            } else if (isset($result['body']['status']) && $result['body']['status'] == "UNKNOWN_ERROR") {
+                // indicating an unknown error
+                $response['error'] = true;
+                $response['message'] = 'An unknown error occure.';
+                $response['charge'] = "0";
+                $response['distance'] = "0";
+                $response['duration'] = "0";
+                return $response;
+            } else if (isset($result['body']['status']) && $result['body']['status'] == "ZERO_RESULTS") {
+                // indicating that the search was successful but returned no results. This may occur if the search was passed a bounds in a remote location.
+                $response['error'] = true;
+                $response['message'] = 'Data not found or invalid.Please check!';
+                $response['charge'] = "0";
+                $response['distance'] = "0";
+                $response['duration'] = "0";
+                return $response;
+            } else {
+                $response['error'] = true;
+                $response['message'] = 'Something went wrong.';
+                $response['charge'] = "0";
+                $response['distance'] = "0";
+                $response['duration'] = "0";
+                return $response;
             }
+        }
         /*$t = &get_instance();
         $charge = "0";
         if (is_exist(['id' => $address_id], 'addresses')) {
@@ -1520,12 +1645,23 @@ class CommonHelper
         }*/
     }
 
-    public static function getAllDeliveryCharge($latitudeFrom, $longitudeFrom, $seller_ids, $sub_total) { 
- 
+    public static function getAllDeliveryCharge($latitudeFrom, $longitudeFrom, $seller_ids, $sub_total)
+    {
+        if (app()->environment() == 'local') {
+            $result['total_delivery_charge'] = 10;
+            $result['sellers_info'] = [Seller::select('sellers.id', 'sellers.name', 'sellers.latitude', 'sellers.longitude', 'sellers.city_id', DB::raw("6371 * acos(cos(radians(" . $latitudeFrom . "))
+            * cos(radians(sellers.latitude)) * cos(radians(sellers.longitude) - radians(" . $longitudeFrom . "))
+            + sin(radians(" . $latitudeFrom . ")) * sin(radians(sellers.latitude))) AS distance"), 'cities.max_deliverable_distance')
+                ->leftJoin("cities", "sellers.city_id", "cities.id")->havingRaw("distance < cities.max_deliverable_distance")->first()];
+            $response['status'] = 1;
+            $response['message'] = 'Data fetched successfully.';
+            $response['data'] = $result;
+            return $response;
+        }
         $sellers = Seller::select('sellers.id', 'sellers.name', 'sellers.latitude', 'sellers.longitude', 'sellers.city_id', DB::raw("6371 * acos(cos(radians(" . $latitudeFrom . "))
                                 * cos(radians(sellers.latitude)) * cos(radians(sellers.longitude) - radians(" . $longitudeFrom . "))
-                                + sin(radians(" .$latitudeFrom. ")) * sin(radians(sellers.latitude))) AS distance"), 'cities.max_deliverable_distance')
-            ->leftJoin("cities", "sellers.city_id", "cities.id")->whereIn('sellers.id',$seller_ids)
+                                + sin(radians(" . $latitudeFrom . ")) * sin(radians(sellers.latitude))) AS distance"), 'cities.max_deliverable_distance')
+            ->leftJoin("cities", "sellers.city_id", "cities.id")->whereIn('sellers.id', $seller_ids)
             ->havingRaw("distance < cities.max_deliverable_distance")
             ->get();
 
@@ -1534,11 +1670,11 @@ class CommonHelper
         $error = false;
         $message = "";
 
-        if ($sellers->isNotEmpty()){
+        if ($sellers->isNotEmpty()) {
 
             $total_delivery_charge = 0;
             $data = array();
-            foreach ($sellers as $seller){
+            foreach ($sellers as $seller) {
                 $subData = array();
                 /*// this is for test
                 $result = CommonHelper::findGoogleMapDistanceLocal($latitudeFrom, $longitudeFrom, $seller->latitude, $seller->longitude);
@@ -1548,7 +1684,7 @@ class CommonHelper
 
                 // dd($delivery);
 
-                if ($delivery["error"] == true){
+                if ($delivery["error"] == true) {
                     $error = true;
                     $message = $delivery["message"];
                     break;
@@ -1560,18 +1696,15 @@ class CommonHelper
                 $total_delivery_charge += $delivery["charge"];
                 array_push($data, $subData);
             }
-
-
-
-        }else{
+        } else {
             $error = true;
             $message = __('sorry_we_are_not_delivering_on_selected_address');
         }
 
-        if ($error == true){
+        if ($error == true) {
             $response['status'] = 0;
             $response['message'] = $message;
-        }else{
+        } else {
             $result['total_delivery_charge'] = $total_delivery_charge;
             $result['sellers_info'] = $data;
 
@@ -1582,33 +1715,68 @@ class CommonHelper
         return $response;
     }
 
-    public static function getSellerCategories($seller_id){
-        $seller = Seller::where('id',$seller_id)->first();
-        $categories =  Category::whereIn('id', explode(",", $seller->categories))->orderBy('name','ASC')->get();
+    public static function getSellerCategories($seller_id)
+    {
+        $seller = Seller::where('id', $seller_id)->first();
+        $categories =  Category::whereIn('id', explode(",", $seller->categories))->orderBy('name', 'ASC')->get();
         //$categories = $categories->makeHidden(['created_at','updated_at','deleted_at']);
         return $categories;
     }
 
-    public static function getStatusOrderCount($seller_id = null){
+    public static function getStatusOrderCount($seller_id = null)
+    {
 
         $query = '(select count(orders.id) from orders where orders.active_status = order_status_lists.id) AS order_count';
 
-        if(isset($seller_id) && $seller_id != "" && $seller_id !=0 ){
-            $orderIds = OrderItem::where('seller_id',$seller_id)->get()->pluck('order_id')->toArray();
-            if(count($orderIds)>0) {
+        if (isset($seller_id) && $seller_id != "" && $seller_id != 0) {
+            $orderIds = OrderItem::where('seller_id', $seller_id)->get()->pluck('order_id')->toArray();
+            if (count($orderIds) > 0) {
                 $query = '(select count(orders.id) from orders where orders.active_status = order_status_lists.id and orders.id IN (' . implode(",", array_unique($orderIds)) . ')) AS order_count';
             }
         }
-        return OrderStatusList::select('order_status_lists.id','order_status_lists.status', \DB::raw($query))
-            ->orderBy('order_status_lists.id','asc')
+        return OrderStatusList::select('order_status_lists.id', 'order_status_lists.status', DB::raw($query))
+            ->orderBy('order_status_lists.id', 'asc')
             ->get();
     }
 
-    public static function getOrderDetails($order_id){
-        $order = Order::select('orders.*','orders.address as order_address','orders.mobile as order_mobile','orders.id as order_id','orders.created_at as created_at','users.*','users.name as user_name','users.email as user_email'
-            ,'users.email as user_email','users.mobile as user_mobile','address.*','address.address as customer_address','address.landmark as customer_landmark','address.area as customer_area','address.pincode as customer_pincode','address.city as customer_city','address.state as customer_state','address.country as customer_country','address.latitude as customer_latitude', 'address.longitude as customer_longitude', 'sellers.name as seller_name', 'sellers.mobile as seller_mobile',
-            'sellers.email as seller_email', 'sellers.store_name', 'sellers.formatted_address as seller_formatted_address', 'sellers.place_name as seller_place_name', 'sellers.latitude as seller_latitude', 'sellers.longitude as seller_longitude', 'delivery_boys.name as delivery_boy_name',
-            'order_items.id as order_item_id','os.id as active_status', 'os.status as status_name', 'cities.id as city_id', 'cities.name as city_name')
+    public static function getOrderDetails($order_id)
+    {
+        $order = Order::select(
+            'orders.*',
+            'orders.address as order_address',
+            'orders.mobile as order_mobile',
+            'orders.id as order_id',
+            'orders.created_at as created_at',
+            'users.*',
+            'users.name as user_name',
+            'users.email as user_email',
+            'users.email as user_email',
+            'users.mobile as user_mobile',
+            'address.*',
+            'address.address as customer_address',
+            'address.landmark as customer_landmark',
+            'address.area as customer_area',
+            'address.pincode as customer_pincode',
+            'address.city as customer_city',
+            'address.state as customer_state',
+            'address.country as customer_country',
+            'address.latitude as customer_latitude',
+            'address.longitude as customer_longitude',
+            'sellers.name as seller_name',
+            'sellers.mobile as seller_mobile',
+            'sellers.email as seller_email',
+            'sellers.store_name',
+            'sellers.formatted_address as seller_formatted_address',
+            'sellers.place_name as seller_place_name',
+            'sellers.latitude as seller_latitude',
+            'sellers.longitude as seller_longitude',
+            'delivery_boys.name as delivery_boy_name',
+            'order_items.id as order_item_id',
+            'os.id as active_status',
+            'os.status as status_name',
+            'cities.id as city_id',
+            'cities.name as city_name'
+        )
             ->leftJoin('order_items', 'order_items.order_id', '=', 'orders.id')
             ->leftJoin('users', 'orders.user_id', '=', 'users.id')
             ->leftJoin('user_addresses as address', 'orders.address_id', '=', 'address.id')
@@ -1622,9 +1790,26 @@ class CommonHelper
             ->groupBy('orders.id')
             ->first();
 
-        $order_items = Order::select('order_items.*','orders.mobile','orders.total' ,'orders.delivery_charge','orders.discount','orders.promo_code',
-            'orders.promo_discount','orders.wallet_balance','orders.final_total','orders.payment_method','orders.address','orders.delivery_time',
-            'users.name as user_name','order_items.status as order_status','sellers.name as seller_name','products.id as product_id', 'os.id as active_status', 'os.status as status_name')
+        $order_items = Order::select(
+            'order_items.*',
+            'orders.mobile',
+            'orders.total',
+            'orders.delivery_charge',
+            'orders.discount',
+            'orders.promo_code',
+            'orders.promo_discount',
+            'orders.wallet_balance',
+            'orders.final_total',
+            'orders.payment_method',
+            'orders.address',
+            'orders.delivery_time',
+            'users.name as user_name',
+            'order_items.status as order_status',
+            'sellers.name as seller_name',
+            'products.id as product_id',
+            'os.id as active_status',
+            'os.status as status_name'
+        )
             ->leftJoin('order_items', 'order_items.order_id', '=', 'orders.id')
             ->leftJoin('users', 'orders.user_id', '=', 'users.id')
             ->leftJoin('product_variants', 'order_items.product_variant_id', '=', 'product_variants.id')
@@ -1633,19 +1818,21 @@ class CommonHelper
             ->leftJoin('order_status_lists as os', 'order_items.active_status', '=', 'os.id')
             ->where('orders.id', $order_id)
             ->where('order_items.active_status', '!=', 7)
-            ->orderBy('order_items.id','DESC')
+            ->orderBy('order_items.id', 'DESC')
             ->get();
         return array("order" => $order, "order_items" => $order_items);
     }
 
-    public static function generateOrderInvoice($data){
+    public static function generateOrderInvoice($data)
+    {
         $invoice = view('invoice', $data)->render();
         return $invoice;
     }
 
-    public static function downloadOrderInvoice($order_id){
+    public static function downloadOrderInvoice($order_id)
+    {
         $data = CommonHelper::getOrderDetails($order_id);
-        if(!$data["order"]){
+        if (!$data["order"]) {
             return CommonHelper::responseError("Order Not found!");
         }
         $invoice = view('invoiceMpdf', $data)->render();
@@ -1656,13 +1843,14 @@ class CommonHelper
         $mpdf = new Mpdf();
         //write content
         $stylesheet = file_get_contents(asset('assets/css/custom/bootstrap/bootstrap.min.css')); // external css
-        $mpdf->WriteHTML($stylesheet,1);
+        $mpdf->WriteHTML($stylesheet, 1);
         $mpdf->WriteHTML($invoice);
         //return the PDF for download
-        return $mpdf->Output("Invoice-No:#".$order_id.'.pdf', Destination::INLINE);
+        return $mpdf->Output("Invoice-No:#" . $order_id . '.pdf', Destination::INLINE);
     }
 
-    public static function getFirebaseKeys(){
+    public static function getFirebaseKeys()
+    {
         $firebase_array = array(
             "apiKey" => "",
             "authDomain" => "",
@@ -1675,18 +1863,20 @@ class CommonHelper
             "jsonFile" => ""
         );
         $variables = array_keys($firebase_array);
-        return Setting::whereIn('variable',$variables)->get();
+        return Setting::whereIn('variable', $variables)->get();
     }
 
 
-    public static function getMailSetting($user_type,$user_id){
-        return MailSetting::where(['user_type' => $user_type, 'user_id' => $user_id ])->get();
+    public static function getMailSetting($user_type, $user_id)
+    {
+        return MailSetting::where(['user_type' => $user_type, 'user_id' => $user_id])->get();
     }
 
-    public static function saveMailSetting($user_id,$user_type,$status_ids,$mail_statuses,$mobile_statuses){
+    public static function saveMailSetting($user_id, $user_type, $status_ids, $mail_statuses, $mobile_statuses)
+    {
 
-        foreach ($status_ids as $key => $status_id){
-            $setting = MailSetting::where(['user_type' => $user_type, 'user_id' => $user_id, 'order_status_id' => $status_id ])->first() ?? new MailSetting();
+        foreach ($status_ids as $key => $status_id) {
+            $setting = MailSetting::where(['user_type' => $user_type, 'user_id' => $user_id, 'order_status_id' => $status_id])->first() ?? new MailSetting();
             $setting->user_type = $user_type;
             $setting->user_id = $user_id;
             $setting->order_status_id = $status_id;
@@ -1695,14 +1885,16 @@ class CommonHelper
             $setting->save();
         }
     }
-    public static function setDefaultMailSetting($user_id, $user_type){
+    public static function setDefaultMailSetting($user_id, $user_type)
+    {
         $status_ids = OrderStatusList::get()->pluck('id')->toArray();
-        $mail_statuses = array_fill(0,count($status_ids),1);
+        $mail_statuses = array_fill(0, count($status_ids), 1);
         $mobile_statuses = $mail_statuses;
-        self::saveMailSetting($user_id,$user_type,$status_ids,$mail_statuses,$mobile_statuses);
+        self::saveMailSetting($user_id, $user_type, $status_ids, $mail_statuses, $mobile_statuses);
     }
 
-    public static function sendMail($to, $subject, $data){
+    public static function sendMail($to, $subject, $data)
+    {
 
         $config = [
             'driver' => 'smtp',
@@ -1713,8 +1905,8 @@ class CommonHelper
             'encryption' => Setting::get_value('smtp_encryption_type'),
         ];
 
-        \Config::set('mail', $config);
-        \Config::set('mail.from.name', $config);
+        Config::set('mail', $config);
+        Config::set('mail.from.name', $config);
 
         $app_name = Setting::get_value('app_name');
         $mailData = array(
@@ -1725,44 +1917,45 @@ class CommonHelper
             'support_email' => Setting::get_value('support_email')
         );
         $data['app_name'] = $app_name;
-        Mail::send('mail', $data, function($message) use ($mailData) {
-            $message->to($mailData['to'], $mailData['name'])->subject($mailData['subject'])->from($mailData['support_email'],$mailData["app_name"]);
+        Mail::send('mail', $data, function ($message) use ($mailData) {
+            $message->to($mailData['to'], $mailData['name'])->subject($mailData['subject'])->from($mailData['support_email'], $mailData["app_name"]);
             //$message->setBody($mailData['message']);
         });
     }
-    public static function sendMailAdminStatus($adminType, $admin, $status, $email){
+    public static function sendMailAdminStatus($adminType, $admin, $status, $email)
+    {
         $app_name = Setting::get_value('app_name');
         $subject = "";
         $data = array();
-        if($adminType == "seller"){
-            if(isset($status) && $status == Seller::$statusRegistered){
+        if ($adminType == "seller") {
+            if (isset($status) && $status == Seller::$statusRegistered) {
                 $status_name = Seller::$Registered;
-                $subject = "Your Account is ".$status_name." Successfully!";
-            }else if(isset($status) && $status == Seller::$statusActive){
+                $subject = "Your Account is " . $status_name . " Successfully!";
+            } else if (isset($status) && $status == Seller::$statusActive) {
                 $status_name = Seller::$Active;
                 $subject = "Your Account is activated";
-            } else if(isset($status) && $status == Seller::$statusDeactivated){
+            } else if (isset($status) && $status == Seller::$statusDeactivated) {
                 $status_name = Seller::$Deactivated;
-                $subject = "Your Account is ".$status_name." by ".$app_name." Administrator!";
-            } else if(isset($status) && $status == Seller::$statusRejected) {
+                $subject = "Your Account is " . $status_name . " by " . $app_name . " Administrator!";
+            } else if (isset($status) && $status == Seller::$statusRejected) {
                 $status_name = Seller::$Rejected;
-                $subject = "Your Account is ".$status_name." by ".$app_name." Administrator!";
+                $subject = "Your Account is " . $status_name . " by " . $app_name . " Administrator!";
             }
             $data['seller'] = $admin;
             $data['type'] = "seller_status";
-        }else{
-            if(isset($status) && $status == DeliveryBoy::$statusRegistered){
+        } else {
+            if (isset($status) && $status == DeliveryBoy::$statusRegistered) {
                 $status_name = DeliveryBoy::$Registered;
-                $subject = "Your Account is ".$status_name." Successfully!";
-            }else if(isset($status) && $status == DeliveryBoy::$statusActive){
+                $subject = "Your Account is " . $status_name . " Successfully!";
+            } else if (isset($status) && $status == DeliveryBoy::$statusActive) {
                 $status_name = DeliveryBoy::$Active;
                 $subject = "Your Account is activated";
-            } else if(isset($status) && $status == DeliveryBoy::$statusDeactivated){
+            } else if (isset($status) && $status == DeliveryBoy::$statusDeactivated) {
                 $status_name = DeliveryBoy::$Deactivated;
-                $subject = "Your Account is ".$status_name." by ".$app_name." Administrator!";
-            } else if(isset($status) && $status == DeliveryBoy::$statusRejected) {
+                $subject = "Your Account is " . $status_name . " by " . $app_name . " Administrator!";
+            } else if (isset($status) && $status == DeliveryBoy::$statusRejected) {
                 $status_name = DeliveryBoy::$Rejected;
-                $subject = "Your Account is ".$status_name." by ".$app_name." Administrator!";
+                $subject = "Your Account is " . $status_name . " by " . $app_name . " Administrator!";
             }
             $admin['email'] = $email;
             $data['delivery_boy'] = $admin;
@@ -1773,18 +1966,19 @@ class CommonHelper
         $data['subject'] = $subject ?? "";
         $data['status'] = $status;
 
-        self::sendMail($email, $subject ,$data);
+        self::sendMail($email, $subject, $data);
     }
 
-    public static function sendMailOrderStatus($order, $assign = false){
-        if($assign == true){
+    public static function sendMailOrderStatus($order, $assign = false)
+    {
+        if ($assign == true) {
             if (isset($order->delivery_boy_id) && $order->delivery_boy_id != 0 && $order->delivery_boy_id != "") {
 
 
                 $deliveryBoy = DeliveryBoy::select("delivery_boys.*", "admins.email", "admins.role_id")->Join('admins', 'delivery_boys.admin_id', 'admins.id')->where('delivery_boys.id', $order->delivery_boy_id)->first();
 
-                $subject = "You have just assigned new order, #".$order->id;
-                $redirect_url = (isset($order->id)) ? url('/seller/orders/view/'.$order->id): url('/seller/orders');
+                $subject = "You have just assigned new order, #" . $order->id;
+                $redirect_url = (isset($order->id)) ? url('/seller/orders/view/' . $order->id) : url('/seller/orders');
                 $data['redirect_url'] = $redirect_url;
                 $data['subject'] = $subject;
                 $data['deliveryBoy'] = $deliveryBoy;
@@ -1798,7 +1992,7 @@ class CommonHelper
                     $seller = Seller::select("sellers.*", "admins.email", "admins.role_id")->Join('admins', 'sellers.admin_id', 'admins.id')->where('sellers.id', $seller_id)->first();
 
                     $subject = "Your order  #" . $order->id . " is assigned to a delivery boy";
-                    $redirect_url = (isset($order->id)) ? url('/delivery_boy/orders/view/'.$order->id): url('/delivery_boy/orders');
+                    $redirect_url = (isset($order->id)) ? url('/delivery_boy/orders/view/' . $order->id) : url('/delivery_boy/orders');
                     $data['redirect_url'] = $redirect_url;
                     $data['subject'] = $subject;
                     $data['seller'] = $seller;
@@ -1846,7 +2040,6 @@ class CommonHelper
                     $data['order'] = $order;
                     $data['type'] = "order_status";
                     self::sendMail($seller->email, $subject, $data);
-
                 }
             }
 
@@ -1891,22 +2084,22 @@ class CommonHelper
                     }
                 }
             }
-
         }
     }
 
 
-    public static function checkOrderMailSendable($user_id, $status_id, $use_type, $type = "mail"){
+    public static function checkOrderMailSendable($user_id, $status_id, $use_type, $type = "mail")
+    {
         // user_type 0:user, 1:Admin
         $mail_settings = MailSetting::where(['user_type' => $use_type, 'user_id' => $user_id, 'order_status_id' => $status_id])->first();
-        if($mail_settings){
-            if($type == 'mail'){
-                if($mail_settings->mail_status == 1){
+        if ($mail_settings) {
+            if ($type == 'mail') {
+                if ($mail_settings->mail_status == 1) {
                     return true;
                 }
                 return false;
-            }else{
-                if($mail_settings->mobile_status == 1){
+            } else {
+                if ($mail_settings->mobile_status == 1) {
                     return true;
                 }
                 return false;
@@ -1916,7 +2109,8 @@ class CommonHelper
     }
 
 
-    public static function sendNotificationOrderStatus($order){
+    public static function sendNotificationOrderStatus($order)
+    {
 
         $app_name = Setting::get_value('app_name');
         $currency = Setting::get_value('currency') ?? '$';
@@ -1929,10 +2123,10 @@ class CommonHelper
 
                 Log::info("checkOrderMailSendable -> user");
 
-                $userTokens = UserToken::where('user_id',$order->user_id)->where('type','customer')->get()->pluck('fcm_token')->toArray();
-                Log::info("checkOrderMailSendable -> user:-",[$userTokens]);
+                $userTokens = UserToken::where('user_id', $order->user_id)->where('type', 'customer')->get()->pluck('fcm_token')->toArray();
+                Log::info("checkOrderMailSendable -> user:-", [$userTokens]);
                 $title = "Your order  #" . $order->id . " has been " . $status_name;
-                $message = "This notification is just a friendly reminder (not a bill or a second charge) that on ". $order->created_at ." you placed an order from ".$app_name." Order summar #". $order->id." Final Total - ". $currency .$order->final_total." We would like to take this opportunity to thank you for your business and look forward to serving you in the future.";
+                $message = "This notification is just a friendly reminder (not a bill or a second charge) that on " . $order->created_at . " you placed an order from " . $app_name . " Order summar #" . $order->id . " Final Total - " . $currency . $order->final_total . " We would like to take this opportunity to thank you for your business and look forward to serving you in the future.";
                 /*if($order->active_status == OrderStatusList::$received)
                 {
                     $message = "This notification is just a friendly reminder (not a bill or a second charge) that on ". $order->created_at ." you placed an order from ".$app_name." Order summar #". $order->id." Final Total - ". $currency .$order->final_total." We would like to take this opportunity to thank you for your business and look forward to serving you in the future.";
@@ -1943,7 +2137,7 @@ class CommonHelper
                 }*/
 
 
-                self::sendNotification($userTokens,$title,$message);
+                self::sendNotification($userTokens, $title, $message);
             }
         }
 
@@ -1952,12 +2146,12 @@ class CommonHelper
         if (isset($seller_id) && $seller_id != 0 && $seller_id != "") {
             $seller = Seller::select("sellers.*", "admins.email", "admins.role_id")->Join('admins', 'sellers.admin_id', 'admins.id')->where('sellers.id', $seller_id)->first();
             //$sellerInfo = $seller->store_name . " (" . $seller->name . ")";
-           
+
             if (self::checkOrderMailSendable($seller->id, $order->active_status, 1)) {
 
-               // dd(Log::info("checkOrderMailSendable -> seller"));
-// dd($seller->admin_id);
-                $userTokens = UserToken::where('user_id',$seller->id)->where('type','seller')->get()->pluck('fcm_token')->toArray();
+                // dd(Log::info("checkOrderMailSendable -> seller"));
+                // dd($seller->admin_id);
+                $userTokens = UserToken::where('user_id', $seller->id)->where('type', 'seller')->get()->pluck('fcm_token')->toArray();
 
                 if ($order->active_status == OrderStatusList::$received) {
                     $title = " You have " . $status_name . " new order  #" . $order->id;
@@ -1967,8 +2161,7 @@ class CommonHelper
 
                 $message = "";
 
-                self::sendNotification($userTokens,$title,$message);
-        
+                self::sendNotification($userTokens, $title, $message);
             }
         }
 
@@ -1979,10 +2172,10 @@ class CommonHelper
             if (self::checkOrderMailSendable($deliveryBoy->id, $order->active_status, 1)) {
 
                 $title = "Order  #" . $order->id . " has been " . $status_name;
-                $userTokens = UserToken::where('user_id',$deliveryBoy->id)->where('type','Delivery Boy')->get()->pluck('fcm_token')->toArray();
+                $userTokens = UserToken::where('user_id', $deliveryBoy->id)->where('type', 'Delivery Boy')->get()->pluck('fcm_token')->toArray();
                 $message = "";
 
-                self::sendNotification($userTokens,$title,$message);
+                self::sendNotification($userTokens, $title, $message);
             }
         }
 
@@ -2009,42 +2202,42 @@ class CommonHelper
                 }
             }
         }*/
-
     }
 
-    public static function sendNotificationOrderAssignDeliveryBoy($order){
+    public static function sendNotificationOrderAssignDeliveryBoy($order)
+    {
 
         $app_name = Setting::get_value('app_name');
         $currency = Setting::get_value('currency') ?? '$';
 
         $orderStatusList = OrderStatusList::where('id', $order->active_status)->first();
         $status_name = $orderStatusList->status;
-        
+
         if (isset($order->delivery_boy_id) && $order->delivery_boy_id != 0 && $order->delivery_boy_id != "") {
 
             $deliveryBoy = DeliveryBoy::select("delivery_boys.*", "admins.email", "admins.role_id")->Join('admins', 'delivery_boys.admin_id', 'admins.id')
                 ->where('delivery_boys.id', $order->delivery_boy_id)->first();
-               
-           // if (self::checkOrderMailSendable($deliveryBoy->id, $order->active_status, 1)) {
 
-                $title = "Order  #" . $order->id . " has been assigned to you for delivery." ;
-                $userTokens = UserToken::where('user_id',$deliveryBoy->id)->where('type','Delivery Boy')->get()->pluck('fcm_token')->toArray();
-                $message = "";
+            // if (self::checkOrderMailSendable($deliveryBoy->id, $order->active_status, 1)) {
 
-                self::sendNotification($userTokens,$title,$message);
+            $title = "Order  #" . $order->id . " has been assigned to you for delivery.";
+            $userTokens = UserToken::where('user_id', $deliveryBoy->id)->where('type', 'Delivery Boy')->get()->pluck('fcm_token')->toArray();
+            $message = "";
+
+            self::sendNotification($userTokens, $title, $message);
             //}
         }
-
     }
 
-    public static function getPushObject($request, $image = ""){
+    public static function getPushObject($request, $image = "")
+    {
 
         /*if($request->hasFile('image') && $image != "" ){*/
         /*$test = false;
         if($test){*/
         /*__construct($title, $message, $image,$type,$id)*/
 
-        if($request->hasFile('image') && $image != "" ){
+        if ($request->hasFile('image') && $image != "") {
             $image_url = Storage::url($image);
             $image_url = asset($image_url);
             $push = new PushHelpers(
@@ -2072,9 +2265,10 @@ class CommonHelper
         return $pushNotification;
     }
 
-    public static function sendNotification($userTokens,$title,$message,$type='',$type_id=0,$image=''){
+    public static function sendNotification($userTokens, $title, $message, $type = '', $type_id = 0, $image = '')
+    {
 
-            /*$notification = new Notification();
+        /*$notification = new Notification();
             $notification->title = $title;
             $notification->message = $message;
             $notification->type = $type;
@@ -2083,21 +2277,21 @@ class CommonHelper
             $notification->image = $image;
             $notification->save();*/
 
-            $data = array();
-            /*$data['data']['title'] = $title;
+        $data = array();
+        /*$data['data']['title'] = $title;
             $data['data']['message'] = $message;
             $data['data']['image'] = $image;
             $data['data']['type'] = $type;
             $data['data']['id'] = $id??'';*/
 
-            $logo = \App\Models\Setting::get_value('logo');
-            if($logo){
-                $logo = url('/storage')."/".$logo;
-            }else{
-                $logo = asset('images/favicon.png');
-            }
+        $logo = \App\Models\Setting::get_value('logo');
+        if ($logo) {
+            $logo = url('/storage') . "/" . $logo;
+        } else {
+            $logo = asset('images/favicon.png');
+        }
 
-            /*$data['title'] = $title;
+        /*$data['title'] = $title;
             $data['message'] = $message;
             $data['body'] = $message;
             $data['image'] = $image;
@@ -2106,49 +2300,50 @@ class CommonHelper
             $data['icon'] = $logo;*/
 
 
-            $data = array();
-            $data['data']['title'] = $title;
-            $data['data']['message'] = $message;
-            $data['data']['body'] = $message;
-            $data['data']['image'] = $image;
-            $data['data']['type'] = $type;
-            $data['data']['id'] = $id??'';
-            $data['data']['icon'] = $logo;
+        $data = array();
+        $data['data']['title'] = $title;
+        $data['data']['message'] = $message;
+        $data['data']['body'] = $message;
+        $data['data']['image'] = $image;
+        $data['data']['type'] = $type;
+        $data['data']['id'] = $id ?? '';
+        $data['data']['icon'] = $logo;
 
 
-            Log::info("fcm data  : ",[$data]);
-            //$pushNotification = CommonHelper::getPushObject($data, $image);
+        Log::info("fcm data  : ", [$data]);
+        //$pushNotification = CommonHelper::getPushObject($data, $image);
 
-            if(isset($userTokens) && count($userTokens)>0){
-                $userTokens = array_unique($userTokens);
-                $fcmTokens = array_chunk($userTokens,1000);
-                foreach($fcmTokens as $deviceTokens){
-                    FirebaseHelper::send($deviceTokens, $data);
-                }
+        if (isset($userTokens) && count($userTokens) > 0) {
+            $userTokens = array_unique($userTokens);
+            $fcmTokens = array_chunk($userTokens, 1000);
+            foreach ($fcmTokens as $deviceTokens) {
+                FirebaseHelper::send($deviceTokens, $data);
             }
+        }
     }
 
-    public static function addFundTransfers($delivery_boy_id, $amount, $type, $message = ""){
+    public static function addFundTransfers($delivery_boy_id, $amount, $type, $message = "")
+    {
 
         $deliveryBoy = DeliveryBoy::find($delivery_boy_id);
 
         $closing_balance = 0;
 
-        if ($type == FundTransfer::$typeDebit){
+        if ($type == FundTransfer::$typeDebit) {
             $closing_balance = ($deliveryBoy->balance - $amount);
-        }else if ($type == FundTransfer::$typeCredit){
+        } else if ($type == FundTransfer::$typeCredit) {
             $closing_balance = ($deliveryBoy->balance + $amount);
         }
 
-        if($closing_balance != 0){
+        if ($closing_balance != 0) {
 
-            \Illuminate\Support\Facades\DB::beginTransaction();
+            DB::beginTransaction();
             try {
                 $fundTransfer = new FundTransfer();
-                $fundTransfer->delivery_boy_id	 = $delivery_boy_id;
-                $fundTransfer->type	 = $type;
-                $fundTransfer->opening_balance	 = $deliveryBoy->balance;
-                $fundTransfer->closing_balance	 = $closing_balance;
+                $fundTransfer->delivery_boy_id     = $delivery_boy_id;
+                $fundTransfer->type     = $type;
+                $fundTransfer->opening_balance     = $deliveryBoy->balance;
+                $fundTransfer->closing_balance     = $closing_balance;
                 $fundTransfer->amount   = $amount;
                 $fundTransfer->status   = 1;
                 $fundTransfer->message  = $message;
@@ -2157,128 +2352,207 @@ class CommonHelper
                 $deliveryBoy->balance = $closing_balance;
                 $deliveryBoy->save();
 
-                \Illuminate\Support\Facades\DB::commit();
+                DB::commit();
             } catch (\Exception $e) {
-                Log::info("Error : ".$e->getMessage());
+                Log::info("Error : " . $e->getMessage());
                 DB::rollBack();
                 // throw $e;
                 return CommonHelper::responseError("Something Went Wrong!");
             }
         }
-
     }
 
 
 
-    public static function restrictedUrls(){
+    public static function restrictedUrls()
+    {
         return array(
-            'categories.update','categories.delete','subcategories.update','subcategories.delete','products.update',
-            'products.delete', 'products.multiple_delete', 'products.change', 'products.bulk_upload', 'taxes.update',
-            'taxes.delete', 'brands.update', 'brands.delete', 'sellers.update', 'sellers.delete', 'sellers.update-status',
-            'sellers.updateCommission', 'home_slider_images.update', 'home_slider_images.delete', 'promo_code.update', 'promo_code.delete',
-            'time_slots.update', 'time_slots.delete', 'units.update', 'units.delete',
+            'categories.update',
+            'categories.delete',
+            'subcategories.update',
+            'subcategories.delete',
+            'products.update',
+            'products.delete',
+            'products.multiple_delete',
+            'products.change',
+            'products.bulk_upload',
+            'taxes.update',
+            'taxes.delete',
+            'brands.update',
+            'brands.delete',
+            'sellers.update',
+            'sellers.delete',
+            'sellers.update-status',
+            'sellers.updateCommission',
+            'home_slider_images.update',
+            'home_slider_images.delete',
+            'promo_code.update',
+            'promo_code.delete',
+            'time_slots.update',
+            'time_slots.delete',
+            'units.update',
+            'units.delete',
 
-            'notifications.delete', 'sections.update', 'sections.delete', 'offers.update', 'offers.delete', 'delivery_boys.update',
-            'delivery_boys.delete', 'delivery_boys.update-status', 'social_media.update', 'social_media.delete', 'customers.change',
-            'system_users.update', 'system_users.delete', 'system_users.change_password', 'withdrawal_requests.update', 'withdrawal_requests.delete',
-            'return_requests.update', 'return_requests.delete', 'orders.delete', 'orders.deleteItem', 'orders.update_status', 'orders.assign_delivery_boy',
-            'orders.update_items_status', 'role.update', 'role.delete', 'media.delete', 'media.multiple_delete', 'seller_commissions.update', 'seller_commissions.delete',
-            'cities.save_boundary', 'cities.update', 'cities.delete', 'faqs.update', 'faqs.delete', 'seller.update_status', 'seller.assign_delivery_boy', 'seller.mail_settings.save',
-            'delivery_boy.update_status', 'delivery_boy.mail_settings.save'
+            'notifications.delete',
+            'sections.update',
+            'sections.delete',
+            'offers.update',
+            'offers.delete',
+            'delivery_boys.update',
+            'delivery_boys.delete',
+            'delivery_boys.update-status',
+            'social_media.update',
+            'social_media.delete',
+            'customers.change',
+            'system_users.update',
+            'system_users.delete',
+            'system_users.change_password',
+            'withdrawal_requests.update',
+            'withdrawal_requests.delete',
+            'return_requests.update',
+            'return_requests.delete',
+            'orders.delete',
+            'orders.deleteItem',
+            'orders.update_status',
+            'orders.assign_delivery_boy',
+            'orders.update_items_status',
+            'role.update',
+            'role.delete',
+            'media.delete',
+            'media.multiple_delete',
+            'seller_commissions.update',
+            'seller_commissions.delete',
+            'cities.save_boundary',
+            'cities.update',
+            'cities.delete',
+            'faqs.update',
+            'faqs.delete',
+            'seller.update_status',
+            'seller.assign_delivery_boy',
+            'seller.mail_settings.save',
+            'delivery_boy.update_status',
+            'delivery_boy.mail_settings.save'
         );
     }
-    public static function updateOrderPromoCode($order_id, $order_promo_discount){
+    public static function updateOrderPromoCode($order_id, $order_promo_discount)
+    {
         // dd($order_promo_discount);
-        $order = Order::where("id",$order_id)->first();
+        $order = Order::where("id", $order_id)->first();
         $order->promo_code = "";
         $order->promo_discount = 0;
         $order->final_total += $order_promo_discount;
-        
+
         $order->save();
     }
-    public static function getFssaiLicImg(){
+    public static function getFssaiLicImg()
+    {
         $fssai_lic_img_empty = '';
-        try{
-            $fssai_lic_img =  Setting::where('variable','fssai_lic_img')->first()->value;
-        
-            if($fssai_lic_img != ''){
+        try {
+            $fssai_lic_img =  Setting::where('variable', 'fssai_lic_img')->first()->value;
+
+            if ($fssai_lic_img != '') {
                 return self::getImage($fssai_lic_img);
-            }else{
-                return $fssai_lic_img_empty;         
+            } else {
+                return $fssai_lic_img_empty;
             }
         } catch (\Exception $e) {
-            return $fssai_lic_img_empty;    
+            return $fssai_lic_img_empty;
         }
-    }   
-        
-    public static function validateFSSAINumber($fssaiNumber){
+    }
+
+    public static function validateFSSAINumber($fssaiNumber)
+    {
         $pattern = '/^[0-9]{14}$/';
         // Check if the FSSAI number matches the pattern
         if (preg_match($pattern, $fssaiNumber)) {
-           
         } else {
-            return Response::json(array('status' => 0, 'message' => 'please enter Valid FSSAI NO.'));
+            return response()->json(array('status' => 0, 'message' => 'please enter Valid FSSAI NO.'));
         }
     }
 
-    public static function getIsCategorySectionInHomepage(){
+    public static function getIsCategorySectionInHomepage()
+    {
         $is_category_section_in_homepage_empty = 1;
-        try{
-            $is_category_section_in_homepage =  (int)Setting::where('variable','is_category_section_in_homepage')->first()->value;
-        
-            if($is_category_section_in_homepage != ''){
-                return $is_category_section_in_homepage;
-            }else{
-                return $is_category_section_in_homepage_empty;         
-            }
-        } catch (\Exception $e) {
-            return $is_category_section_in_homepage_empty;    
-        }
-    }
-    
-    public static function getCountCategorySectionInHomepage(){
-        $count_category_section_in_homepage_empty = 9;
-        try{
-            $count_category_section_in_homepage =  (int)Setting::where('variable','count_category_section_in_homepage')->first()->value;
-        
-            if($count_category_section_in_homepage != ''){
-                return $count_category_section_in_homepage;
-            }else{
-                return $count_category_section_in_homepage_empty;         
-            }
-        } catch (\Exception $e) {
-            return $count_category_section_in_homepage_empty;    
-        }
-    } 
+        try {
+            $is_category_section_in_homepage =  (int)Setting::where('variable', 'is_category_section_in_homepage')->first()->value;
 
-    public static function getIsBrandSectionInHomepage(){
-        $is_brand_section_in_homepage_empty = 1;
-        try{
-            $is_brand_section_in_homepage =  (int)Setting::where('variable','is_brand_section_in_homepage')->first()->value;
-        
-            if($is_brand_section_in_homepage != ''){
-                return $is_brand_section_in_homepage;
-            }else{
-                return $is_brand_section_in_homepage_empty;         
+            if ($is_category_section_in_homepage != '') {
+                return $is_category_section_in_homepage;
+            } else {
+                return $is_category_section_in_homepage_empty;
             }
         } catch (\Exception $e) {
-            return $is_brand_section_in_homepage_empty;    
+            return $is_category_section_in_homepage_empty;
         }
     }
-    
-    public static function getCountBrandSectionInHomepage(){
-        $count_brand_section_in_homepage_empty = 9;
-        try{
-            $count_brand_section_in_homepage =  (int)Setting::where('variable','count_brand_section_in_homepage')->first()->value;
-        
-            if($count_brand_section_in_homepage != ''){
-                return $count_brand_section_in_homepage;
-            }else{
-                return $count_brand_section_in_homepage_empty;         
+
+    public static function getCountCategorySectionInHomepage()
+    {
+        $count_category_section_in_homepage_empty = 9;
+        try {
+            $count_category_section_in_homepage =  (int)Setting::where('variable', 'count_category_section_in_homepage')->first()->value;
+
+            if ($count_category_section_in_homepage != '') {
+                return $count_category_section_in_homepage;
+            } else {
+                return $count_category_section_in_homepage_empty;
             }
         } catch (\Exception $e) {
-            return $count_brand_section_in_homepage_empty;    
+            return $count_category_section_in_homepage_empty;
         }
-    } 
+    }
+
+    public static function getIsBrandSectionInHomepage()
+    {
+        $is_brand_section_in_homepage_empty = 1;
+        try {
+            $is_brand_section_in_homepage =  (int)Setting::where('variable', 'is_brand_section_in_homepage')->first()->value;
+
+            if ($is_brand_section_in_homepage != '') {
+                return $is_brand_section_in_homepage;
+            } else {
+                return $is_brand_section_in_homepage_empty;
+            }
+        } catch (\Exception $e) {
+            return $is_brand_section_in_homepage_empty;
+        }
+    }
+
+    public static function getCountBrandSectionInHomepage()
+    {
+        $count_brand_section_in_homepage_empty = 9;
+        try {
+            $count_brand_section_in_homepage =  (int)Setting::where('variable', 'count_brand_section_in_homepage')->first()->value;
+
+            if ($count_brand_section_in_homepage != '') {
+                return $count_brand_section_in_homepage;
+            } else {
+                return $count_brand_section_in_homepage_empty;
+            }
+        } catch (\Exception $e) {
+            return $count_brand_section_in_homepage_empty;
+        }
+    }
+
+    public static function fileUploadStorage($file, ?string $path = 'uploads', ?string $name = '')
+    {
+        $name = !empty($name) ? $name : rand();
+        $fileName = $name . '_' . time() . uniqid() . '.' . $file->getClientOriginalExtension();
+        $fileName = Str::replace(' ', '', Str::lower($fileName));
+        // $fileName= md5($fileName);
+        $path = trim($path, '/');
+        $uploadedPath = $file->storeAs($path, $fileName, 'public');
+        return '/storage/' . trim($uploadedPath, '/');
+    }
+    public static function fileDeleteStorage(?string $path)
+    {
+        if (!empty($path)) {
+            $path = public_path($path);
+            if (file_exists($path)) {
+                return unlink($path);
+            }
+        }
+
+        return false;
+    }
 }
-?>
